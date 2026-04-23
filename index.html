@@ -2,57 +2,136 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Festa São Sebastião 2027</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6ª FPSS - Festa do Padroeiro São Sebastião</title>
 
 <style>
-body{
+*{
 margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
 font-family:Arial,sans-serif;
 background:linear-gradient(#7f1d1d,#fff7ed);
 color:#111;
+line-height:1.5;
 }
 
 .wrap{
-max-width:980px;
+max-width:1100px;
 margin:auto;
 padding:20px;
 }
 
 .hero{
-color:#fff;
 text-align:center;
-padding:50px 20px;
+color:#fff;
+padding:55px 20px;
+}
+
+.hero h1{
+font-size:38px;
+margin-bottom:12px;
+}
+
+.hero p{
+font-size:18px;
+margin:6px 0;
 }
 
 .card{
 background:#fff;
 border-radius:18px;
-padding:20px;
-margin:12px 0;
-box-shadow:0 8px 20px rgba(0,0,0,.08);
+padding:24px;
+margin:16px 0;
+box-shadow:0 10px 24px rgba(0,0,0,.08);
+}
+
+.grid-2{
+display:grid;
+grid-template-columns:1fr;
+gap:18px;
+}
+
+.logo-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:20px;
+margin-top:20px;
+}
+
+.logo-box{
+background:#fff;
+border-radius:18px;
+padding:16px;
+text-align:center;
+box-shadow:0 8px 18px rgba(0,0,0,.08);
+}
+
+.logo-box img{
+width:100%;
+height:120px;
+object-fit:contain;
+}
+
+.logo-box p{
+margin-top:10px;
+font-weight:bold;
+font-size:15px;
 }
 
 .btn{
 display:inline-block;
-background:#16a34a;
-color:#fff;
 padding:14px 18px;
 border-radius:12px;
+color:#fff;
 text-decoration:none;
 font-weight:bold;
-margin:6px 0;
+margin-top:8px;
+margin-bottom:10px;
 }
 
-.grid{
-display:grid;
-grid-template-columns:1fr;
-gap:16px;
+.green{background:#16a34a;}
+.blue{background:#2563eb;}
+.purple{background:#7c3aed;}
+
+.section-title{
+margin-bottom:12px;
+font-size:26px;
+}
+
+.highlight-red{
+font-size:28px;
+font-weight:bold;
+color:#dc2626;
+}
+
+.highlight-green{
+font-size:20px;
+font-weight:bold;
+color:#16a34a;
+}
+
+.small-space{
+margin-top:14px;
+}
+
+footer{
+text-align:center;
+padding:30px;
+color:#444;
+font-size:14px;
 }
 
 @media(min-width:800px){
-.grid{
+.grid-2{
 grid-template-columns:1fr 1fr;
+}
+
+.hero h1{
+font-size:46px;
 }
 }
 </style>
@@ -60,129 +139,100 @@ grid-template-columns:1fr 1fr;
 
 <body>
 
-<div class="hero">
+<header class="hero">
 <div class="wrap">
-<h1><strong>6ª FPSS </strong><br> 
-Festa do Padroeiro São Sebastião</h1>
+<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 <p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
 <p>Fé, tradição e grande confraternização</p>
 </div>
-</div>
+</header>
 
-<div class="wrap">
+<main class="wrap">
 
-<div class="grid">
+<section class="grid-2">
 
 <div class="card">
-<h2>Programação</h2>
-<p>
-10h: Santa Missa<br>
-11h: Almoço com churrasco e show ao vivo<br>
-15h: Sorteio 4º prêmio<br>
-17h: Show de Prêmios
-</p>
+<h2 class="section-title">Programação Oficial</h2>
+<p>10h - Santa Missa</p>
+<p>11h - Almoço com churrasco e show ao vivo</p>
+<p>15h - Sorteio do 4º prêmio</p>
+<p>17h - Show de Prêmios</p>
 </div>
 
 <div class="card">
-<h2>Bingo Beneficente</h2>
-<p style="font-size:24px; color:#dc2626; font-weight:bold;">
-R$ <strong> 25.000,00 </strong> em prêmios
-</p>
+<h2 class="section-title">Bingo Beneficente</h2>
 
-<p style="font-size:18px; color:#16a34a; font-weight:bold;">
-13 Chances de Ganhar
-</p>
+<p class="highlight-red">R$ 25.000,00 em prêmios</p>
+<p class="highlight-green">13 chances de ganhar</p>
+<p class="small-space"><strong>Cartela R$ 20,00</strong></p>
 
-<p><strong>Cartela R$ 20,00</strong></p>
-
-<p>
+<p class="small-space">
 PIX: <strong>69999005245</strong><br>
 Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 </p>
+</div>
 
+</section>
 
-<h2>Compre já sua Cartela com um dos Nossos Vendedores</h2>
+<section class="card">
+<h2 class="section-title">Compre sua Cartela</h2>
 
 <p><strong>André</strong> - Coordenador da Festa</p>
-<a class="btn" href="https://wa.me/5569981102306">
-Falar com André
-</a>
+<a class="btn green" target="_blank" href="https://wa.me/5569981102306">Falar com André</a>
 
 <p><strong>Marcos</strong> - Assessor Geral</p>
-<a class="btn" href="https://wa.me/5569984384210">
-Falar com Marcos
-</a>
+<a class="btn blue" target="_blank" href="https://wa.me/5569984384210">Falar com Marcos</a>
 
 <p><strong>Rafael</strong> - Responsável pelo Bingo</p>
-<a class="btn" href="https://wa.me/5569993982037">
-Falar com Rafael
+<a class="btn purple" target="_blank" href="https://wa.me/5569993982037">Falar com Rafael</a>
+</section>
+
+<section class="card">
+<h2 class="section-title">Redes Sociais</h2>
+
+<a class="btn purple" target="_blank" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3">
+Instagram da Comunidade
 </a>
 
-</div>
-
-<div class="card">
-<h2>Redes Sociais</h2>
-<br>
-<a href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3"
-style="background:#7c3aed;color:white;padding:14px 18px;border-radius:12px;text-decoration:none;display:inline-block;">
-Instagram da comunidade 
-</a><br><br>
-<a href="https://www.facebook.com/share/18dNHKRaNH/"
-style="background:#2563eb;color:white;padding:14px 18px;border-radius:12px;text-decoration:none;display:inline-block;">
-Facebook da Comunidade 
+<a class="btn blue" target="_blank" href="https://www.facebook.com/share/18dNHKRaNH/">
+Facebook da Comunidade
 </a>
+</section>
 
+<section class="card">
+<h2 class="section-title">Parceiros Oficiais</h2>
+<p>Empresas que acreditam na nossa festa.</p>
+
+<div class="logo-grid">
+
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
+<p>Central Modas</p>
 </div>
 
-<div class="card">
-<h2>Parceiros Oficiais</h2>
-
-<strong>Divulgue aqui sua Marca</strong>
-</p>
-
-<div class="card">
-<h2 style="text-align:center;">Confirmados</h2>
-
-<div style="
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:20px;
-align-items:center;
-justify-items:center;
-padding:20px;
-">
-
-<div style="background:white;padding:18px;border-radius:18px;
-box-shadow:0 8px 20px rgba(0,0,0,.08);text-align:center;max-width:240px;width:100%;">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI FPSS/Central Modas.png"
-style="max-width:100%;height:120px;object-fit:contain;">
-<p><strong>Central Modas</strong></p>
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
+<p>Grande Rede Telecom</p>
 </div>
 
-<div style="background:white;padding:18px;border-radius:18px;
-box-shadow:0 8px 20px rgba(0,0,0,.08);text-align:center;max-width:240px;width:100%;">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI FPSS/Grande Rede.png"
-style="max-width:100%;height:120px;object-fit:contain;">
-<p><strong>Grande Rede Telecom</strong></p>
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
+<p>Norte Motos</p>
 </div>
 
-<div style="background:white;padding:18px;border-radius:18px;
-box-shadow:0 8px 20px rgba(0,0,0,.08);text-align:center;max-width:240px;width:100%;">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI FPSS/NORTE MOTOS.png"
-style="max-width:100%;height:120px;object-fit:contain;">
-<p><strong>Norte Motos</strong></p>
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
+<p>Maicon Jóias</p>
 </div>
 
-<div style="background:white;padding:18px;border-radius:18px;
-box-shadow:0 8px 20px rgba(0,0,0,.08);text-align:center;max-width:240px;width:100%;">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI FPSS/Maicon Joias.jpeg"
-style="max-width:100%;height:120px;object-fit:contain;">
-<p><strong>Maicon Jóias</strong></p>
 </div>
+</section>
 
-  
-</div>
-</div>
+</main>
+
+<footer>
+Comunidade São Sebastião • Rolim de Moura/RO
+</footer>
 
 </body>
 </html>
