@@ -1,494 +1,291 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
-<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO. Programação, bingo, compra de cartelas e parceiros.">
+  <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+    html {
+      scroll-behavior: smooth;
+    }
 
-html{
-scroll-behavior:smooth;
-}
+    body {
+      font-family: Arial, sans-serif;
+      color: #111;
+      line-height: 1.5;
+      background: linear-gradient(rgba(255,248,235,.72), rgba(255,248,235,.72)), 
+        url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+    }
 
-body{
-font-family:Arial,sans-serif;
-color:#111;
-line-height:1.5;
-background:
-linear-gradient(rgba(255,248,235,.72),rgba(255,248,235,.72)),
-url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
-background-size:cover;
-background-position:center;
-background-attachment:fixed;
-background-repeat:no-repeat;
-}
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(255,215,0,.12), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(255,255,255,.22), transparent 35%);
+      pointer-events: none;
+      z-index: -1;
+    }
 
-body::before{
-content:"";
-position:fixed;
-inset:0;
-background:
-radial-gradient(circle at top right, rgba(255,215,0,.12), transparent 28%),
-radial-gradient(circle at bottom left, rgba(255,255,255,.22), transparent 35%);
-pointer-events:none;
-z-index:-1;
-}
+    .wrap {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
 
-.wrap{
-max-width:1200px;
-margin:auto;
-padding:20px;
-}
+    /* TOPO PREMIUM */
+    .hero {
+      padding: 60px 20px;
+      border-radius: 0 0 34px 34px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      background: 
+        linear-gradient(135deg, #5b0f0f 0%, #7f1d1d 35%, #991b1b 65%, #7c2d12 100%),
+        radial-gradient(circle at top right, rgba(255,215,0,.22), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(255,255,255,.10), transparent 35%);
+      box-shadow: 0 18px 40px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.08);
+    }
 
-/* TOPO PREMIUM */
-.hero{
-padding:60px 20px;
-border-radius:0 0 34px 34px;
-color:#fff;
-position:relative;
-overflow:hidden;
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -20%;
+      width: 140%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+      transform: skewX(-18deg);
+    }
 
-background:
-radial-gradient(circle at top right, rgba(255,215,0,.22), transparent 28%),
-radial-gradient(circle at bottom left, rgba(255,255,255,.10), transparent 35%),
-linear-gradient(135deg,#5b0f0f 0%, #7f1d1d 35%, #991b1b 65%, #7c2d12 100%);
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
 
-box-shadow:
-0 18px 40px rgba(0,0,0,.18),
-inset 0 1px 0 rgba(255,255,255,.08);
-}
+    .hero-text {
+      text-align: center;
+    }
 
-.hero::after{
-content:"";
-position:absolute;
-top:0;
-left:-20%;
-width:140%;
-height:100%;
-background:linear-gradient(
-90deg,
-transparent,
-rgba(255,255,255,.05),
-transparent
-);
-transform:skewX(-18deg);
-}
+    .hero h1 {
+      font-size: 42px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      text-shadow: 0 4px 16px rgba(0,0,0,.55);
+    }
 
-.hero-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:30px;
-align-items:center;
-position:relative;
-z-index:2;
-}
+    .hero p {
+      font-size: 18px;
+      margin: 6px 0;
+      font-weight: bold;
+      text-shadow: 0 2px 8px rgba(0,0,0,.45);
+    }
 
-.hero-text{
-text-align:center;
-}
+    .hero-btn, .btn {
+      display: block;
+      text-align: center;
+      padding: 14px 18px;
+      border-radius: 12px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: .25s;
+    }
 
-.hero h1{
-font-size:42px;
-line-height:1.1;
-margin-bottom:12px;
-text-shadow:0 4px 16px rgba(0,0,0,.55);
-}
+    .hero-btn {
+      display: inline-block;
+      padding: 14
+      
+      .hero-btn {
+        display: inline-block;
+        padding: 14px 24px;
+        background: #16a34a;
+        box-shadow: 0 10px 20px rgba(0,0,0,.18);
+      }
 
-.hero p{
-font-size:18px;
-margin:6px 0;
-font-weight:bold;
-text-shadow:0 2px 8px rgba(0,0,0,.45);
-}
+      .hero-btn:hover, .btn:hover {
+        transform: translateY(-3px);
+        opacity: .95;
+      }
 
-/* LOGO LATERAL */
-.hero-side{
-display:flex;
-justify-content:center;
-align-items:center;
-position:relative;
-}
+      .green { background: #16a34a; }
+      .blue { background: #2563eb; }
+      .purple { background: #7c3aed; }
 
-.hero-side::before{
-content:"";
-position:absolute;
-width:260px;
-height:260px;
-border-radius:50%;
-background:radial-gradient(circle, rgba(255,215,0,.75), rgba(255,215,0,.18), transparent 70%);
-filter:blur(8px);
-animation:pulseGlow 3s infinite ease-in-out;
-}
+      /* Layout */
+      .grid-2, .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        margin-top: 18px;
+      }
 
-.hero-side img{
-width:100%;
-max-width:280px;
-position:relative;
-z-index:2;
-filter:drop-shadow(0 18px 30px rgba(0,0,0,.28));
-animation:rotateSoft 14s linear infinite;
-}
+      .card {
+        background: rgba(255,255,255,.94);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 14px 30px rgba(0,0,0,.10);
+        backdrop-filter: blur(2px);
+      }
 
-/* CONTADOR */
-.countdown{
-margin-top:22px;
-display:flex;
-justify-content:center;
-gap:12px;
-flex-wrap:wrap;
-}
+      .section-title {
+        font-size: 26px;
+        margin-bottom: 12px;
+        color: #7f1d1d;
+      }
 
-.time-box{
-background:rgba(255,255,255,.14);
-padding:12px 14px;
-border-radius:14px;
-min-width:86px;
-backdrop-filter:blur(3px);
-}
+      .highlight-red {
+        font-size: 30px;
+        font-weight: bold;
+        color: #dc2626;
+      }
 
-.time-number{
-font-size:28px;
-font-weight:bold;
-}
+      .highlight-green {
+        font-size: 20px;
+        font-weight: bold;
+        color: #16a34a;
+        margin-top: 6px;
+      }
 
-.time-label{
-font-size:12px;
-letter-spacing:1px;
-}
+      .small-space {
+        margin-top: 14px;
+      }
 
-/* BOTÕES */
-.hero-btn,.btn{
-display:block;
-text-align:center;
-padding:14px 18px;
-border-radius:12px;
-color:#fff;
-text-decoration:none;
-font-weight:bold;
-margin-top:10px;
-transition:.25s;
-}
+      /* Bingo */
+      .bingo-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        align-items: center;
+      }
 
-.hero-btn{
-display:inline-block;
-padding:14px 24px;
-background:#16a34a;
-box-shadow:0 10px 20px rgba(0,0,0,.18);
-}
+      .bingo-grid img {
+        width: 100%;
+        max-width: 340px;
+        margin: auto;
+        display: block;
+        border-radius: 18px;
+        box-shadow: 0 12px 24px rgba(0,0,0,.14);
+      }
 
-.hero-btn:hover,.btn:hover{
-transform:translateY(-3px);
-opacity:.95;
-}
+      /* Patrocinadores */
+      .logo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 18px;
+        margin-top: 18px;
+      }
 
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.purple{background:#7c3aed;}
+      .logo-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 14px;
+        text-align: center;
+        box-shadow: 0 8px 18px rgba(0,0,0,.08);
+        animation: floatLogo 4s infinite ease-in-out;
+      }
 
-/* LAYOUT */
-.grid-2,.grid-3{
-display:grid;
-grid-template-columns:1fr;
-gap:18px;
-margin-top:18px;
-}
+      .logo-box:nth-child(2) { animation-delay: .4s; }
+      .logo-box:nth-child(3) { animation-delay: .8s; }
+      .logo-box:nth-child(4) { animation-delay: 1.2s; }
 
-.card{
-background:rgba(255,255,255,.94);
-border-radius:20px;
-padding:24px;
-box-shadow:0 14px 30px rgba(0,0,0,.10);
-backdrop-filter:blur(2px);
-}
+      .logo-box img {
+        width: 100%;
+        height: 110px;
+        object-fit: contain;
+      }
 
-.section-title{
-font-size:26px;
-margin-bottom:12px;
-color:#7f1d1d;
-}
+      .logo-box p {
+        margin-top: 8px;
+        font-weight: bold;
+        font-size: 15px;
+      }
 
-.highlight-red{
-font-size:30px;
-font-weight:bold;
-color:#dc2626;
-}
+      footer {
+        text-align: center;
+        padding: 30px;
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+      }
 
-.highlight-green{
-font-size:20px;
-font-weight:bold;
-color:#16a34a;
-margin-top:6px;
-}
+      /* Animações */
+      @keyframes rotateSoft {
+        0% { transform: rotate(0deg); }
+        50% { transform: rotate(6deg); }
+        100% { transform: rotate(0deg); }
+      }
 
-.small-space{
-margin-top:14px;
-}
+      @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); opacity: .9; }
+        50% { transform: scale(1.12); opacity: 1; }
+      }
 
-/* BINGO */
-.bingo-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:20px;
-align-items:center;
-}
+      @keyframes floatLogo
+      
+      @keyframes floatLogo {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
 
-.bingo-grid img{
-width:100%;
-max-width:340px;
-margin:auto;
-display:block;
-border-radius:18px;
-box-shadow:0 12px 24px rgba(0,0,0,.14);
-}
+      /* Responsividade */
+      @media (min-width: 900px) {
+        .hero-grid {
+          grid-template-columns: 1.1fr .9fr;
+        }
 
-/* PATROCINADORES */
-.logo-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-gap:18px;
-margin-top:18px;
-}
+        .hero-text {
+          text-align: left;
+        }
 
-.logo-box{
-background:#fff;
-border-radius:18px;
-padding:14px;
-text-align:center;
-box-shadow:0 8px 18px rgba(0,0,0,.08);
-animation:floatLogo 4s infinite ease-in-out;
-}
+        .countdown {
+          justify-content: flex-start;
+        }
 
-.logo-box:nth-child(2){animation-delay:.4s;}
-.logo-box:nth-child(3){animation-delay:.8s;}
-.logo-box:nth-child(4){animation-delay:1.2s;}
+        .grid-2 {
+          grid-template-columns: 1fr 1fr;
+        }
 
-.logo-box img{
-width:100%;
-height:110px;
-object-fit:contain;
-}
+        .grid-3 {
+          grid-template-columns: 1fr 1fr;
+        }
 
-.logo-box p{
-margin-top:8px;
-font-weight:bold;
-font-size:15px;
-}
+        .bingo-grid {
+          grid-template-columns: 1.1fr .9fr;
+        }
 
-footer{
-text-align:center;
-padding:30px;
-font-size:14px;
-font-weight:bold;
-color:#333;
-}
-
-/* ANIMAÇÕES */
-@keyframes rotateSoft{
-0%{transform:rotate(0deg);}
-50%{transform:rotate(6deg);}
-100%{transform:rotate(0deg);}
-}
-
-@keyframes pulseGlow{
-0%,100%{transform:scale(1);opacity:.9;}
-50%{transform:scale(1.12);opacity:1;}
-}
-
-@keyframes floatLogo{
-0%,100%{transform:translateY(0);}
-50%{transform:translateY(-8px);}
-}
-
-/* RESPONSIVO */
-@media(min-width:900px){
-
-.hero-grid{
-grid-template-columns:1.1fr .9fr;
-}
-
-.hero-text{
-text-align:left;
-}
-
-.countdown{
-justify-content:flex-start;
-}
-
-.grid-2{
-grid-template-columns:1fr 1fr;
-}
-
-.grid-3{
-grid-template-columns:1fr 1fr;
-}
-
-.bingo-grid{
-grid-template-columns:1.1fr .9fr;
-}
-
-.hero h1{
-font-size:52px;
-}
-}
-</style>
+        .hero h1 {
+          font-size: 52px;
+        }
+      }
+    </style>
 </head>
-
 <body>
 
-<header class="hero">
-<div class="wrap">
-
-<div class="hero-grid">
-
-<div class="hero-text">
-<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
-
-<p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
-<p>Fé, tradição e grande confraternização</p>
-
-<div class="countdown" id="countdown">
-<div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div>
-<div class="time-box"><div class="time-number" id="horas">0</div><div class="time-label">HORAS</div></div>
-<div class="time-box"><div class="time-number" id="minutos">0</div><div class="time-label">MIN</div></div>
-<div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div>
-</div>
-
-<a href="https://wa.me/5569993982037?text=Olá!%20Tenho%20interesse%20na%20cartela%20do%20bingo." target="_blank" class="hero-btn">
-Comprar Cartela
-</a>
-</div>
-
-<div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
-</div>
-
-</div>
-</div>
-</header>
-
-<main class="wrap">
-
-<section class="grid-2">
-
-<div class="card">
-<h2 class="section-title">Programação Oficial</h2>
-<p>10h - Santa Missa</p>
-<p>11h - Almoço com Churrasco no Espeto</p>
-<p>Show ao Vivo com Cuyabano e Douradense</p>
-<p>15h - Sorteio Presencial</p>
-<p>17h - Show de Prêmios</p>
-</div>
-
-<div class="card">
-<h2 class="section-title">Bingo Beneficente</h2>
-
-<div class="bingo-grid">
-<div>
-<p class="highlight-red">R$ 25.000,00 em prêmios</p>
-<p class="highlight-green">13 chances de ganhar</p>
-<p class="small-space"><strong>Cartela R$ 20,00</strong></p>
-<p class="small-space">
-PIX: <strong>69999005245</strong><br>
-Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
-</p>
-</div>
-
-<div>
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png">
-</div>
-</div>
-
-</div>
-</section>
-
-<section class="grid-3">
-
-<div class="card">
-<h2 class="section-title">Compre sua Cartela</h2>
-
-<p><strong>André</strong> - Coordenador da Festa</p>
-<a class="btn green" href="https://wa.me/5569981102306?text=Olá!%20Gostaria%20de%20comprar%20cartela%20da%206ª%20FPSS." target="_blank">Falar com André</a>
-
-<p><strong>Rafael</strong> - Coordenador do Bingo</p>
-<a class="btn purple" href="https://wa.me/5569993982037?text=Olá!%20Tenho%20interesse%20na%20cartela%20do%20bingo." target="_blank">Falar com Rafael</a>
-</div>
-
-<div class="card">
-<h2 class="section-title">Redes Sociais</h2>
-
-<a class="btn purple" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3" target="_blank">Instagram da Comunidade</a>
-
-<a class="btn blue" href="https://www.facebook.com/share/18dNHKRaNH/" target="_blank">Facebook da Comunidade</a>
-</div>
-
-</section>
-
-<section style="margin-top:18px;">
-<div class="card">
-<h2 class="section-title">Parceiros Oficiais</h2>
-<p>Empresas que acreditam na nossa festa.</p>
-
-<div class="logo-grid">
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
-<p>Central Modas</p>
-</div>
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
-<p>Grande Rede Telecom</p>
-</div>
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
-<p>Norte Motos</p>
-</div>
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
-<p>Maicon Jóias</p>
-</div>
-
-</div>
-</div>
-</section>
-
-</main>
-
-<footer>
-Comunidade São Sebastião • Rolim de Moura/RO
-</footer>
-
-<script>
-const dataEvento = new Date("Jan 24, 2027 10:00:00").getTime();
-
-function atualizarContador(){
-const agora = new Date().getTime();
-const distancia = dataEvento - agora;
-
-if(distancia <= 0){
-document.getElementById("countdown").innerHTML =
-"<div class='time-box'><div class='time-number'>HOJE</div><div class='time-label'>A FESTA COMEÇOU</div></div>";
-return;
-}
-
-document.getElementById("dias").textContent = Math.floor(distancia/(1000*60*60*24));
-document.getElementById("horas").textContent = Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
-document.getElementById("minutos").textContent = Math.floor((distancia%(1000*60*60))/(1000*60));
-document.getElementById("segundos").textContent = Math.floor((distancia%(1000*60))/1000);
-}
-
-setInterval(atualizarContador,1000);
-atualizarContador();
-</script>
-
-</body>
-</html>
+  <header class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-text">
+          <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
+          <p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
+          <p>Fé, tradição e grande confraternização</p>
+          <div class="countdown" id="countdown">
+            <div class="time-box"><div class="time-number" id
+            
+            
