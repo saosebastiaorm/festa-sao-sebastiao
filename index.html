@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO. Programação oficial, bingo beneficente, compra de cartelas e parceiros.">
+<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
 
 <style>
@@ -17,7 +17,7 @@ body{
 font-family:Arial,sans-serif;
 color:#111;
 line-height:1.5;
-background:url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V FPSS/Imagem_aerea_lateral.jpg');
+background:url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
 background-size:cover;
 background-position:center;
 background-attachment:fixed;
@@ -30,7 +30,6 @@ position:fixed;
 inset:0;
 background:rgba(255,255,255,.78);
 backdrop-filter:blur(4px);
--webkit-backdrop-filter:blur(4px);
 z-index:-1;
 }
 
@@ -55,16 +54,14 @@ box-shadow:0 10px 30px rgba(0,0,0,.18);
 
 .hero img{
 width:150px;
-max-width:90%;
 margin-bottom:16px;
 filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));
 }
 
 .hero h1{
-font-size:40px;
-line-height:1.15;
+font-size:42px;
+margin-bottom:10px;
 text-shadow:0 3px 12px rgba(0,0,0,.8);
-margin-bottom:12px;
 }
 
 .hero p{
@@ -74,22 +71,33 @@ font-weight:bold;
 text-shadow:0 2px 8px rgba(0,0,0,.75);
 }
 
-.hero-btn{
-display:inline-block;
-margin-top:18px;
-padding:14px 22px;
-background:#16a34a;
+.hero-btn,.btn{
+display:block;
+text-align:center;
+padding:14px 18px;
+border-radius:12px;
 color:#fff;
 text-decoration:none;
 font-weight:bold;
-border-radius:14px;
-box-shadow:0 8px 18px rgba(0,0,0,.16);
+margin-top:10px;
 transition:.2s;
 }
 
-.hero-btn:hover{
-transform:translateY(-2px);
+.hero-btn{
+display:inline-block;
+background:#16a34a;
+padding:14px 24px;
+margin-top:18px;
 }
+
+.hero-btn:hover,.btn:hover{
+transform:translateY(-2px);
+opacity:.95;
+}
+
+.green{background:#16a34a;}
+.blue{background:#2563eb;}
+.purple{background:#7c3aed;}
 
 .countdown{
 margin-top:22px;
@@ -104,29 +112,18 @@ background:rgba(255,255,255,.16);
 padding:12px 14px;
 border-radius:14px;
 min-width:86px;
-backdrop-filter:blur(2px);
 }
 
 .time-number{
 font-size:30px;
 font-weight:bold;
-line-height:1;
 }
 
 .time-label{
 font-size:12px;
-margin-top:4px;
-letter-spacing:1px;
 }
 
-.grid-2{
-display:grid;
-grid-template-columns:1fr;
-gap:18px;
-margin-top:18px;
-}
-
-.grid-3{
+.grid-2,.grid-3{
 display:grid;
 grid-template-columns:1fr;
 gap:18px;
@@ -163,28 +160,6 @@ margin-top:6px;
 margin-top:14px;
 }
 
-.btn{
-display:block;
-text-align:center;
-padding:14px 18px;
-border-radius:12px;
-color:#fff;
-text-decoration:none;
-font-weight:bold;
-margin-top:8px;
-margin-bottom:14px;
-transition:.2s;
-}
-
-.btn:hover{
-transform:translateY(-2px);
-opacity:.95;
-}
-
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.purple{background:#7c3aed;}
-
 .bingo-grid{
 display:grid;
 grid-template-columns:1fr;
@@ -195,8 +170,8 @@ align-items:center;
 .bingo-grid img{
 width:100%;
 max-width:340px;
-display:block;
 margin:auto;
+display:block;
 border-radius:18px;
 box-shadow:0 12px 24px rgba(0,0,0,.14);
 }
@@ -214,11 +189,6 @@ border-radius:18px;
 padding:14px;
 text-align:center;
 box-shadow:0 8px 18px rgba(0,0,0,.08);
-transition:.2s;
-}
-
-.logo-box:hover{
-transform:translateY(-3px);
 }
 
 .logo-box img{
@@ -248,7 +218,7 @@ grid-template-columns:1fr 1fr;
 }
 
 .grid-3{
-grid-template-columns:1fr 1fr 1fr;
+grid-template-columns:1fr 1fr;
 }
 
 .bingo-grid{
@@ -257,10 +227,6 @@ grid-template-columns:1.1fr .9fr;
 
 .hero h1{
 font-size:48px;
-}
-
-.hero p{
-font-size:20px;
 }
 }
 </style>
@@ -271,7 +237,7 @@ font-size:20px;
 <header class="hero">
 <div class="wrap">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png" alt="Logo da Festa">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 
 <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 
@@ -279,32 +245,13 @@ font-size:20px;
 <p>Fé, tradição e grande confraternização</p>
 
 <div class="countdown" id="countdown">
-
-<div class="time-box">
-<div class="time-number" id="dias">0</div>
-<div class="time-label">DIAS</div>
+<div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div>
+<div class="time-box"><div class="time-number" id="horas">0</div><div class="time-label">HORAS</div></div>
+<div class="time-box"><div class="time-number" id="minutos">0</div><div class="time-label">MIN</div></div>
+<div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div>
 </div>
 
-<div class="time-box">
-<div class="time-number" id="horas">0</div>
-<div class="time-label">HORAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="minutos">0</div>
-<div class="time-label">MIN</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="segundos">0</div>
-<div class="time-label">SEG</div>
-</div>
-
-</div>
-
-<a href="https://wa.me/5569981102306" target="_blank" class="hero-btn">
-Comprar Cartela
-</a>
+<a href="https://wa.me/5569993982037" target="_blank" class="hero-btn">Comprar Cartela</a>
 
 </div>
 </header>
@@ -331,7 +278,6 @@ Comprar Cartela
 <p class="highlight-red">R$ 25.000,00 em prêmios</p>
 <p class="highlight-green">13 chances de ganhar</p>
 <p class="small-space"><strong>Cartela R$ 20,00</strong></p>
-
 <p class="small-space">
 PIX: <strong>69999005245</strong><br>
 Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
@@ -339,7 +285,7 @@ Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 </div>
 
 <div>
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png" alt="Cartela do Bingo">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png">
 </div>
 
 </div>
@@ -349,59 +295,58 @@ Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 
 <section class="grid-3">
 
-  <div class="card">
-    <h2 class="section-title">Compre sua Cartela</h2>
-  
-    <p><strong>André</strong> - Coordenador da Festa</p>
-    <a class="btn green" href="https://wa.me/5569981102306" target="_blank">Falar com André</a>
-  
-    <p><strong>Rafael</strong> - Coordenador do Bingo</p>
-    <a class="btn purple" href="https://wa.me/5569993982037" target="_blank">Falar com Rafael</a>
-  </div>
-  
-  <div class="card">
-    <h2 class="section-title">Redes Sociais</h2>
-  
-    <a class="btn purple" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3" target="_blank">
-    Instagram da Comunidade
-    </a>
-  
-    <a class="btn blue" href="https://www.facebook.com/share/18dNHKRaNH/" target="_blank">
-    Facebook da Comunidade
-    </a>
-  </div>
+<div class="card">
+<h2 class="section-title">Compre sua Cartela</h2>
+
+<p><strong>André</strong> - Coordenador da Festa</p>
+<a class="btn green" href="https://wa.me/5569981102306" target="_blank">Falar com André</a>
+
+<p><strong>Rafael</strong> - Coordenador do Bingo</p>
+<a class="btn purple" href="https://wa.me/5569993982037" target="_blank">Falar com Rafael</a>
+</div>
+
+<div class="card">
+<h2 class="section-title">Redes Sociais</h2>
+
+<a class="btn purple" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3" target="_blank">Instagram da Comunidade</a>
+
+<a class="btn blue" href="https://www.facebook.com/share/18dNHKRaNH/" target="_blank">Facebook da Comunidade</a>
+</div>
 
 </section>
-  
-<section class="grid-4">
-  <div class="card">
-  <h2 class="section-title">Parceiros Oficiais</h2>
-  <p>Empresas que acreditam na nossa festa.</p>
-  
-    <div class="logo-grid">
-    
-      <div class="logo-box">
-      <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png" alt="Central Modas">
-      <p>Central Modas</p>
-      </div>
-    
-      <div class="logo-box">
-      <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png" alt="Grande Rede">
-      <p>Grande Rede Telecom</p>
-      </div>
-    
-      <div class="logo-box">
-      <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png" alt="Norte Motos">
-      <p>Norte Motos</p>
-      </div>
-    
-      <div class="logo-box">
-      <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg" alt="Maicon Jóias">
-      <p>Maicon Jóias</p>
-      </div>
-  
-    </div>
-  </div>
+
+<!-- PATROCINADORES AGORA ABAIXO DAS DEMAIS SEÇÕES -->
+
+<section style="margin-top:18px;">
+
+<div class="card">
+<h2 class="section-title">Parceiros Oficiais</h2>
+<p>Empresas que acreditam na nossa festa.</p>
+
+<div class="logo-grid">
+
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
+<p>Central Modas</p>
+</div>
+
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
+<p>Grande Rede Telecom</p>
+</div>
+
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
+<p>Norte Motos</p>
+</div>
+
+<div class="logo-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
+<p>Maicon Jóias</p>
+</div>
+
+</div>
+</div>
 
 </section>
 
@@ -419,19 +364,15 @@ const agora = new Date().getTime();
 const distancia = dataEvento - agora;
 
 if(distancia <= 0){
-document.getElementById("countdown").innerHTML = "<div class='time-box'><div class='time-number'>HOJE</div><div class='time-label'>A FESTA COMEÇOU</div></div>";
+document.getElementById("countdown").innerHTML =
+"<div class='time-box'><div class='time-number'>HOJE</div><div class='time-label'>A FESTA COMEÇOU</div></div>";
 return;
 }
 
-const dias = Math.floor(distancia / (1000*60*60*24));
-const horas = Math.floor((distancia % (1000*60*60*24)) / (1000*60*60));
-const minutos = Math.floor((distancia % (1000*60*60)) / (1000*60));
-const segundos = Math.floor((distancia % (1000*60)) / 1000);
-
-document.getElementById("dias").textContent = dias;
-document.getElementById("horas").textContent = horas;
-document.getElementById("minutos").textContent = minutos;
-document.getElementById("segundos").textContent = segundos;
+document.getElementById("dias").textContent = Math.floor(distancia/(1000*60*60*24));
+document.getElementById("horas").textContent = Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
+document.getElementById("minutos").textContent = Math.floor((distancia%(1000*60*60))/(1000*60));
+document.getElementById("segundos").textContent = Math.floor((distancia%(1000*60))/1000);
 }
 
 setInterval(atualizarContador,1000);
