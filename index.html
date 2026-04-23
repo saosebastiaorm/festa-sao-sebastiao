@@ -24,12 +24,13 @@ background-attachment:fixed;
 background-repeat:no-repeat;
 }
 
+/* FUNDO DO SITE MENOS TRANSPARENTE */
 body::before{
 content:"";
 position:fixed;
 inset:0;
-background:rgba(255,255,255,.78);
-backdrop-filter:blur(4px);
+background:rgba(255,255,255,.58);
+backdrop-filter:blur(2px);
 z-index:-1;
 }
 
@@ -39,36 +40,53 @@ margin:auto;
 padding:20px;
 }
 
+/* TOPO PRINCIPAL */
 .hero{
-text-align:center;
+padding:55px 20px;
 color:#fff;
-padding:70px 20px;
-background:
-linear-gradient(rgba(90,20,20,.86),rgba(127,29,29,.78)),
-url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/CARTAZ_Reduzido.png');
-background-size:cover;
-background-position:center;
+background:linear-gradient(135deg,#7f1d1d,#991b1b);
 border-radius:0 0 28px 28px;
 box-shadow:0 10px 30px rgba(0,0,0,.18);
 }
 
-.hero img{
-width:150px;
+.hero-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:28px;
+align-items:center;
+}
+
+.hero-text{
+text-align:center;
+}
+
+.hero-logo{
+width:140px;
 margin-bottom:16px;
 filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));
 }
 
 .hero h1{
-font-size:42px;
-margin-bottom:10px;
-text-shadow:0 3px 12px rgba(0,0,0,.8);
+font-size:40px;
+line-height:1.15;
+margin-bottom:12px;
+text-shadow:0 3px 12px rgba(0,0,0,.55);
 }
 
 .hero p{
 font-size:18px;
 margin:6px 0;
 font-weight:bold;
-text-shadow:0 2px 8px rgba(0,0,0,.75);
+text-shadow:0 2px 8px rgba(0,0,0,.45);
+}
+
+.hero-side img{
+width:100%;
+max-width:360px;
+display:block;
+margin:auto;
+border-radius:22px;
+box-shadow:0 16px 30px rgba(0,0,0,.22);
 }
 
 .hero-btn,.btn{
@@ -211,7 +229,19 @@ font-weight:bold;
 color:#333;
 }
 
-@media(min-width:850px){
+@media(min-width:900px){
+
+.hero-grid{
+grid-template-columns:1.1fr .9fr;
+}
+
+.hero-text{
+text-align:left;
+}
+
+.countdown{
+justify-content:flex-start;
+}
 
 .grid-2{
 grid-template-columns:1fr 1fr;
@@ -237,7 +267,11 @@ font-size:48px;
 <header class="hero">
 <div class="wrap">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
+<div class="hero-grid">
+
+<div class="hero-text">
+
+<img class="hero-logo" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 
 <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 
@@ -251,8 +285,17 @@ font-size:48px;
 <div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div>
 </div>
 
-<a href="https://wa.me/5569993982037" target="_blank" class="hero-btn">Comprar Cartela</a>
+<a href="https://wa.me/5569993982037" target="_blank" class="hero-btn">
+Comprar Cartela
+</a>
 
+</div>
+
+<div class="hero-side">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/CARTAZ_Reduzido.png">
+</div>
+
+</div>
 </div>
 </header>
 
@@ -314,8 +357,6 @@ Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 </div>
 
 </section>
-
-<!-- PATROCINADORES AGORA ABAIXO DAS DEMAIS SEÇÕES -->
 
 <section style="margin-top:18px;">
 
