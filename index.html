@@ -1,591 +1,579 @@
 <!DOCTYPE html>
+<!-- Declara que este documento usa HTML5 -->
 <html lang="pt-br">
+<!-- Início do HTML e define idioma principal como português do Brasil -->
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
-<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+  <!-- Cabeçalho invisível da página: configurações, título, estilos -->
 
-<style>
+  <meta charset="UTF-8">
+  <!-- Permite acentos e caracteres especiais -->
 
-/* ===========================
-RESET
-=========================== */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <!-- Faz o site funcionar corretamente em celular/tablet -->
 
-html{
-scroll-behavior:smooth;
-}
+  <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
+  <!-- Descrição usada por Google e redes sociais -->
 
-/* ===========================
-FUNDO DO SITE
-=========================== */
-body{
-font-family:Arial,sans-serif;
-color:#111;
-line-height:1.5;
+  <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+  <!-- Nome exibido na aba do navegador -->
 
-background:
-linear-gradient(rgba(255,248,235,.78),rgba(255,248,235,.78)),
-url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
+  <style>
 
-background-size:cover;
-background-position:center;
-background-attachment:fixed;
-background-repeat:no-repeat;
-}
+    /* =======================================================
+       RESET GERAL
+       Remove margens e paddings padrões do navegador
+    ======================================================= */
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      /* Faz largura e altura incluírem padding e borda */
+    }
 
-/* brilho ambiente */
-body::before{
-content:"";
-position:fixed;
-inset:0;
-background:
-radial-gradient(circle at top right, rgba(255,215,0,.10), transparent 28%),
-radial-gradient(circle at bottom left, rgba(255,255,255,.18), transparent 35%);
-pointer-events:none;
-z-index:-1;
-}
+    html{
+      scroll-behavior:smooth;
+      /* Rolagem suave ao clicar em links internos */
+    }
 
-/* container */
-.wrap{
-max-width:1200px;
-margin:auto;
-padding:20px;
-}
+    /* =======================================================
+       CORPO DO SITE
+       Fundo principal + fonte + texto
+    ======================================================= */
+    body{
+      font-family:Arial,sans-serif;
+      /* Fonte padrão */
 
-/* ===========================
-TOPO HERO
-=========================== */
-.hero{
-padding:65px 20px;
-border-radius:0 0 34px 34px;
-color:#fff;
-overflow:hidden;
-position:relative;
+      color:#111;
+      /* Cor principal do texto */
 
-background:
-radial-gradient(circle at top right, rgba(255,215,0,.18), transparent 25%),
-linear-gradient(135deg,#5b0f0f 0%, #7f1d1d 45%, #991b1b 100%);
+      line-height:1.5;
+      /* Espaçamento entre linhas */
 
-box-shadow:0 18px 40px rgba(0,0,0,.20);
-}
+      background:
+      linear-gradient(
+        rgba(255,248,235,.78),
+        rgba(255,248,235,.78)
+      ),
+      url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
 
-.hero-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:35px;
-align-items:center;
-}
+      /* Fundo com imagem + camada clara por cima */
 
-.hero-text{
-text-align:center;
-}
+      background-size:cover;
+      /* Faz imagem cobrir toda tela */
 
-.hero h1{
-font-size:42px;
-line-height:1.1;
-margin-bottom:12px;
-text-shadow:0 4px 14px rgba(0,0,0,.45);
-}
+      background-position:center;
+      /* Centraliza imagem */
 
-.hero p{
-font-size:18px;
-margin:6px 0;
-font-weight:bold;
-}
+      background-attachment:fixed;
+      /* Efeito parallax: fundo fixo */
 
-.hero-side{
-display:flex;
-justify-content:center;
-align-items:center;
-position:relative;
-}
+      background-repeat:no-repeat;
+      /* Não repete imagem */
+    }
 
-/* brilho atrás logo */
-.hero-side::before{
-content:"";
-position:absolute;
-width:250px;
-height:250px;
-border-radius:50%;
-background:radial-gradient(circle, rgba(255,215,0,.75), rgba(255,215,0,.15), transparent 70%);
-filter:blur(10px);
-animation:pulseGlow 3s infinite ease-in-out;
-}
+    /* =======================================================
+       EFEITO DE BRILHO NO FUNDO
+    ======================================================= */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      /* ocupa tela inteira */
 
-.hero-side img{
-width:100%;
-max-width:280px;
-position:relative;
-z-index:2;
-animation:rotateSoft 14s infinite linear;
-filter:drop-shadow(0 18px 28px rgba(0,0,0,.30));
-}
+      background:
+      radial-gradient(circle at top right,
+      rgba(255,215,0,.10),
+      transparent 28%),
 
-/* ===========================
-CONTADOR
-=========================== */
-.countdown{
-margin-top:24px;
-display:flex;
-gap:12px;
-justify-content:center;
-flex-wrap:wrap;
-}
+      radial-gradient(circle at bottom left,
+      rgba(255,255,255,.18),
+      transparent 35%);
 
-.time-box{
-background:rgba(255,255,255,.15);
-padding:12px 14px;
-border-radius:14px;
-min-width:86px;
-backdrop-filter:blur(3px);
-}
+      pointer-events:none;
+      /* não interfere em cliques */
 
-.time-number{
-font-size:28px;
-font-weight:bold;
-}
+      z-index:-1;
+      /* fica atrás de tudo */
+    }
 
-.time-label{
-font-size:12px;
-letter-spacing:1px;
-}
+    /* =======================================================
+       CONTAINER CENTRAL
+       Limita largura do conteúdo
+    ======================================================= */
+    .wrap{
+      max-width:1200px;
+      margin:auto;
+      /* centraliza */
 
-/* ===========================
-BOTÕES
-=========================== */
-.hero-btn,.btn{
-display:inline-block;
-padding:14px 20px;
-border-radius:12px;
-color:#fff;
-text-decoration:none;
-font-weight:bold;
-transition:.25s;
-margin-top:12px;
-}
+      padding:20px;
+    }
 
-.hero-btn{
-background:#16a34a;
-box-shadow:0 10px 20px rgba(0,0,0,.20);
-}
+    /* =======================================================
+       HERO / TOPO DO SITE
+    ======================================================= */
+    .hero{
+      padding:65px 20px;
+      border-radius:0 0 34px 34px;
+      /* cantos arredondados abaixo */
 
-.btn{
-display:block;
-text-align:center;
-margin-bottom:12px;
-}
+      color:#fff;
+      overflow:hidden;
+      position:relative;
 
-.hero-btn:hover,.btn:hover{
-transform:translateY(-3px);
-opacity:.95;
-}
+      background:
+      radial-gradient(circle at top right,
+      rgba(255,215,0,.18),
+      transparent 25%),
 
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.purple{background:#7c3aed;}
+      linear-gradient(
+      135deg,
+      #5b0f0f 0%,
+      #7f1d1d 45%,
+      #991b1b 100%);
 
-/* ===========================
-LAYOUT
-=========================== */
-.grid-2,.grid-3{
-display:grid;
-grid-template-columns:1fr;
-gap:18px;
-margin-top:18px;
-}
+      /* fundo vinho degradê */
 
-.card{
-background:rgba(255,255,255,.94);
-border-radius:22px;
-padding:24px;
-box-shadow:0 14px 30px rgba(0,0,0,.10);
-}
+      box-shadow:0 18px 40px rgba(0,0,0,.20);
+    }
 
-.section-title{
-font-size:28px;
-margin-bottom:14px;
-color:#7f1d1d;
-}
+    /* Divide topo em colunas */
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:35px;
+      align-items:center;
+    }
 
-.highlight-red{
-font-size:32px;
-font-weight:bold;
-color:#dc2626;
-}
+    /* Texto do topo */
+    .hero-text{
+      text-align:center;
+    }
 
-.highlight-green{
-font-size:20px;
-font-weight:bold;
-color:#16a34a;
-margin-top:8px;
-}
+    .hero h1{
+      font-size:42px;
+      line-height:1.1;
+      margin-bottom:12px;
 
-.small-space{
-margin-top:14px;
-}
+      text-shadow:0 4px 14px rgba(0,0,0,.45);
+      /* sombra no título */
+    }
 
-/* ===========================
-BINGO
-=========================== */
-.bingo-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:20px;
-align-items:center;
-}
+    .hero p{
+      font-size:18px;
+      margin:6px 0;
+      font-weight:bold;
+    }
 
-.bingo-grid img{
-width:100%;
-max-width:340px;
-display:block;
-margin:auto;
-border-radius:18px;
-box-shadow:0 12px 24px rgba(0,0,0,.14);
-}
+    /* Área da logo */
+    .hero-side{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      position:relative;
+    }
 
-/* ===========================
-PATROCINADORES
-=========================== */
-.logo-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-gap:18px;
-margin-top:18px;
-}
+    /* Brilho atrás da logo */
+    .hero-side::before{
+      content:"";
+      position:absolute;
+      width:250px;
+      height:250px;
+      border-radius:50%;
 
-.logo-box{
-background:#fff;
-border-radius:18px;
-padding:14px;
-text-align:center;
-box-shadow:0 8px 18px rgba(0,0,0,.08);
-animation:floatLogo 4s infinite ease-in-out;
-}
+      background:radial-gradient(circle,
+      rgba(255,215,0,.75),
+      rgba(255,215,0,.15),
+      transparent 70%);
 
-.logo-box:nth-child(2){animation-delay:.4s;}
-.logo-box:nth-child(3){animation-delay:.8s;}
-.logo-box:nth-child(4){animation-delay:1.2s;}
+      filter:blur(10px);
 
-.logo-box img{
-width:100%;
-height:110px;
-object-fit:contain;
-}
+      animation:pulseGlow 3s infinite ease-in-out;
+    }
 
-.logo-box p{
-margin-top:8px;
-font-weight:bold;
-}
+    /* Imagem da logo */
+    .hero-side img{
+      width:100%;
+      max-width:280px;
+      position:relative;
+      z-index:2;
 
-/* ===========================
-GALERIA EVENTO
-=========================== */
-.gallery{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-gap:18px;
-margin-top:18px;
-}
+      animation:rotateSoft 14s infinite linear;
 
-.gallery img,
-.gallery iframe,
-.gallery video{
-width:100%;
-border-radius:18px;
-box-shadow:0 10px 20px rgba(0,0,0,.10);
-}
+      filter:drop-shadow(0 18px 28px rgba(0,0,0,.30));
+    }
 
-/* ===========================
-RODAPÉ
-=========================== */
-footer{
-text-align:center;
-padding:30px;
-font-weight:bold;
-color:#333;
-}
+    /* =======================================================
+       CONTADOR REGRESSIVO
+    ======================================================= */
+    .countdown{
+      margin-top:24px;
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
 
-/* ===========================
-ANIMAÇÕES
-=========================== */
-@keyframes rotateSoft{
-0%{transform:rotate(0deg);}
-50%{transform:rotate(6deg);}
-100%{transform:rotate(0deg);}
-}
+    .time-box{
+      background:rgba(255,255,255,.15);
+      padding:12px 14px;
+      border-radius:14px;
+      min-width:86px;
+      backdrop-filter:blur(3px);
+    }
 
-@keyframes pulseGlow{
-0%,100%{transform:scale(1);}
-50%{transform:scale(1.12);}
-}
+    .time-number{
+      font-size:28px;
+      font-weight:bold;
+    }
 
-@keyframes floatLogo{
-0%,100%{transform:translateY(0);}
-50%{transform:translateY(-8px);}
-}
+    .time-label{
+      font-size:12px;
+      letter-spacing:1px;
+    }
 
-/* ===========================
-RESPONSIVO
-=========================== */
-@media(min-width:900px){
+    /* =======================================================
+       BOTÕES
+    ======================================================= */
+    .hero-btn,.btn{
+      display:inline-block;
+      padding:14px 20px;
+      border-radius:12px;
+      color:#fff;
+      text-decoration:none;
+      font-weight:bold;
+      transition:.25s;
+      margin-top:12px;
+    }
 
-.hero-grid{
-grid-template-columns:1.1fr .9fr;
-}
+    .hero-btn{
+      background:#16a34a;
+      box-shadow:0 10px 20px rgba(0,0,0,.20);
+    }
 
-.hero-text{
-text-align:left;
-}
+    .btn{
+      display:block;
+      text-align:center;
+      margin-bottom:12px;
+    }
 
-.countdown{
-justify-content:flex-start;
-}
+    /* efeito hover */
+    .hero-btn:hover,.btn:hover{
+      transform:translateY(-3px);
+      opacity:.95;
+    }
 
-.grid-2{
-grid-template-columns:1fr 1fr;
-}
+    /* cores auxiliares */
+    .green{background:#16a34a;}
+    .blue{background:#2563eb;}
+    .purple{background:#7c3aed;}
 
-.grid-3{
-grid-template-columns:1fr 1fr;
-}
+    /* =======================================================
+       GRIDS DE LAYOUT
+    ======================================================= */
+    .grid-2,.grid-3{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:18px;
+      margin-top:18px;
+    }
 
-.bingo-grid{
-grid-template-columns:1.1fr .9fr;
-}
+    /* cards brancos */
+    .card{
+      background:rgba(255,255,255,.94);
+      border-radius:22px;
+      padding:24px;
+      box-shadow:0 14px 30px rgba(0,0,0,.10);
+    }
 
-.hero h1{
-font-size:52px;
-}
-}
+    .section-title{
+      font-size:28px;
+      margin-bottom:14px;
+      color:#7f1d1d;
+    }
 
-</style>
+    .highlight-red{
+      font-size:32px;
+      font-weight:bold;
+      color:#dc2626;
+    }
+
+    .highlight-green{
+      font-size:20px;
+      font-weight:bold;
+      color:#16a34a;
+      margin-top:8px;
+    }
+
+    .small-space{
+      margin-top:14px;
+    }
+
+    /* =======================================================
+       BINGO
+    ======================================================= */
+    .bingo-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:20px;
+      align-items:center;
+    }
+
+    .bingo-grid img{
+      width:100%;
+      max-width:340px;
+      display:block;
+      margin:auto;
+      border-radius:18px;
+      box-shadow:0 12px 24px rgba(0,0,0,.14);
+    }
+
+    /* =======================================================
+       PARCEIROS
+    ======================================================= */
+    .logo-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .logo-box{
+      background:#fff;
+      border-radius:18px;
+      padding:14px;
+      text-align:center;
+      box-shadow:0 8px 18px rgba(0,0,0,.08);
+
+      animation:floatLogo 4s infinite ease-in-out;
+    }
+
+    /* atraso em cada animação */
+    .logo-box:nth-child(2){animation-delay:.4s;}
+    .logo-box:nth-child(3){animation-delay:.8s;}
+    .logo-box:nth-child(4){animation-delay:1.2s;}
+
+    .logo-box img{
+      width:100%;
+      height:110px;
+      object-fit:contain;
+    }
+
+    .logo-box p{
+      margin-top:8px;
+      font-weight:bold;
+    }
+
+    /* =======================================================
+       GALERIA
+    ======================================================= */
+    .gallery{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .gallery img,
+    .gallery iframe,
+    .gallery video{
+      width:100%;
+      border-radius:18px;
+      box-shadow:0 10px 20px rgba(0,0,0,.10);
+    }
+
+    /* =======================================================
+       RODAPÉ
+    ======================================================= */
+    footer{
+      text-align:center;
+      padding:30px;
+      font-weight:bold;
+      color:#333;
+    }
+
+    /* =======================================================
+       ANIMAÇÕES
+    ======================================================= */
+
+    @keyframes rotateSoft{
+      0%{transform:rotate(0deg);}
+      50%{transform:rotate(6deg);}
+      100%{transform:rotate(0deg);}
+    }
+
+    @keyframes pulseGlow{
+      0%,100%{transform:scale(1);}
+      50%{transform:scale(1.12);}
+    }
+
+    @keyframes floatLogo{
+      0%,100%{transform:translateY(0);}
+      50%{transform:translateY(-8px);}
+    }
+
+    /* =======================================================
+       RESPONSIVO
+       Ativa layout desktop
+    ======================================================= */
+    @media(min-width:900px){
+
+      .hero-grid{
+        grid-template-columns:1.1fr .9fr;
+      }
+
+      .hero-text{
+        text-align:left;
+      }
+
+      .countdown{
+        justify-content:flex-start;
+      }
+
+      .grid-2{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .grid-3{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .bingo-grid{
+        grid-template-columns:1.1fr .9fr;
+      }
+
+      .hero h1{
+        font-size:52px;
+      }
+    }
+
+  </style>
 </head>
 
 <body>
 
-<!-- TOPO -->
-<header class="hero">
-<div class="wrap">
+  <!-- =====================================================
+       TOPO DO SITE
+  ====================================================== -->
+  <header class="hero">
 
-<div class="hero-grid">
+    <div class="wrap">
 
-<div class="hero-text">
+      <div class="hero-grid">
 
-<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
+        <!-- TEXTO -->
+        <div class="hero-text">
 
-<p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
-<p>Fé, tradição e grande confraternização</p>
+          <h1>
+            6ª FPSS<br>
+            Festa do Padroeiro São Sebastião
+          </h1>
 
-<!-- contador -->
-<div class="countdown" id="countdown">
+          <p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
+          <p>Fé, tradição e grande confraternização</p>
 
-<div class="time-box">
-<div class="time-number" id="dias">0</div>
-<div class="time-label">DIAS</div>
-</div>
+          <!-- CONTADOR -->
+          <div class="countdown" id="countdown">
 
-<div class="time-box">
-<div class="time-number" id="horas">0</div>
-<div class="time-label">HORAS</div>
-</div>
+            <div class="time-box">
+              <div class="time-number" id="dias">0</div>
+              <div class="time-label">DIAS</div>
+            </div>
 
-<div class="time-box">
-<div class="time-number" id="minutos">0</div>
-<div class="time-label">MIN</div>
-</div>
+            <div class="time-box">
+              <div class="time-number" id="horas">0</div>
+              <div class="time-label">HORAS</div>
+            </div>
 
-<div class="time-box">
-<div class="time-number" id="segundos">0</div>
-<div class="time-label">SEG</div>
-</div>
+            <div class="time-box">
+              <div class="time-number" id="minutos">0</div>
+              <div class="time-label">MIN</div>
+            </div>
 
-</div>
+            <div class="time-box">
+              <div class="time-number" id="segundos">0</div>
+              <div class="time-label">SEG</div>
+            </div>
 
-<a href="https://wa.me/5569993982037?text=Olá Rafael! Tenho interesse na cartela da 6ª FPSS."
-target="_blank" class="hero-btn">
-Comprar Cartela
-</a>
+          </div>
 
-</div>
+          <!-- BOTÃO WHATSAPP -->
+          <a href="https://wa.me/5569993982037"
+             target="_blank"
+             class="hero-btn">
 
-<div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
-</div>
+             Comprar Cartela
+          </a>
 
-</div>
-</div>
-</header>
+        </div>
 
-<main class="wrap">
+        <!-- LOGO -->
+        <div class="hero-side">
+          <img src="LINK_DA_LOGO">
+        </div>
 
-<!-- programação + bingo -->
-<section class="grid-2">
+      </div>
 
-<div class="card">
-<h2 class="section-title">Programação Oficial</h2>
+    </div>
 
-<p>10h - Santa Missa</p>
-<p>11h - Almoço com Churrasco no Espeto</p>
-<p>Show ao Vivo com Cuyabano e Douradense</p>
-<p>15h - Sorteio Presencial</p>
-<p>17h - Show de Prêmios</p>
+  </header>
 
-</div>
+  <!-- =====================================================
+       JAVASCRIPT CONTADOR
+  ====================================================== -->
+  <script>
 
-<div class="card">
-<h2 class="section-title">Bingo Beneficente</h2>
+    /* Data do evento */
+    const dataEvento =
+      new Date("Jan 24, 2027 10:00:00").getTime();
 
-<div class="bingo-grid">
+    /* Função atualiza contador */
+    function atualizarContador(){
 
-<div>
-<p class="highlight-red">R$ 25.000,00 em prêmios</p>
-<p class="highlight-green">13 chances de ganhar</p>
+      const agora = new Date().getTime();
 
-<p class="small-space"><strong>Cartela R$ 20,00</strong></p>
+      const distancia = dataEvento - agora;
 
-<p class="small-space">
-PIX: <strong>69999005245</strong><br>
-Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
-</p>
-</div>
+      /* Se chegou a data */
+      if(distancia <= 0){
 
-<div>
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png">
-</div>
+        document.getElementById("countdown").innerHTML =
+        `
+        <div class='time-box'>
+          <div class='time-number'>HOJE</div>
+          <div class='time-label'>
+            A FESTA COMEÇOU
+          </div>
+        </div>
+        `;
 
-</div>
-</div>
-</section>
+        return;
+      }
 
-<!-- vendas + redes -->
-<section class="grid-3">
+      /* Calcula dias */
+      document.getElementById("dias").textContent =
+      Math.floor(distancia/(1000*60*60*24));
 
-<div class="card">
-<h2 class="section-title">Compre sua Cartela</h2>
+      /* Calcula horas */
+      document.getElementById("horas").textContent =
+      Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
 
-<p><strong>André</strong> - Coordenador</p>
-<a class="btn green" href="https://wa.me/5569981102306">Falar com André</a>
+      /* Calcula minutos */
+      document.getElementById("minutos").textContent =
+      Math.floor((distancia%(1000*60*60))/(1000*60));
 
-<p><strong>Rafael</strong> - Bingo</p>
-<a class="btn purple" href="https://wa.me/5569993982037">Falar com Rafael</a>
+      /* Calcula segundos */
+      document.getElementById("segundos").textContent =
+      Math.floor((distancia%(1000*60))/1000);
+    }
 
-</div>
+    /* Atualiza a cada 1 segundo */
+    setInterval(atualizarContador,1000);
 
-<div class="card">
-<h2 class="section-title">Redes Sociais</h2>
+    /* Atualiza imediatamente ao abrir */
+    atualizarContador();
 
-<a class="btn purple" href="#">Instagram</a>
-<a class="btn blue" href="#">Facebook</a>
-
-</div>
-
-</section>
-
-<!-- patrocinadores -->
-<section style="margin-top:18px;">
-
-<div class="card">
-<h2 class="section-title">Parceiros Oficiais</h2>
-<p>Empresas que acreditam na nossa festa.</p>
-
-<div class="logo-grid">
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
-<p>Central Modas</p>
-</div>
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
-<p>Grande Rede</p>
-</div>
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
-<p>Norte Motos</p>
-</div>
-
-<div class="logo-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
-<p>Maicon Jóias</p>
-</div>
-
-</div>
-</div>
-</section>
-
-<!-- galeria -->
-<section style="margin-top:18px;">
-
-<div class="card">
-<h2 class="section-title">Momentos da 5ª Festa</h2>
-<p>Fotos e vídeos da edição anterior.</p>
-
-<div class="gallery">
-
-<!-- fotos -->
-<img src="COLE_LINK_DA_FOTO_1_AQUI">
-<img src="COLE_LINK_DA_FOTO_2_AQUI">
-
-<!-- youtube -->
-<iframe height="220"
-src="https://www.youtube.com/embed/VIDEO_ID"
-allowfullscreen></iframe>
-
-<!-- vídeo próprio -->
-<video controls>
-<source src="LINK_DO_VIDEO.mp4" type="video/mp4">
-</video>
-
-</div>
-</div>
-</section>
-
-</main>
-
-<footer>
-Comunidade São Sebastião • Rolim de Moura/RO
-</footer>
-
-<script>
-
-/* contador */
-const dataEvento = new Date("Jan 24, 2027 10:00:00").getTime();
-
-function atualizarContador(){
-
-const agora = new Date().getTime();
-const distancia = dataEvento - agora;
-
-if(distancia <= 0){
-document.getElementById("countdown").innerHTML =
-"<div class='time-box'><div class='time-number'>HOJE</div><div class='time-label'>A FESTA COMEÇOU</div></div>";
-return;
-}
-
-document.getElementById("dias").textContent =
-Math.floor(distancia/(1000*60*60*24));
-
-document.getElementById("horas").textContent =
-Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
-
-document.getElementById("minutos").textContent =
-Math.floor((distancia%(1000*60*60))/(1000*60));
-
-document.getElementById("segundos").textContent =
-Math.floor((distancia%(1000*60))/1000);
-}
-
-setInterval(atualizarContador,1000);
-atualizarContador();
-
-</script>
+  </script>
 
 </body>
 </html>
