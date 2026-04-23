@@ -1,89 +1,89 @@
 <!DOCTYPE html>
-<!-- =========================================================
-DEFINE QUE O DOCUMENTO USA HTML5 (PADRÃO MODERNO WEB)
-========================================================= -->
+<!-- Define que o documento segue padrão HTML5 -->
+
 <html lang="pt-br">
+<!-- Define idioma principal do site para português do Brasil -->
 
 <head>
 
-<!-- =========================================================
-CONFIGURAÇÃO DE CARACTERES (SUPORTE A ACENTOS)
-========================================================= -->
 <meta charset="UTF-8">
+<!-- Suporte a acentos e caracteres especiais -->
 
-<!-- =========================================================
-RESPONSIVIDADE (ADAPTA EM CELULAR, TABLET E DESKTOP)
-========================================================= -->
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<!-- Responsividade: adapta o site para celular, tablet e desktop -->
 
-<!-- =========================================================
-SEO - DESCRIÇÃO DO SITE (GOOGLE / REDES SOCIAIS)
-========================================================= -->
 <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
+<!-- SEO: descrição do site para Google -->
 
-<!-- =========================================================
-TÍTULO DA ABA DO NAVEGADOR
-========================================================= -->
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+<!-- Título da aba do navegador -->
 
 <style>
 
 /* =========================================================
-RESET GLOBAL (REMOVE PADRÕES DO NAVEGADOR)
+   RESET GLOBAL
+   Remove estilos padrões do navegador
 ========================================================= */
 *{
-    margin:0; /* remove espaçamento externo padrão */
-    padding:0; /* remove espaçamento interno padrão */
-    box-sizing:border-box; /* inclui padding dentro da largura */
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-/* =========================================================
-ROLAGEM SUAVE PARA LINKS INTERNOS
-========================================================= */
+/* Rolagem suave ao clicar em âncoras */
 html{
     scroll-behavior:smooth;
 }
 
 /* =========================================================
-FUNDO GLOBAL DO SITE (IMAGEM + CAMADA CLARA)
+   FUNDO DO SITE (LAYOUT BASE VISUAL)
 ========================================================= */
 body{
 
-    font-family:Arial,sans-serif; /* fonte padrão */
-    color:#111; /* cor principal do texto */
-    line-height:1.5; /* espaçamento entre linhas */
+    font-family:Arial,sans-serif;
+    /* fonte padrão do site */
 
-    /* fundo com imagem + camada de clareamento */
+    color:#111;
+    /* cor base do texto */
+
+    line-height:1.5;
+    /* espaçamento entre linhas */
+
     background:
-    linear-gradient(rgba(255,248,235,.78),rgba(255,248,235,.78)),
+    linear-gradient(
+        rgba(255,248,235,.78),
+        rgba(255,248,235,.78)
+    ),
     url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
 
-    background-size:cover; /* cobre tela inteira */
-    background-position:center; /* centraliza imagem */
-    background-attachment:fixed; /* efeito parallax */
-    background-repeat:no-repeat; /* evita repetição */
+    /* imagem + camada de transparência clara */
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+    background-repeat:no-repeat;
 }
 
 /* =========================================================
-EFEITO DE ILUMINAÇÃO AMBIENTE (OVERLAY VISUAL)
+   EFEITO DE LUZ AMBIENTE (OVERLAY VISUAL)
 ========================================================= */
 body::before{
+    content:"";
+    position:fixed;
+    inset:0;
 
-    content:""; /* obrigatório em pseudo-elemento */
-    position:fixed; /* fixa na tela */
-    inset:0; /* ocupa toda tela */
-
-    /* dois brilhos decorativos */
     background:
     radial-gradient(circle at top right, rgba(255,215,0,.10), transparent 28%),
     radial-gradient(circle at bottom left, rgba(255,255,255,.18), transparent 35%);
 
-    pointer-events:none; /* não bloqueia clique */
-    z-index:-1; /* fica atrás de tudo */
+    pointer-events:none;
+    /* não interfere em cliques */
+
+    z-index:-1;
 }
 
 /* =========================================================
-CONTAINER PRINCIPAL (CENTRALIZA CONTEÚDO)
+   CONTAINER PRINCIPAL
 ========================================================= */
 .wrap{
     max-width:1200px;
@@ -92,7 +92,7 @@ CONTAINER PRINCIPAL (CENTRALIZA CONTEÚDO)
 }
 
 /* =========================================================
-CABEÇALHO HERO (ÁREA PRINCIPAL DO SITE)
+   HERO (TOPO PRINCIPAL DO SITE)
 ========================================================= */
 .hero{
 
@@ -103,7 +103,6 @@ CABEÇALHO HERO (ÁREA PRINCIPAL DO SITE)
     position:relative;
     overflow:hidden;
 
-    /* fundo degradê institucional */
     background:
     radial-gradient(circle at top right, rgba(255,215,0,.18), transparent 25%),
     linear-gradient(135deg,#5b0f0f,#7f1d1d,#991b1b);
@@ -111,7 +110,7 @@ CABEÇALHO HERO (ÁREA PRINCIPAL DO SITE)
     box-shadow:0 18px 40px rgba(0,0,0,.20);
 }
 
-/* layout interno do hero */
+/* GRID do hero (texto + logo) */
 .hero-grid{
     display:grid;
     grid-template-columns:1fr;
@@ -119,7 +118,7 @@ CABEÇALHO HERO (ÁREA PRINCIPAL DO SITE)
     align-items:center;
 }
 
-/* texto do hero */
+/* texto do topo */
 .hero-text{
     text-align:center;
 }
@@ -149,7 +148,6 @@ CABEÇALHO HERO (ÁREA PRINCIPAL DO SITE)
 
 /* brilho atrás da logo */
 .hero-side::before{
-
     content:"";
     position:absolute;
     width:250px;
@@ -164,21 +162,19 @@ CABEÇALHO HERO (ÁREA PRINCIPAL DO SITE)
 
 /* logo principal */
 .hero-side img{
-
     width:100%;
     max-width:280px;
-    position:relative;
     z-index:2;
+    position:relative;
 
     animation:rotateSoft 14s infinite linear;
     filter:drop-shadow(0 18px 28px rgba(0,0,0,.30));
 }
 
 /* =========================================================
-CONTADOR REGRESSIVO (TEMPO ATÉ EVENTO)
+   CONTADOR REGRESSIVO
 ========================================================= */
 .countdown{
-
     margin-top:24px;
     display:flex;
     gap:12px;
@@ -186,7 +182,6 @@ CONTADOR REGRESSIVO (TEMPO ATÉ EVENTO)
     flex-wrap:wrap;
 }
 
-/* caixa individual do tempo */
 .time-box{
     background:rgba(255,255,255,.15);
     padding:12px 14px;
@@ -195,31 +190,28 @@ CONTADOR REGRESSIVO (TEMPO ATÉ EVENTO)
     backdrop-filter:blur(3px);
 }
 
-/* número do contador */
 .time-number{
     font-size:28px;
     font-weight:bold;
 }
 
-/* label do contador */
 .time-label{
     font-size:12px;
     letter-spacing:1px;
 }
 
 /* =========================================================
-BOTÕES
+   BOTÕES (UI INTERAÇÃO)
 ========================================================= */
 .hero-btn,.btn{
-
     display:inline-block;
     padding:14px 20px;
     border-radius:12px;
 
     color:#fff;
     text-decoration:none;
-    font-weight:bold;
 
+    font-weight:bold;
     transition:.25s;
     margin-top:12px;
 }
@@ -249,7 +241,7 @@ BOTÕES
 .purple{background:#7c3aed;}
 
 /* =========================================================
-LAYOUT DE CARDS
+   LAYOUT DE SEÇÕES
 ========================================================= */
 .grid-2,.grid-3{
     display:grid;
@@ -258,7 +250,7 @@ LAYOUT DE CARDS
     margin-top:18px;
 }
 
-/* cartão branco */
+/* card padrão */
 .card{
     background:rgba(255,255,255,.94);
     border-radius:22px;
@@ -266,7 +258,7 @@ LAYOUT DE CARDS
     box-shadow:0 14px 30px rgba(0,0,0,.10);
 }
 
-/* título das seções */
+/* título de seção */
 .section-title{
     font-size:28px;
     margin-bottom:14px;
@@ -287,13 +279,13 @@ LAYOUT DE CARDS
     color:#16a34a;
 }
 
-/* espaçamento extra */
+/* espaçamento */
 .small-space{
     margin-top:14px;
 }
 
 /* =========================================================
-BINGO
+   BINGO
 ========================================================= */
 .bingo-grid{
     display:grid;
@@ -305,13 +297,13 @@ BINGO
 .bingo-grid img{
     width:100%;
     max-width:340px;
+    border-radius:18px;
     margin:auto;
     display:block;
-    border-radius:18px;
 }
 
 /* =========================================================
-PATROCINADORES
+   PARCEIROS
 ========================================================= */
 .logo-grid{
     display:grid;
@@ -319,7 +311,6 @@ PATROCINADORES
     gap:18px;
 }
 
-/* card patrocinador */
 .logo-box{
     background:#fff;
     border-radius:18px;
@@ -328,12 +319,12 @@ PATROCINADORES
     animation:floatLogo 4s infinite ease-in-out;
 }
 
-/* delay animação */
+/* animações alternadas */
 .logo-box:nth-child(2){animation-delay:.4s;}
 .logo-box:nth-child(3){animation-delay:.8s;}
 .logo-box:nth-child(4){animation-delay:1.2s;}
 
-/* imagem patrocinador */
+/* imagem parceiro */
 .logo-box img{
     width:100%;
     height:110px;
@@ -341,51 +332,19 @@ PATROCINADORES
 }
 
 /* =========================================================
-GALERIA
+   ANIMAÇÕES
 ========================================================= */
-.gallery{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-    gap:18px;
-    margin-top:18px;
-}
-
-.gallery img,
-.gallery iframe,
-.gallery video{
-    width:100%;
-    border-radius:18px;
-    box-shadow:0 10px 20px rgba(0,0,0,.10);
-}
-
-/* =========================================================
-RODAPÉ
-========================================================= */
-footer{
-    text-align:center;
-    padding:30px;
-    font-weight:bold;
-    color:#333;
-}
-
-/* =========================================================
-ANIMAÇÕES CSS
-========================================================= */
-
-/* leve rotação da logo */
 @keyframes rotateSoft{
     0%{transform:rotate(0deg);}
     50%{transform:rotate(6deg);}
     100%{transform:rotate(0deg);}
 }
 
-/* pulsação do brilho */
 @keyframes pulseGlow{
     0%,100%{transform:scale(1);}
     50%{transform:scale(1.12);}
 }
 
-/* flutuação dos logos */
 @keyframes floatLogo{
     0%,100%{transform:translateY(0);}
     50%{transform:translateY(-8px);}
@@ -396,11 +355,10 @@ ANIMAÇÕES CSS
 
 <body>
 
-<!-- =========================================================
-TOPO DO SITE
-========================================================= -->
+<!-- ================= TOPO ================= -->
 <header class="hero">
 <div class="wrap">
+
 <div class="hero-grid">
 
 <div class="hero-text">
@@ -410,7 +368,7 @@ TOPO DO SITE
 <p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
 <p>Fé, tradição e grande confraternização</p>
 
-<!-- contador -->
+<!-- CONTADOR -->
 <div class="countdown" id="countdown">
 
 <div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div>
@@ -420,26 +378,27 @@ TOPO DO SITE
 
 </div>
 
-<a class="hero-btn" href="https://wa.me/5569993982037" target="_blank">
+<a class="hero-btn"
+href="https://wa.me/5569993982037"
+target="_blank">
 Comprar Cartela
 </a>
 
 </div>
 
 <div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
+<img alt="Logo FPSS"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 </div>
 
 </div>
 </div>
 </header>
 
-<!-- =========================================================
-JAVASCRIPT (CONTADOR EM TEMPO REAL)
-========================================================= -->
+<!-- ================= JS ================= -->
 <script>
 
-/* define data do evento */
+/* data do evento (formato seguro) */
 const dataEvento = new Date("2027-01-24T10:00:00").getTime();
 
 /* função principal do contador */
@@ -448,14 +407,12 @@ function atualizarContador(){
 const agora = new Date().getTime();
 const distancia = dataEvento - agora;
 
-/* evento iniciado */
 if(distancia <= 0){
 document.getElementById("countdown").innerHTML =
 "<div class='time-box'><div class='time-number'>HOJE</div><div class='time-label'>A FESTA COMEÇOU</div></div>";
 return;
 }
 
-/* cálculo de tempo */
 document.getElementById("dias").textContent =
 Math.floor(distancia/(1000*60*60*24));
 
@@ -470,7 +427,7 @@ Math.floor((distancia%(1000*60))/1000);
 
 }
 
-/* execução contínua */
+/* loop do contador */
 setInterval(atualizarContador,1000);
 atualizarContador();
 
