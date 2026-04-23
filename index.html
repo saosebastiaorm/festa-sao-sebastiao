@@ -1,579 +1,623 @@
 <!DOCTYPE html>
-<!-- Declara que este documento usa HTML5 -->
+<!-- Informa ao navegador que o documento usa HTML5 -->
+
 <html lang="pt-br">
-<!-- Início do HTML e define idioma principal como português do Brasil -->
+<!-- Início da página HTML e idioma principal = português do Brasil -->
 
 <head>
-  <!-- Cabeçalho invisível da página: configurações, título, estilos -->
+<!-- Cabeçalho invisível da página: configurações, título, estilos -->
 
-  <meta charset="UTF-8">
-  <!-- Permite acentos e caracteres especiais -->
+<meta charset="UTF-8">
+<!-- Permite acentos, ç, símbolos e caracteres especiais -->
 
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <!-- Faz o site funcionar corretamente em celular/tablet -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<!-- Faz o site adaptar corretamente em celular/tablet -->
 
-  <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
-  <!-- Descrição usada por Google e redes sociais -->
+<meta name="description"
+content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
+<!-- Descrição usada por Google e redes sociais -->
 
-  <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
-  <!-- Nome exibido na aba do navegador -->
+<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+<!-- Nome que aparece na aba do navegador -->
 
-  <style>
+<style>
 
-    /* =======================================================
-       RESET GERAL
-       Remove margens e paddings padrões do navegador
-    ======================================================= */
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-      /* Faz largura e altura incluírem padding e borda */
-    }
+/* =====================================================
+   RESET GERAL
+   Remove espaçamentos padrões do navegador
+===================================================== */
+*{
+    margin:0;             /* remove margem */
+    padding:0;            /* remove espaçamento interno */
+    box-sizing:border-box;/* calcula largura incluindo padding */
+}
 
-    html{
-      scroll-behavior:smooth;
-      /* Rolagem suave ao clicar em links internos */
-    }
+html{
+    scroll-behavior:smooth;
+    /* rolagem suave ao clicar em links internos */
+}
 
-    /* =======================================================
-       CORPO DO SITE
-       Fundo principal + fonte + texto
-    ======================================================= */
-    body{
-      font-family:Arial,sans-serif;
-      /* Fonte padrão */
+/* =====================================================
+   FUNDO GERAL DO SITE
+===================================================== */
+body{
 
-      color:#111;
-      /* Cor principal do texto */
+    font-family:Arial,sans-serif;
+    /* fonte principal */
 
-      line-height:1.5;
-      /* Espaçamento entre linhas */
+    color:#111;
+    /* cor padrão do texto */
 
-      background:
-      linear-gradient(
+    line-height:1.5;
+    /* altura entre linhas */
+
+    background:
+    linear-gradient(
         rgba(255,248,235,.78),
         rgba(255,248,235,.78)
-      ),
-      url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
+    ),
+    url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
 
-      /* Fundo com imagem + camada clara por cima */
+    /* imagem de fundo + camada clara por cima */
 
-      background-size:cover;
-      /* Faz imagem cobrir toda tela */
+    background-size:cover;
+    /* cobre toda tela */
 
-      background-position:center;
-      /* Centraliza imagem */
+    background-position:center;
+    /* centraliza imagem */
 
-      background-attachment:fixed;
-      /* Efeito parallax: fundo fixo */
+    background-attachment:fixed;
+    /* fundo fixo ao rolar */
 
-      background-repeat:no-repeat;
-      /* Não repete imagem */
-    }
+    background-repeat:no-repeat;
+    /* não repete imagem */
+}
 
-    /* =======================================================
-       EFEITO DE BRILHO NO FUNDO
-    ======================================================= */
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      /* ocupa tela inteira */
+/* brilho decorativo sobre fundo */
+body::before{
 
-      background:
-      radial-gradient(circle at top right,
-      rgba(255,215,0,.10),
-      transparent 28%),
+    content:"";
+    /* obrigatório em pseudo-elemento */
 
-      radial-gradient(circle at bottom left,
-      rgba(255,255,255,.18),
-      transparent 35%);
+    position:fixed;
+    inset:0;
+    /* ocupa tela inteira */
 
-      pointer-events:none;
-      /* não interfere em cliques */
+    background:
+    radial-gradient(circle at top right,
+    rgba(255,215,0,.10),
+    transparent 28%),
 
-      z-index:-1;
-      /* fica atrás de tudo */
-    }
+    radial-gradient(circle at bottom left,
+    rgba(255,255,255,.18),
+    transparent 35%);
 
-    /* =======================================================
-       CONTAINER CENTRAL
-       Limita largura do conteúdo
-    ======================================================= */
-    .wrap{
-      max-width:1200px;
-      margin:auto;
-      /* centraliza */
+    pointer-events:none;
+    /* não interfere em cliques */
 
-      padding:20px;
-    }
+    z-index:-1;
+    /* fica atrás */
+}
 
-    /* =======================================================
-       HERO / TOPO DO SITE
-    ======================================================= */
-    .hero{
-      padding:65px 20px;
-      border-radius:0 0 34px 34px;
-      /* cantos arredondados abaixo */
+/* =====================================================
+   CONTAINER CENTRAL
+===================================================== */
+.wrap{
+    max-width:1200px; /* largura máxima */
+    margin:auto;      /* centraliza */
+    padding:20px;     /* respiro interno */
+}
 
-      color:#fff;
-      overflow:hidden;
-      position:relative;
+/* =====================================================
+   HERO / TOPO PRINCIPAL
+===================================================== */
+.hero{
 
-      background:
-      radial-gradient(circle at top right,
-      rgba(255,215,0,.18),
-      transparent 25%),
+    padding:65px 20px;
+    /* espaçamento interno */
 
-      linear-gradient(
-      135deg,
-      #5b0f0f 0%,
-      #7f1d1d 45%,
-      #991b1b 100%);
+    border-radius:0 0 34px 34px;
+    /* arredonda parte inferior */
 
-      /* fundo vinho degradê */
+    color:#fff;
+    /* texto branco */
 
-      box-shadow:0 18px 40px rgba(0,0,0,.20);
-    }
+    overflow:hidden;
+    position:relative;
 
-    /* Divide topo em colunas */
+    background:
+    radial-gradient(circle at top right,
+    rgba(255,215,0,.18),
+    transparent 25%),
+
+    linear-gradient(
+    135deg,
+    #5b0f0f 0%,
+    #7f1d1d 45%,
+    #991b1b 100%);
+
+    /* fundo vinho elegante */
+
+    box-shadow:0 18px 40px rgba(0,0,0,.20);
+    /* sombra */
+}
+
+/* estrutura em grid */
+.hero-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    /* 1 coluna no celular */
+
+    gap:35px;
+    align-items:center;
+}
+
+/* bloco texto */
+.hero-text{
+    text-align:center;
+}
+
+/* título principal */
+.hero h1{
+    font-size:42px;
+    line-height:1.1;
+    margin-bottom:12px;
+
+    text-shadow:0 4px 14px rgba(0,0,0,.45);
+}
+
+/* subtítulos */
+.hero p{
+    font-size:18px;
+    margin:6px 0;
+    font-weight:bold;
+}
+
+/* lado da imagem/logo */
+.hero-side{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+}
+
+/* brilho atrás da logo */
+.hero-side::before{
+    content:"";
+    position:absolute;
+    width:250px;
+    height:250px;
+    border-radius:50%;
+
+    background:radial-gradient(circle,
+    rgba(255,215,0,.75),
+    rgba(255,215,0,.15),
+    transparent 70%);
+
+    filter:blur(10px);
+
+    animation:pulseGlow 3s infinite ease-in-out;
+}
+
+/* imagem logo */
+.hero-side img{
+    width:100%;
+    max-width:280px;
+
+    position:relative;
+    z-index:2;
+
+    animation:rotateSoft 14s infinite linear;
+
+    filter:drop-shadow(0 18px 28px rgba(0,0,0,.30));
+}
+
+/* =====================================================
+   CONTADOR REGRESSIVO
+===================================================== */
+.countdown{
+    margin-top:24px;
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+/* caixa de cada número */
+.time-box{
+    background:rgba(255,255,255,.15);
+    padding:12px 14px;
+    border-radius:14px;
+    min-width:86px;
+
+    backdrop-filter:blur(3px);
+}
+
+/* número */
+.time-number{
+    font-size:28px;
+    font-weight:bold;
+}
+
+/* texto menor */
+.time-label{
+    font-size:12px;
+    letter-spacing:1px;
+}
+
+/* =====================================================
+   BOTÕES
+===================================================== */
+.hero-btn,.btn{
+
+    display:inline-block;
+    padding:14px 20px;
+    border-radius:12px;
+
+    color:#fff;
+    text-decoration:none;
+
+    font-weight:bold;
+
+    transition:.25s;
+
+    margin-top:12px;
+}
+
+/* botão principal */
+.hero-btn{
+    background:#16a34a;
+    box-shadow:0 10px 20px rgba(0,0,0,.20);
+}
+
+/* botão padrão */
+.btn{
+    display:block;
+    text-align:center;
+    margin-bottom:12px;
+}
+
+/* efeito ao passar mouse */
+.hero-btn:hover,.btn:hover{
+    transform:translateY(-3px);
+    opacity:.95;
+}
+
+/* cores auxiliares */
+.green{background:#16a34a;}
+.blue{background:#2563eb;}
+.purple{background:#7c3aed;}
+
+/* =====================================================
+   LAYOUT EM CARDS
+===================================================== */
+.grid-2,.grid-3{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:18px;
+    margin-top:18px;
+}
+
+/* caixas brancas */
+.card{
+    background:rgba(255,255,255,.94);
+    border-radius:22px;
+    padding:24px;
+
+    box-shadow:0 14px 30px rgba(0,0,0,.10);
+}
+
+/* títulos internos */
+.section-title{
+    font-size:28px;
+    margin-bottom:14px;
+    color:#7f1d1d;
+}
+
+/* destaque vermelho */
+.highlight-red{
+    font-size:32px;
+    font-weight:bold;
+    color:#dc2626;
+}
+
+/* destaque verde */
+.highlight-green{
+    font-size:20px;
+    font-weight:bold;
+    color:#16a34a;
+    margin-top:8px;
+}
+
+/* margem superior */
+.small-space{
+    margin-top:14px;
+}
+
+/* =====================================================
+   ÁREA BINGO
+===================================================== */
+.bingo-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+    align-items:center;
+}
+
+.bingo-grid img{
+    width:100%;
+    max-width:340px;
+    display:block;
+    margin:auto;
+    border-radius:18px;
+
+    box-shadow:0 12px 24px rgba(0,0,0,.14);
+}
+
+/* =====================================================
+   PARCEIROS
+===================================================== */
+.logo-grid{
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(170px,1fr));
+
+    gap:18px;
+    margin-top:18px;
+}
+
+/* caixa do patrocinador */
+.logo-box{
+    background:#fff;
+    border-radius:18px;
+    padding:14px;
+    text-align:center;
+
+    box-shadow:0 8px 18px rgba(0,0,0,.08);
+
+    animation:floatLogo 4s infinite ease-in-out;
+}
+
+/* atrasos individuais */
+.logo-box:nth-child(2){animation-delay:.4s;}
+.logo-box:nth-child(3){animation-delay:.8s;}
+.logo-box:nth-child(4){animation-delay:1.2s;}
+
+.logo-box img{
+    width:100%;
+    height:110px;
+    object-fit:contain;
+}
+
+.logo-box p{
+    margin-top:8px;
+    font-weight:bold;
+}
+
+/* =====================================================
+   GALERIA
+===================================================== */
+.gallery{
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(240px,1fr));
+
+    gap:18px;
+    margin-top:18px;
+}
+
+.gallery img,
+.gallery iframe,
+.gallery video{
+    width:100%;
+    border-radius:18px;
+    box-shadow:0 10px 20px rgba(0,0,0,.10);
+}
+
+/* =====================================================
+   RODAPÉ
+===================================================== */
+footer{
+    text-align:center;
+    padding:30px;
+    font-weight:bold;
+    color:#333;
+}
+
+/* =====================================================
+   ANIMAÇÕES
+===================================================== */
+
+/* leve giro da logo */
+@keyframes rotateSoft{
+    0%{transform:rotate(0deg);}
+    50%{transform:rotate(6deg);}
+    100%{transform:rotate(0deg);}
+}
+
+/* pulsar brilho */
+@keyframes pulseGlow{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.12);}
+}
+
+/* sobe e desce logos */
+@keyframes floatLogo{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-8px);}
+}
+
+/* =====================================================
+   RESPONSIVO DESKTOP
+===================================================== */
+@media(min-width:900px){
+
     .hero-grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:35px;
-      align-items:center;
+        grid-template-columns:1.1fr .9fr;
+        /* duas colunas */
     }
 
-    /* Texto do topo */
     .hero-text{
-      text-align:center;
+        text-align:left;
+    }
+
+    .countdown{
+        justify-content:flex-start;
+    }
+
+    .grid-2{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .grid-3{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .bingo-grid{
+        grid-template-columns:1.1fr .9fr;
     }
 
     .hero h1{
-      font-size:42px;
-      line-height:1.1;
-      margin-bottom:12px;
-
-      text-shadow:0 4px 14px rgba(0,0,0,.45);
-      /* sombra no título */
-    }
-
-    .hero p{
-      font-size:18px;
-      margin:6px 0;
-      font-weight:bold;
-    }
-
-    /* Área da logo */
-    .hero-side{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      position:relative;
-    }
-
-    /* Brilho atrás da logo */
-    .hero-side::before{
-      content:"";
-      position:absolute;
-      width:250px;
-      height:250px;
-      border-radius:50%;
-
-      background:radial-gradient(circle,
-      rgba(255,215,0,.75),
-      rgba(255,215,0,.15),
-      transparent 70%);
-
-      filter:blur(10px);
-
-      animation:pulseGlow 3s infinite ease-in-out;
-    }
-
-    /* Imagem da logo */
-    .hero-side img{
-      width:100%;
-      max-width:280px;
-      position:relative;
-      z-index:2;
-
-      animation:rotateSoft 14s infinite linear;
-
-      filter:drop-shadow(0 18px 28px rgba(0,0,0,.30));
-    }
-
-    /* =======================================================
-       CONTADOR REGRESSIVO
-    ======================================================= */
-    .countdown{
-      margin-top:24px;
-      display:flex;
-      gap:12px;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-
-    .time-box{
-      background:rgba(255,255,255,.15);
-      padding:12px 14px;
-      border-radius:14px;
-      min-width:86px;
-      backdrop-filter:blur(3px);
-    }
-
-    .time-number{
-      font-size:28px;
-      font-weight:bold;
-    }
-
-    .time-label{
-      font-size:12px;
-      letter-spacing:1px;
-    }
-
-    /* =======================================================
-       BOTÕES
-    ======================================================= */
-    .hero-btn,.btn{
-      display:inline-block;
-      padding:14px 20px;
-      border-radius:12px;
-      color:#fff;
-      text-decoration:none;
-      font-weight:bold;
-      transition:.25s;
-      margin-top:12px;
-    }
-
-    .hero-btn{
-      background:#16a34a;
-      box-shadow:0 10px 20px rgba(0,0,0,.20);
-    }
-
-    .btn{
-      display:block;
-      text-align:center;
-      margin-bottom:12px;
-    }
-
-    /* efeito hover */
-    .hero-btn:hover,.btn:hover{
-      transform:translateY(-3px);
-      opacity:.95;
-    }
-
-    /* cores auxiliares */
-    .green{background:#16a34a;}
-    .blue{background:#2563eb;}
-    .purple{background:#7c3aed;}
-
-    /* =======================================================
-       GRIDS DE LAYOUT
-    ======================================================= */
-    .grid-2,.grid-3{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:18px;
-      margin-top:18px;
-    }
-
-    /* cards brancos */
-    .card{
-      background:rgba(255,255,255,.94);
-      border-radius:22px;
-      padding:24px;
-      box-shadow:0 14px 30px rgba(0,0,0,.10);
-    }
-
-    .section-title{
-      font-size:28px;
-      margin-bottom:14px;
-      color:#7f1d1d;
-    }
-
-    .highlight-red{
-      font-size:32px;
-      font-weight:bold;
-      color:#dc2626;
-    }
-
-    .highlight-green{
-      font-size:20px;
-      font-weight:bold;
-      color:#16a34a;
-      margin-top:8px;
-    }
-
-    .small-space{
-      margin-top:14px;
-    }
-
-    /* =======================================================
-       BINGO
-    ======================================================= */
-    .bingo-grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:20px;
-      align-items:center;
-    }
-
-    .bingo-grid img{
-      width:100%;
-      max-width:340px;
-      display:block;
-      margin:auto;
-      border-radius:18px;
-      box-shadow:0 12px 24px rgba(0,0,0,.14);
-    }
-
-    /* =======================================================
-       PARCEIROS
-    ======================================================= */
-    .logo-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-      gap:18px;
-      margin-top:18px;
-    }
-
-    .logo-box{
-      background:#fff;
-      border-radius:18px;
-      padding:14px;
-      text-align:center;
-      box-shadow:0 8px 18px rgba(0,0,0,.08);
-
-      animation:floatLogo 4s infinite ease-in-out;
-    }
-
-    /* atraso em cada animação */
-    .logo-box:nth-child(2){animation-delay:.4s;}
-    .logo-box:nth-child(3){animation-delay:.8s;}
-    .logo-box:nth-child(4){animation-delay:1.2s;}
-
-    .logo-box img{
-      width:100%;
-      height:110px;
-      object-fit:contain;
-    }
-
-    .logo-box p{
-      margin-top:8px;
-      font-weight:bold;
-    }
-
-    /* =======================================================
-       GALERIA
-    ======================================================= */
-    .gallery{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-      gap:18px;
-      margin-top:18px;
-    }
-
-    .gallery img,
-    .gallery iframe,
-    .gallery video{
-      width:100%;
-      border-radius:18px;
-      box-shadow:0 10px 20px rgba(0,0,0,.10);
-    }
-
-    /* =======================================================
-       RODAPÉ
-    ======================================================= */
-    footer{
-      text-align:center;
-      padding:30px;
-      font-weight:bold;
-      color:#333;
-    }
-
-    /* =======================================================
-       ANIMAÇÕES
-    ======================================================= */
-
-    @keyframes rotateSoft{
-      0%{transform:rotate(0deg);}
-      50%{transform:rotate(6deg);}
-      100%{transform:rotate(0deg);}
-    }
-
-    @keyframes pulseGlow{
-      0%,100%{transform:scale(1);}
-      50%{transform:scale(1.12);}
-    }
-
-    @keyframes floatLogo{
-      0%,100%{transform:translateY(0);}
-      50%{transform:translateY(-8px);}
-    }
-
-    /* =======================================================
-       RESPONSIVO
-       Ativa layout desktop
-    ======================================================= */
-    @media(min-width:900px){
-
-      .hero-grid{
-        grid-template-columns:1.1fr .9fr;
-      }
-
-      .hero-text{
-        text-align:left;
-      }
-
-      .countdown{
-        justify-content:flex-start;
-      }
-
-      .grid-2{
-        grid-template-columns:1fr 1fr;
-      }
-
-      .grid-3{
-        grid-template-columns:1fr 1fr;
-      }
-
-      .bingo-grid{
-        grid-template-columns:1.1fr .9fr;
-      }
-
-      .hero h1{
         font-size:52px;
-      }
     }
+}
 
-  </style>
+</style>
 </head>
 
 <body>
 
-  <!-- =====================================================
-       TOPO DO SITE
-  ====================================================== -->
-  <header class="hero">
+<!-- =====================================================
+     TOPO DO SITE
+===================================================== -->
+<header class="hero">
 
-    <div class="wrap">
+<div class="wrap">
 
-      <div class="hero-grid">
+<div class="hero-grid">
 
-        <!-- TEXTO -->
-        <div class="hero-text">
+<!-- texto lado esquerdo -->
+<div class="hero-text">
 
-          <h1>
-            6ª FPSS<br>
-            Festa do Padroeiro São Sebastião
-          </h1>
+<h1>
+6ª FPSS<br>
+Festa do Padroeiro São Sebastião
+</h1>
 
-          <p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
-          <p>Fé, tradição e grande confraternização</p>
+<p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
+<p>Fé, tradição e grande confraternização</p>
 
-          <!-- CONTADOR -->
-          <div class="countdown" id="countdown">
+<!-- contador -->
+<div class="countdown" id="countdown">
 
-            <div class="time-box">
-              <div class="time-number" id="dias">0</div>
-              <div class="time-label">DIAS</div>
-            </div>
+<div class="time-box">
+<div class="time-number" id="dias">0</div>
+<div class="time-label">DIAS</div>
+</div>
 
-            <div class="time-box">
-              <div class="time-number" id="horas">0</div>
-              <div class="time-label">HORAS</div>
-            </div>
+<div class="time-box">
+<div class="time-number" id="horas">0</div>
+<div class="time-label">HORAS</div>
+</div>
 
-            <div class="time-box">
-              <div class="time-number" id="minutos">0</div>
-              <div class="time-label">MIN</div>
-            </div>
+<div class="time-box">
+<div class="time-number" id="minutos">0</div>
+<div class="time-label">MIN</div>
+</div>
 
-            <div class="time-box">
-              <div class="time-number" id="segundos">0</div>
-              <div class="time-label">SEG</div>
-            </div>
+<div class="time-box">
+<div class="time-number" id="segundos">0</div>
+<div class="time-label">SEG</div>
+</div>
 
-          </div>
+</div>
 
-          <!-- BOTÃO WHATSAPP -->
-          <a href="https://wa.me/5569993982037"
-             target="_blank"
-             class="hero-btn">
+<!-- botão whatsapp -->
+<a href="https://wa.me/5569993982037"
+target="_blank"
+class="hero-btn">
 
-             Comprar Cartela
-          </a>
+Comprar Cartela
 
-        </div>
+</a>
 
-        <!-- LOGO -->
-        <div class="hero-side">
-          <img src="LINK_DA_LOGO">
-        </div>
+</div>
 
-      </div>
+<!-- logo -->
+<div class="hero-side">
 
-    </div>
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 
-  </header>
+</div>
 
-  <!-- =====================================================
-       JAVASCRIPT CONTADOR
-  ====================================================== -->
-  <script>
+</div>
+</div>
+</header>
 
-    /* Data do evento */
-    const dataEvento =
-      new Date("Jan 24, 2027 10:00:00").getTime();
+<!-- =====================================================
+     JAVASCRIPT CONTADOR
+===================================================== -->
+<script>
 
-    /* Função atualiza contador */
-    function atualizarContador(){
+/* define data oficial do evento */
+const dataEvento =
+new Date("Jan 24, 2027 10:00:00").getTime();
 
-      const agora = new Date().getTime();
+/* função que atualiza contador */
+function atualizarContador(){
 
-      const distancia = dataEvento - agora;
+    /* pega horário atual */
+    const agora = new Date().getTime();
 
-      /* Se chegou a data */
-      if(distancia <= 0){
+    /* calcula tempo restante */
+    const distancia = dataEvento - agora;
+
+    /* se chegou a data */
+    if(distancia <= 0){
 
         document.getElementById("countdown").innerHTML =
-        `
-        <div class='time-box'>
-          <div class='time-number'>HOJE</div>
-          <div class='time-label'>
-            A FESTA COMEÇOU
-          </div>
-        </div>
-        `;
+        "<div class='time-box'>" +
+        "<div class='time-number'>HOJE</div>" +
+        "<div class='time-label'>A FESTA COMEÇOU</div>" +
+        "</div>";
 
         return;
-      }
-
-      /* Calcula dias */
-      document.getElementById("dias").textContent =
-      Math.floor(distancia/(1000*60*60*24));
-
-      /* Calcula horas */
-      document.getElementById("horas").textContent =
-      Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
-
-      /* Calcula minutos */
-      document.getElementById("minutos").textContent =
-      Math.floor((distancia%(1000*60*60))/(1000*60));
-
-      /* Calcula segundos */
-      document.getElementById("segundos").textContent =
-      Math.floor((distancia%(1000*60))/1000);
     }
 
-    /* Atualiza a cada 1 segundo */
-    setInterval(atualizarContador,1000);
+    /* atualiza dias */
+    document.getElementById("dias").textContent =
+    Math.floor(distancia/(1000*60*60*24));
 
-    /* Atualiza imediatamente ao abrir */
-    atualizarContador();
+    /* atualiza horas */
+    document.getElementById("horas").textContent =
+    Math.floor(
+    (distancia%(1000*60*60*24))/
+    (1000*60*60)
+    );
 
-  </script>
+    /* atualiza minutos */
+    document.getElementById("minutos").textContent =
+    Math.floor(
+    (distancia%(1000*60*60))/
+    (1000*60)
+    );
+
+    /* atualiza segundos */
+    document.getElementById("segundos").textContent =
+    Math.floor(
+    (distancia%(1000*60))/1000
+    );
+}
+
+/* executa a cada 1 segundo */
+setInterval(atualizarContador,1000);
+
+/* executa imediatamente */
+atualizarContador();
+
+</script>
 
 </body>
 </html>
