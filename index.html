@@ -13,46 +13,58 @@ padding:0;
 box-sizing:border-box;
 }
 
+html{
+scroll-behavior:smooth;
+}
+
 body{
 font-family:Arial,sans-serif;
 color:#111;
 line-height:1.5;
-background:url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
+background:
+linear-gradient(rgba(255,248,235,.72),rgba(255,248,235,.72)),
+url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
 background-size:cover;
 background-position:center;
 background-attachment:fixed;
 background-repeat:no-repeat;
 }
 
-/* FUNDO DO SITE MENOS TRANSPARENTE */
+/* brilho ambiente */
 body::before{
 content:"";
 position:fixed;
 inset:0;
-background:rgba(255,255,255,.58);
-backdrop-filter:blur(2px);
+background:
+radial-gradient(circle at top right, rgba(255,215,0,.16), transparent 30%),
+radial-gradient(circle at bottom left, rgba(255,255,255,.35), transparent 35%);
+pointer-events:none;
 z-index:-1;
 }
 
 .wrap{
-max-width:1180px;
+max-width:1200px;
 margin:auto;
 padding:20px;
 }
 
-/* TOPO PRINCIPAL */
+/* HERO PREMIUM */
 .hero{
-padding:55px 20px;
+padding:60px 20px;
+border-radius:0 0 30px 30px;
+background:
+linear-gradient(135deg,rgba(90,20,20,.95),rgba(127,29,29,.88)),
+url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg');
+background-size:cover;
+background-position:center;
+box-shadow:0 18px 40px rgba(0,0,0,.18);
 color:#fff;
-background:linear-gradient(135deg,#7f1d1d,#991b1b);
-border-radius:0 0 28px 28px;
-box-shadow:0 10px 30px rgba(0,0,0,.18);
 }
 
 .hero-grid{
 display:grid;
 grid-template-columns:1fr;
-gap:28px;
+gap:30px;
 align-items:center;
 }
 
@@ -60,17 +72,11 @@ align-items:center;
 text-align:center;
 }
 
-.hero-logo{
-width:140px;
-margin-bottom:16px;
-filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));
-}
-
 .hero h1{
-font-size:40px;
-line-height:1.15;
+font-size:42px;
+line-height:1.1;
 margin-bottom:12px;
-text-shadow:0 3px 12px rgba(0,0,0,.55);
+text-shadow:0 4px 16px rgba(0,0,0,.55);
 }
 
 .hero p{
@@ -80,43 +86,35 @@ font-weight:bold;
 text-shadow:0 2px 8px rgba(0,0,0,.45);
 }
 
+/* LOGO PREMIUM */
+.hero-side{
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+.hero-side::before{
+content:"";
+position:absolute;
+width:260px;
+height:260px;
+border-radius:50%;
+background:radial-gradient(circle, rgba(255,215,0,.75), rgba(255,215,0,.18), transparent 70%);
+filter:blur(8px);
+animation:pulseGlow 3s infinite ease-in-out;
+}
+
 .hero-side img{
 width:100%;
-max-width:360px;
-display:block;
-margin:auto;
-border-radius:22px;
-box-shadow:0 16px 30px rgba(0,0,0,.22);
+max-width:280px;
+position:relative;
+z-index:2;
+filter:drop-shadow(0 18px 30px rgba(0,0,0,.28));
+animation:rotateSoft 14s linear infinite;
 }
 
-.hero-btn,.btn{
-display:block;
-text-align:center;
-padding:14px 18px;
-border-radius:12px;
-color:#fff;
-text-decoration:none;
-font-weight:bold;
-margin-top:10px;
-transition:.2s;
-}
-
-.hero-btn{
-display:inline-block;
-background:#16a34a;
-padding:14px 24px;
-margin-top:18px;
-}
-
-.hero-btn:hover,.btn:hover{
-transform:translateY(-2px);
-opacity:.95;
-}
-
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.purple{background:#7c3aed;}
-
+/* CONTADOR */
 .countdown{
 margin-top:22px;
 display:flex;
@@ -126,21 +124,53 @@ flex-wrap:wrap;
 }
 
 .time-box{
-background:rgba(255,255,255,.16);
+background:rgba(255,255,255,.14);
 padding:12px 14px;
 border-radius:14px;
 min-width:86px;
+backdrop-filter:blur(3px);
 }
 
 .time-number{
-font-size:30px;
+font-size:28px;
 font-weight:bold;
 }
 
 .time-label{
 font-size:12px;
+letter-spacing:1px;
 }
 
+/* BOTÕES */
+.hero-btn,.btn{
+display:block;
+text-align:center;
+padding:14px 18px;
+border-radius:12px;
+color:#fff;
+text-decoration:none;
+font-weight:bold;
+margin-top:10px;
+transition:.25s;
+}
+
+.hero-btn{
+display:inline-block;
+padding:14px 24px;
+background:#16a34a;
+box-shadow:0 10px 20px rgba(0,0,0,.18);
+}
+
+.hero-btn:hover,.btn:hover{
+transform:translateY(-3px);
+opacity:.95;
+}
+
+.green{background:#16a34a;}
+.blue{background:#2563eb;}
+.purple{background:#7c3aed;}
+
+/* CARDS */
 .grid-2,.grid-3{
 display:grid;
 grid-template-columns:1fr;
@@ -150,9 +180,10 @@ margin-top:18px;
 
 .card{
 background:rgba(255,255,255,.94);
-border-radius:18px;
+border-radius:20px;
 padding:24px;
-box-shadow:0 12px 28px rgba(0,0,0,.10);
+box-shadow:0 14px 30px rgba(0,0,0,.10);
+backdrop-filter:blur(2px);
 }
 
 .section-title{
@@ -178,6 +209,7 @@ margin-top:6px;
 margin-top:14px;
 }
 
+/* BINGO */
 .bingo-grid{
 display:grid;
 grid-template-columns:1fr;
@@ -194,6 +226,7 @@ border-radius:18px;
 box-shadow:0 12px 24px rgba(0,0,0,.14);
 }
 
+/* PATROCINADORES */
 .logo-grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
@@ -207,7 +240,12 @@ border-radius:18px;
 padding:14px;
 text-align:center;
 box-shadow:0 8px 18px rgba(0,0,0,.08);
+animation:floatLogo 4s infinite ease-in-out;
 }
+
+.logo-box:nth-child(2){animation-delay:.4s;}
+.logo-box:nth-child(3){animation-delay:.8s;}
+.logo-box:nth-child(4){animation-delay:1.2s;}
 
 .logo-box img{
 width:100%;
@@ -223,12 +261,30 @@ font-size:15px;
 
 footer{
 text-align:center;
-padding:28px;
+padding:30px;
 font-size:14px;
 font-weight:bold;
 color:#333;
 }
 
+/* ANIMAÇÕES */
+@keyframes rotateSoft{
+0%{transform:rotate(0deg);}
+50%{transform:rotate(6deg);}
+100%{transform:rotate(0deg);}
+}
+
+@keyframes pulseGlow{
+0%,100%{transform:scale(1);opacity:.9;}
+50%{transform:scale(1.12);opacity:1;}
+}
+
+@keyframes floatLogo{
+0%,100%{transform:translateY(0);}
+50%{transform:translateY(-8px);}
+}
+
+/* RESPONSIVO */
 @media(min-width:900px){
 
 .hero-grid{
@@ -256,7 +312,7 @@ grid-template-columns:1.1fr .9fr;
 }
 
 .hero h1{
-font-size:48px;
+font-size:52px;
 }
 }
 </style>
@@ -270,8 +326,6 @@ font-size:48px;
 <div class="hero-grid">
 
 <div class="hero-text">
-
-<img class="hero-logo" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 
 <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 
@@ -292,7 +346,7 @@ Comprar Cartela
 </div>
 
 <div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/CARTAZ_Reduzido.png">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 </div>
 
 </div>
@@ -316,7 +370,6 @@ Comprar Cartela
 <h2 class="section-title">Bingo Beneficente</h2>
 
 <div class="bingo-grid">
-
 <div>
 <p class="highlight-red">R$ 25.000,00 em prêmios</p>
 <p class="highlight-green">13 chances de ganhar</p>
@@ -330,10 +383,9 @@ Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 <div>
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png">
 </div>
-
-</div>
 </div>
 
+</div>
 </section>
 
 <section class="grid-3">
@@ -359,7 +411,6 @@ Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 </section>
 
 <section style="margin-top:18px;">
-
 <div class="card">
 <h2 class="section-title">Parceiros Oficiais</h2>
 <p>Empresas que acreditam na nossa festa.</p>
@@ -388,7 +439,6 @@ Titular: <strong>Paróquia Nossa Senhora Aparecida</strong>
 
 </div>
 </div>
-
 </section>
 
 </main>
