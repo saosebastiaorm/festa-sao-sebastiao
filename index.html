@@ -1,340 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
-<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+<!-- ========================================= -->
+<!-- FOTOS E VÍDEOS DAS 5 EDIÇÕES COMPLETAS   -->
+<!-- Cole no lugar da seção antiga galeria     -->
+<!-- ========================================= -->
 
-<style>
-/* =========================
-   RESET
-========================= */
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-html{
-    scroll-behavior:smooth;
-}
-
-body{
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f8f4ec;
-    color:#111;
-    line-height:1.5;
-}
-
-/* =========================
-   CONTAINER
-========================= */
-.wrap{
-    max-width:1200px;
-    margin:auto;
-    padding:20px;
-}
-
-/* =========================
-   HERO
-========================= */
-.hero{
-    background:linear-gradient(135deg,#5b0f0f,#991b1b);
-    color:#fff;
-    padding:60px 20px;
-    border-radius:0 0 30px 30px;
-}
-
-.hero-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:30px;
-    align-items:center;
-}
-
-.hero h1{
-    font-size:42px;
-    line-height:1.1;
-}
-
-.hero p{
-    margin-top:10px;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.hero-side{
-    text-align:center;
-}
-
-.hero-side img{
-    max-width:280px;
-    width:100%;
-}
-
-/* =========================
-   CONTADOR
-========================= */
-.countdown{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top:20px;
-}
-
-.time-box{
-    background:rgba(255,255,255,.15);
-    padding:10px 14px;
-    border-radius:12px;
-    min-width:80px;
-    text-align:center;
-}
-
-.time-number{
-    font-size:28px;
-    font-weight:bold;
-}
-
-.time-label{
-    font-size:12px;
-}
-
-/* =========================
-   BOTÕES
-========================= */
-.btn{
-    display:inline-block;
-    padding:14px 20px;
-    border-radius:12px;
-    text-decoration:none;
-    color:#fff;
-    font-weight:bold;
-    margin-top:12px;
-    transition:.3s;
-}
-
-.btn:hover{
-    transform:translateY(-2px);
-    opacity:.9;
-}
-
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.purple{background:#7c3aed;}
-.red{background:#dc2626;}
-.telegram{background:#229ED9;}
-
-/* =========================
-   CARDS
-========================= */
-.card{
-    background:#fff;
-    padding:24px;
-    border-radius:22px;
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
-    margin-top:20px;
-}
-
-.grid-2,
-.grid-3{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:20px;
-}
-
-.section-title{
-    font-size:28px;
-    color:#7f1d1d;
-    margin-bottom:16px;
-}
-
-/* =========================
-   GALERIA PADRONIZADA
-========================= */
-.gallery{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:16px;
-}
-
-.gallery img,
-.gallery iframe,
-.gallery video{
-    width:100%;
-    height:220px;
-    object-fit:cover;
-    border-radius:18px;
-    display:block;
-    background:#eee;
-}
-
-/* =========================
-   FOOTER
-========================= */
-footer{
-    text-align:center;
-    padding:30px;
-    font-weight:bold;
-}
-
-/* =========================
-   RESPONSIVO
-========================= */
-@media(min-width:900px){
-
-.hero-grid{
-    grid-template-columns:1.1fr .9fr;
-}
-
-.grid-2{
-    grid-template-columns:1fr 1fr;
-}
-
-.grid-3{
-    grid-template-columns:repeat(3,1fr);
-}
-
-}
-</style>
-</head>
-
-<body>
-
-<!-- =========================
-     TOPO
-========================= -->
-<header class="hero">
-<div class="wrap">
-<div class="hero-grid">
-
-<div>
-<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
-<p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
-<p>Fé, tradição e grande confraternização</p>
-
-<div class="countdown" id="countdown">
-
-<div class="time-box">
-<div class="time-number" id="dias">0</div>
-<div class="time-label">DIAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="horas">0</div>
-<div class="time-label">HORAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="minutos">0</div>
-<div class="time-label">MIN</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="segundos">0</div>
-<div class="time-label">SEG</div>
-</div>
-
-</div>
-
-<a href="https://wa.me/5569993982037" class="btn green" target="_blank">
-Comprar Cartela
-</a>
-
-</div>
-
-<div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png" alt="Logo">
-</div>
-
-</div>
-</div>
-</header>
-
-<!-- =========================
-     CONTEÚDO
-========================= -->
-<main class="wrap">
-
-<section class="grid-2">
-
-<div class="card">
-<h2 class="section-title">Programação Oficial</h2>
-<p>10h - Santa Missa</p>
-<p>11h - Almoço com Churrasco no Espeto</p>
-<p>Show ao Vivo com Cuyabano e Douradense</p>
-<p>15h - Sorteio Presencial</p>
-<p>17h - Show de Prêmios</p>
-</div>
-
-<div class="card">
-<h2 class="section-title">Bingo Beneficente</h2>
-
-<img
-style="width:100%;max-width:340px;display:block;margin:auto;border-radius:18px"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png"
-alt="Cartela">
-
-<p><strong>R$ 25.000,00 em prêmios</strong></p>
-<p>13 chances de ganhar</p>
-<p>Cartela R$ 20,00</p>
-<p>PIX: <strong>69999005245</strong></p>
-
-</div>
-
-</section>
-
-<!-- CONTATOS -->
-<section class="grid-3">
-
-<div class="card">
-<h2 class="section-title">Contatos</h2>
-
-<p><strong>André</strong></p>
-<a class="btn green" href="https://wa.me/5569981102306">WhatsApp</a>
-
-<br><br>
-
-<p><strong>Rafael</strong></p>
-<a class="btn green" href="https://wa.me/5569993982037">WhatsApp</a>
-
-</div>
-
-<div class="card">
-<h2 class="section-title">Redes Sociais</h2>
-
-<a class="btn purple" href="#">Instagram</a>
-<a class="btn blue" href="#">Facebook</a>
-<a class="btn red" href="#">YouTube</a>
-
-</div>
-
-<div class="card">
-<h2 class="section-title">Informações</h2>
-<p>Evento beneficente em prol da comunidade.</p>
-<p>Participe com sua família.</p>
-</div>
-
-</section>
-
-<!-- PARCEIROS -->
 <section class="card">
-<h2 class="section-title">Parceiros Oficiais</h2>
+<h2 class="section-title">Fotos e Vídeos de Todas as Edições</h2>
 
-<div class="gallery">
-
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
-
-</div>
-</section>
-
-<!-- GALERIA -->
-<section class="card">
-<h2 class="section-title">Fotos e Vídeos</h2>
-
+<!-- ================= 5ª EDIÇÃO ================= -->
+<h3 style="margin:25px 0 15px;color:#7f1d1d;">5ª Edição</h3>
 <div class="gallery">
 
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
@@ -346,47 +19,61 @@ alt="Cartela">
 <iframe src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
 
 </div>
+
+<!-- ================= 4ª EDIÇÃO ================= -->
+<h3 style="margin:30px 0 15px;color:#7f1d1d;">4ª Edição</h3>
+<div class="gallery">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Cartaz.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Cartela.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Chegada_Folia.jpg">
+
+<iframe src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
+
+</div>
+
+<!-- ================= 3ª EDIÇÃO ================= -->
+<h3 style="margin:30px 0 15px;color:#7f1d1d;">3ª Edição</h3>
+<div class="gallery">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III%20FPSS/Carreata.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III%20FPSS/Missa.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III%20FPSS/Almoço.jpg">
+
+<iframe src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
+
+</div>
+
+<!-- ================= 2ª EDIÇÃO ================= -->
+<h3 style="margin:30px 0 15px;color:#7f1d1d;">2ª Edição</h3>
+<div class="gallery">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II%20FPSS/Ganhadora_1.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II%20FPSS/Ganhadora_2.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II%20FPSS/visita_comunidades.jpg">
+
+<iframe src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
+
+</div>
+
+<!-- ================= 1ª EDIÇÃO ================= -->
+<h3 style="margin:30px 0 15px;color:#7f1d1d;">1ª Edição</h3>
+<div class="gallery">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I%20FPSS/IFPSSF_AREIA_1.JPG">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I%20FPSS/IFPSSF_AREIA_2.JPG">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I%20FPSS/IFPSSF_AREIA_3.JPG">
+
+<iframe src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
+
+</div>
+
 </section>
-
-</main>
-
-<footer>
-Comunidade São Sebastião • Rolim de Moura/RO
-</footer>
-
-<!-- =========================
-     SCRIPT CONTADOR
-========================= -->
-<script>
-const dataEvento = new Date("Jan 24, 2027 10:00:00").getTime();
-
-function atualizarContador(){
-
-const agora = new Date().getTime();
-const distancia = dataEvento - agora;
-
-if(distancia <= 0){
-document.getElementById("countdown").innerHTML = "HOJE É O EVENTO";
-return;
-}
-
-document.getElementById("dias").textContent =
-Math.floor(distancia / (1000*60*60*24));
-
-document.getElementById("horas").textContent =
-Math.floor((distancia % (1000*60*60*24)) / (1000*60*60));
-
-document.getElementById("minutos").textContent =
-Math.floor((distancia % (1000*60*60)) / (1000*60));
-
-document.getElementById("segundos").textContent =
-Math.floor((distancia % (1000*60)) / 1000);
-
-}
-
-setInterval(atualizarContador,1000);
-atualizarContador();
-</script>
-
-</body>
-</html>
