@@ -341,6 +341,286 @@ height:160px;
 ================================================== -->
 <main class="wrap">
 
+
+<!-- ===================================================== -->
+<!-- SEÇÃO ESPECIAL - CHURRASCO ANTECIPADO FPSS            -->
+<!-- Cole esta seção dentro do <main> do seu site          -->
+<!-- ===================================================== -->
+
+<section class="card churrasco-section">
+
+    <!-- TÍTULO PRINCIPAL -->
+    <h2 class="section-title">🔥 Churrasco Antecipado</h2>
+
+    <!-- SUBTÍTULO -->
+    <p class="churrasco-subtitulo">
+        Garanta seu almoço antecipadamente e retire sem fila no dia da festa.
+    </p>
+
+    <!-- GRID PRINCIPAL -->
+    <div class="churrasco-grid">
+
+        <!-- ======================================== -->
+        <!-- BLOCO ESQUERDO - IMAGEM + INFORMAÇÕES    -->
+        <!-- ======================================== -->
+        <div class="churrasco-info">
+
+            <!-- IMAGEM ILUSTRATIVA -->
+            <img 
+                src="https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=900&q=80"
+                alt="Churrasco no espeto"
+                class="churrasco-img"
+            >
+
+            <!-- PREÇO -->
+            <div class="preco-box">
+                <span class="preco-label">Valor:</span>
+                <span class="preco-valor">R$ 60,00</span>
+            </div>
+
+            <!-- INFORMAÇÕES -->
+            <ul class="lista-info">
+                <li>🥩 Churrasco no espeto</li>
+                <li>⏰ Retirada máxima até <strong>15:00h</strong></li>
+                <li>📲 Pedido confirmado via WhatsApp</li>
+                <li>💳 Pagamento via Pix</li>
+            </ul>
+
+            <!-- PIX -->
+            <div class="pix-box">
+                <h3>💳 Pagamento Pix</h3>
+                <p><strong>Chave:</strong> 6999900-5245</p>
+                <p><strong>Titular:</strong> Diocese de Ji-Paraná</p>
+            </div>
+
+        </div>
+
+        <!-- ======================================== -->
+        <!-- BLOCO DIREITO - FORMULÁRIO               -->
+        <!-- ======================================== -->
+        <div class="churrasco-form">
+
+            <h3>📋 Fazer Pedido</h3>
+
+            <!-- NOME -->
+            <label>Nome Completo</label>
+            <input type="text" id="nomeCliente" placeholder="Digite seu nome">
+
+            <!-- TELEFONE -->
+            <label>Telefone</label>
+            <input type="text" id="telefoneCliente" placeholder="(69) 99999-9999">
+
+            <!-- QUANTIDADE -->
+            <label>Quantidade</label>
+            <input type="number" id="quantidadePedido" min="1" value="1">
+
+            <!-- HORÁRIO -->
+            <label>Horário previsto para retirar</label>
+            <input type="time" id="horarioRetirada">
+
+            <!-- COMPROVANTE -->
+            <label>Comprovante Pix (opcional)</label>
+            <input type="file">
+
+            <!-- TOTAL -->
+            <div class="total-box">
+                Total: <span id="valorTotal">R$ 60,00</span>
+            </div>
+
+            <!-- BOTÃO -->
+            <button onclick="enviarPedidoWhats()" class="btn green pedido-btn">
+                📲 Confirmar Pedido no WhatsApp
+            </button>
+
+            <!-- RESPONSÁVEL -->
+            <p class="responsavel">
+                Pedidos recebidos por <strong>Rafael</strong><br>
+                📞 69 8110-2306
+            </p>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- ===================================================== -->
+<!-- CSS DA SEÇÃO                                          -->
+<!-- Cole dentro do <style> do seu site                    -->
+<!-- ===================================================== -->
+
+<style>
+
+.churrasco-section{
+margin-top:22px;
+}
+
+.churrasco-subtitulo{
+margin-bottom:20px;
+font-size:18px;
+color:#444;
+}
+
+.churrasco-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:25px;
+}
+
+.churrasco-img{
+width:100%;
+height:320px;
+object-fit:cover;
+border-radius:18px;
+box-shadow:0 12px 25px rgba(0,0,0,.12);
+}
+
+.preco-box{
+margin-top:15px;
+background:#16a34a;
+color:#fff;
+padding:14px;
+border-radius:14px;
+font-size:22px;
+font-weight:bold;
+text-align:center;
+}
+
+.lista-info{
+margin-top:18px;
+padding-left:20px;
+line-height:2;
+}
+
+.pix-box{
+margin-top:20px;
+padding:18px;
+background:#f5f5f5;
+border-radius:16px;
+}
+
+.churrasco-form{
+background:#fafafa;
+padding:22px;
+border-radius:18px;
+box-shadow:0 10px 20px rgba(0,0,0,.06);
+}
+
+.churrasco-form h3{
+margin-bottom:16px;
+color:#7f1d1d;
+}
+
+.churrasco-form label{
+display:block;
+margin-top:12px;
+margin-bottom:6px;
+font-weight:bold;
+}
+
+.churrasco-form input{
+width:100%;
+padding:12px;
+border:1px solid #ccc;
+border-radius:10px;
+font-size:16px;
+}
+
+.total-box{
+margin-top:18px;
+padding:14px;
+background:#16a34a;
+color:#fff;
+font-size:22px;
+font-weight:bold;
+text-align:center;
+border-radius:12px;
+}
+
+.pedido-btn{
+width:100%;
+margin-top:18px;
+font-size:18px;
+padding:16px;
+}
+
+.responsavel{
+margin-top:18px;
+text-align:center;
+font-size:15px;
+color:#444;
+}
+
+@media(min-width:900px){
+
+.churrasco-grid{
+grid-template-columns:1fr 1fr;
+align-items:start;
+}
+
+}
+
+</style>
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT                                            -->
+<!-- Cole antes do </body>                                -->
+<!-- ===================================================== -->
+
+<script>
+
+/* Atualiza valor total conforme quantidade */
+document.getElementById("quantidadePedido").addEventListener("input", function(){
+
+let qtd = parseInt(this.value) || 1;
+let total = qtd * 60;
+
+document.getElementById("valorTotal").innerText =
+"R$ " + total.toFixed(2).replace(".", ",");
+
+});
+
+
+/* Enviar pedido no WhatsApp */
+function enviarPedidoWhats(){
+
+let nome =
+document.getElementById("nomeCliente").value;
+
+let telefone =
+document.getElementById("telefoneCliente").value;
+
+let quantidade =
+document.getElementById("quantidadePedido").value;
+
+let horario =
+document.getElementById("horarioRetirada").value;
+
+let total = quantidade * 60;
+
+/* Texto da mensagem */
+let mensagem =
+"Olá Rafael! Pedido de Churrasco FPSS:%0A%0A" +
+"Nome: " + nome + "%0A" +
+"Telefone: " + telefone + "%0A" +
+"Quantidade: " + quantidade + "%0A" +
+"Horário retirada: " + horario + "%0A" +
+"Valor Total: R$ " + total + ",00%0A%0A" +
+"Pagamento via Pix realizado.";
+
+/* Abre WhatsApp */
+window.open(
+"https://wa.me/556981102306?text=" + mensagem,
+"_blank"
+);
+
+}
+
+</script>
+
+
+
+   
+
 <section class="grid-2">
 
 <div class="card">
