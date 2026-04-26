@@ -1,289 +1,295 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
-<meta name="theme-color" content="#8b1e1e">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
 
 <style>
 
-/* ===================================================
+/* ==================================================
    RESET GERAL
-=================================================== */
+================================================== */
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
 html{
-    scroll-behavior:smooth;
+scroll-behavior:smooth;
 }
 
 body{
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f7f2ea;
-    color:#1b1b1b;
-    line-height:1.5;
+font-family:Arial, Helvetica, sans-serif;
+background:#f8f4ec;
+color:#111;
+line-height:1.5;
 }
 
-/* ===================================================
-   UTILITÁRIOS
-=================================================== */
+/* ==================================================
+   CONTAINER
+================================================== */
 .wrap{
-    width:100%;
-    max-width:1250px;
-    margin:auto;
-    padding:0 20px;
+max-width:1280px;
+margin:auto;
+padding:20px;
 }
 
-section{
-    margin-top:28px;
+/* ==================================================
+   HERO TOPO
+================================================== */
+.hero{
+background:linear-gradient(135deg,#5b0f0f,#991b1b);
+color:#fff;
+padding:60px 20px;
+border-radius:0 0 28px 28px;
 }
 
-.card{
-    background:#ffffff;
-    border-radius:24px;
-    padding:28px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+.hero-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:30px;
+align-items:center;
 }
 
-.section-title{
-    font-size:30px;
-    color:#7f1d1d;
-    margin-bottom:18px;
+.hero h1{
+font-size:46px;
+line-height:1.1;
 }
 
-/* ===================================================
+.hero p{
+margin-top:10px;
+font-size:19px;
+font-weight:bold;
+}
+
+.hero-side{
+text-align:center;
+}
+
+.hero-side img{
+max-width:300px;
+width:100%;
+filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));
+}
+
+/* ==================================================
+   CONTADOR
+================================================== */
+.countdown{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+margin-top:25px;
+}
+
+.time-box{
+background:rgba(255,255,255,.15);
+padding:12px 16px;
+border-radius:14px;
+min-width:90px;
+text-align:center;
+backdrop-filter:blur(4px);
+}
+
+.time-number{
+font-size:30px;
+font-weight:bold;
+}
+
+.time-label{
+font-size:12px;
+letter-spacing:1px;
+}
+
+/* ==================================================
    BOTÕES
-=================================================== */
+================================================== */
 .btn{
-    display:inline-block;
-    text-decoration:none;
-    color:#fff;
-    padding:14px 18px;
-    border-radius:14px;
-    font-weight:700;
-    transition:.25s;
-    margin-top:10px;
+display:inline-block;
+padding:14px 18px;
+border-radius:12px;
+text-decoration:none;
+font-weight:bold;
+color:#fff;
+margin-top:12px;
+margin-right:8px;
+transition:.25s;
 }
 
 .btn:hover{
-    transform:translateY(-2px);
-    opacity:.92;
+transform:translateY(-2px);
+opacity:.92;
 }
 
 .green{background:#16a34a;}
 .blue{background:#2563eb;}
-.red{background:#dc2626;}
 .purple{background:#7c3aed;}
+.red{background:#dc2626;}
 .telegram{background:#229ED9;}
-.gold{background:#b7791f;}
 
-/* ===================================================
-   HERO
-=================================================== */
-.hero{
-    background:linear-gradient(135deg,#5b0f0f,#991b1b,#7f1d1d);
-    color:#fff;
-    padding:55px 0;
-    border-radius:0 0 34px 34px;
+/* ==================================================
+   CARDS
+================================================== */
+.card{
+background:#fff;
+padding:24px;
+border-radius:22px;
+box-shadow:0 10px 25px rgba(0,0,0,.08);
+margin-top:22px;
 }
 
-.hero-grid{
-    display:grid;
-    grid-template-columns:1.2fr .8fr;
-    gap:28px;
-    align-items:center;
+.grid-2,.grid-3{
+display:grid;
+grid-template-columns:1fr;
+gap:20px;
 }
 
-.hero h1{
-    font-size:52px;
-    line-height:1.05;
-    margin-bottom:10px;
+.section-title{
+font-size:30px;
+color:#7f1d1d;
+margin-bottom:16px;
 }
 
-.hero p{
-    font-size:19px;
-    font-weight:700;
-    margin-top:8px;
-}
-
-.hero-side{
-    text-align:center;
-}
-
-.hero-side img{
-    width:100%;
-    max-width:330px;
-    filter:drop-shadow(0 12px 20px rgba(0,0,0,.25));
-}
-
-/* ===================================================
-   CONTADOR
-=================================================== */
-.countdown{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    margin-top:22px;
-}
-
-.time-box{
-    min-width:88px;
-    text-align:center;
-    padding:12px;
-    border-radius:16px;
-    background:rgba(255,255,255,.14);
-    backdrop-filter:blur(6px);
-}
-
-.time-number{
-    font-size:30px;
-    font-weight:900;
-}
-
-.time-label{
-    font-size:12px;
-    letter-spacing:.6px;
-}
-
-/* ===================================================
-   GRIDS
-=================================================== */
-.grid-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
-
-.grid-3{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:20px;
-}
-
-/* ===================================================
+/* ==================================================
    GALERIA
-=================================================== */
+================================================== */
 .gallery{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:18px;
-    margin-top:18px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:18px;
 }
 
 .gallery img,
-.gallery iframe,
-.gallery video{
-    width:100%;
-    height:230px;
-    object-fit:cover;
-    object-position:center;
-    border:none;
-    border-radius:18px;
-    display:block;
-    background:#ececec;
-    box-shadow:0 8px 18px rgba(0,0,0,.08);
-    transition:.25s;
+.gallery iframe{
+width:100%;
+height:230px;
+object-fit:cover;
+border-radius:18px;
+background:#eee;
+box-shadow:0 8px 20px rgba(0,0,0,.10);
+transition:.35s;
+}
+
+.gallery img{
+cursor:pointer;
 }
 
 .gallery img:hover,
 .gallery iframe:hover{
-    transform:scale(1.02);
+transform:scale(1.03);
 }
 
+/* ==================================================
+   EDIÇÕES
+================================================== */
 .edicao{
-    margin-top:42px;
+margin-top:42px;
 }
 
 .edicao h3{
-    font-size:27px;
-    color:#7f1d1d;
-    margin-bottom:14px;
-    padding-left:14px;
-    border-left:6px solid #991b1b;
+font-size:28px;
+color:#991b1b;
+border-left:6px solid #991b1b;
+padding-left:14px;
+margin-bottom:16px;
 }
 
-/* ===================================================
-   LISTAS
-=================================================== */
-.lista p{
-    margin-bottom:8px;
-    font-size:18px;
+/* ==================================================
+   LIGHTBOX
+================================================== */
+#lightbox{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.94);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:99999;
+padding:25px;
 }
 
-/* ===================================================
-   RODAPÉ
-=================================================== */
+#lightbox img{
+max-width:95%;
+max-height:92%;
+border-radius:18px;
+}
+
+#closeBox{
+position:absolute;
+top:15px;
+right:25px;
+font-size:44px;
+color:#fff;
+cursor:pointer;
+font-weight:bold;
+}
+
+.arrow{
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+font-size:58px;
+color:#fff;
+cursor:pointer;
+padding:10px;
+user-select:none;
+}
+
+#prev{left:20px;}
+#next{right:20px;}
+
+/* ==================================================
+   FOOTER
+================================================== */
 footer{
-    text-align:center;
-    padding:34px 20px;
-    font-weight:700;
-    color:#6b1a1a;
+text-align:center;
+padding:35px 20px;
+font-weight:bold;
+color:#7f1d1d;
 }
 
-/* ===================================================
+/* ==================================================
    RESPONSIVO
-=================================================== */
-@media(max-width:980px){
-
-.hero-grid,
-.grid-2,
-.grid-3{
-    grid-template-columns:1fr;
+================================================== */
+@media(min-width:900px){
+.hero-grid{grid-template-columns:1.1fr .9fr;}
+.grid-2{grid-template-columns:1fr 1fr;}
+.grid-3{grid-template-columns:1fr 1fr;}
 }
 
-.hero h1{
-    font-size:42px;
-}
+@media(max-width:700px){
 
-.hero-side{
-    order:-1;
-}
+.hero h1{font-size:34px;}
 
-}
-
-@media(max-width:600px){
-
-.hero{
-    padding:42px 0;
-}
-
-.hero h1{
-    font-size:34px;
-}
-
-.section-title{
-    font-size:25px;
+.gallery{
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:12px;
 }
 
 .gallery img,
-.gallery iframe,
-.gallery video{
-    height:205px;
+.gallery iframe{
+height:160px;
 }
 
-.time-box{
-    min-width:74px;
-}
-
-.time-number{
-    font-size:24px;
-}
+.arrow{font-size:38px;}
+#closeBox{font-size:34px;}
 
 }
 
 </style>
 </head>
+
 <body>
 
-<!-- ===================================================
-     TOPO
-=================================================== -->
+<!-- ==================================================
+   TOPO
+================================================== -->
 <header class="hero">
 <div class="wrap">
 
@@ -291,9 +297,8 @@ footer{
 
 <div>
 <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
-
 <p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
-<p>Fé • Tradição • Comunidade • Grande Confraternização</p>
+<p>Fé, tradição e grande confraternização</p>
 
 <div class="countdown" id="countdown">
 
@@ -319,58 +324,48 @@ footer{
 
 </div>
 
-<a class="btn green" target="_blank" href="https://wa.me/5569993982037">
-Comprar Cartela
-</a>
+<a href="https://wa.me/5569993982037" class="btn green">Comprar Cartela</a>
 
 </div>
 
 <div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png" alt="Logo FPSS">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 </div>
 
 </div>
 </div>
 </header>
 
-<!-- ===================================================
-     CONTEÚDO
-=================================================== -->
+<!-- ==================================================
+   CONTEÚDO
+================================================== -->
 <main class="wrap">
 
-<!-- PROGRAMAÇÃO -->
 <section class="grid-2">
 
-<div class="card lista">
+<div class="card">
 <h2 class="section-title">Programação Oficial</h2>
-
-<p>10h - Santa Missa</p>
-<p>11h - Almoço com Churrasco no Espeto</p>
-<p>Show ao Vivo com Cuyabano e Douradense</p>
-<p>15h - Sorteio Presencial</p>
-<p>17h - Show de Prêmios</p>
-
+<p>10h • Santa Missa</p>
+<p>11h • Almoço com Churrasco no Espeto</p>
+<p>Show ao vivo com Cuyabano e Douradense</p>
+<p>15h • Sorteio Presencial</p>
+<p>17h • Show de Prêmios</p>
 </div>
 
-<div class="card lista">
+<div class="card">
 <h2 class="section-title">Bingo Beneficente</h2>
-
-<img
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png"
-style="width:100%;max-width:360px;display:block;margin:auto;border-radius:18px;box-shadow:0 10px 20px rgba(0,0,0,.12);margin-bottom:18px;"
-alt="Cartela Bingo">
+<img style="width:100%;max-width:340px;display:block;margin:auto;border-radius:18px;"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png">
 
 <p><strong>R$ 25.000,00 em prêmios</strong></p>
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
-<p>PIX: <strong>69999005245</strong></p>
-<p>Titular: <strong>Paróquia Nossa Senhora Aparecida</strong></p>
-
+<p><strong>PIX:</strong> 69999005245</p>
+<p><strong>Titular:</strong> Paróquia Nossa Senhora Aparecida</p>
 </div>
 
 </section>
 
-<!-- CONTATOS -->
 <section class="grid-3">
 
 <div class="card">
@@ -379,9 +374,7 @@ alt="Cartela Bingo">
 <p><strong>André</strong> - Coordenador</p>
 <a class="btn green" href="https://wa.me/5569981102306">Falar com André</a>
 
-<br><br>
-
-<p><strong>Rafael</strong> - Bingo</p>
+<p style="margin-top:12px;"><strong>Rafael</strong> - Bingo</p>
 <a class="btn green" href="https://wa.me/5569993982037">Falar com Rafael</a>
 
 </div>
@@ -389,48 +382,23 @@ alt="Cartela Bingo">
 <div class="card">
 <h2 class="section-title">Redes Sociais</h2>
 
-<a class="btn purple" target="_blank" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3">Instagram</a><br>
-<a class="btn blue" target="_blank" href="https://www.facebook.com/saosebastiaorolim">Facebook</a><br>
-<a class="btn red" target="_blank" href="https://www.youtube.com/watch?v=N9PLCErzT08">YouTube</a><br>
-<a class="btn telegram" target="_blank" href="https://t.me/+8qryuFS5-eNmNWMx">Telegram</a>
-
-</div>
-
-<div class="card">
-<h2 class="section-title">Ajude a Festa</h2>
-
-<p>Sua colaboração fortalece a comunidade e mantém viva a tradição.</p>
-
-<a class="btn gold" href="https://wa.me/5569993982037">
-Quero Ajudar
-</a>
+<a class="btn purple" href="#">Instagram</a>
+<a class="btn blue" href="#">Facebook</a>
+<a class="btn red" href="#">YouTube</a>
+<a class="btn telegram" href="#">Telegram</a>
 
 </div>
 
 </section>
 
-<!-- PARCEIROS -->
-<section class="card">
-
-<h2 class="section-title">Parceiros Oficiais</h2>
-
-<div class="gallery">
-
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
-
-</div>
-
-</section>
-
-<!-- EDIÇÕES -->
+<!-- ==================================================
+   GALERIA PREMIUM
+================================================== -->
 <section class="card">
 
 <h2 class="section-title">Fotos e Vídeos de Edições Anteriores</h2>
 
-<div class="edicao">
+div class="edicao">
 <h3>5ª Edição</h3>
 <div class="gallery">
         <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
@@ -504,7 +472,6 @@ Quero Ajudar
         <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_6.JPG">
 </div>
 </div>
-
 </section>
 
 </main>
@@ -513,11 +480,26 @@ Quero Ajudar
 Comunidade São Sebastião • Rolim de Moura / RO
 </footer>
 
-<!-- ===================================================
-     SCRIPT CONTADOR
-=================================================== -->
+<!-- ==================================================
+   LIGHTBOX
+================================================== -->
+<div id="lightbox">
+
+<span id="closeBox">×</span>
+<span class="arrow" id="prev">&#10094;</span>
+
+<img id="imgBox">
+
+<span class="arrow" id="next">&#10095;</span>
+
+</div>
+
+<!-- ==================================================
+   JAVASCRIPT
+================================================== -->
 <script>
 
+/* CONTADOR */
 const dataEvento = new Date("Jan 24, 2027 10:00:00").getTime();
 
 function atualizarContador(){
@@ -526,12 +508,12 @@ const agora = new Date().getTime();
 const distancia = dataEvento - agora;
 
 if(distancia <= 0){
-document.getElementById("countdown").innerHTML = "<strong>HOJE É O EVENTO 🎉</strong>";
+document.getElementById("countdown").innerHTML="HOJE É O EVENTO";
 return;
 }
 
 document.getElementById("dias").textContent =
-Math.floor(distancia / (1000*60*60*24));
+Math.floor(distancia/(1000*60*60*24));
 
 document.getElementById("horas").textContent =
 Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
@@ -547,8 +529,62 @@ Math.floor((distancia%(1000*60))/1000);
 setInterval(atualizarContador,1000);
 atualizarContador();
 
+/* LIGHTBOX */
+const imagens = document.querySelectorAll(".gallery img");
+const lightbox = document.getElementById("lightbox");
+const imgBox = document.getElementById("imgBox");
+
+let atual = 0;
+
+function abrir(i){
+atual = i;
+imgBox.src = imagens[atual].src;
+lightbox.style.display="flex";
+document.body.style.overflow="hidden";
+}
+
+function fechar(){
+lightbox.style.display="none";
+document.body.style.overflow="auto";
+}
+
+function prox(){
+atual++;
+if(atual>=imagens.length){atual=0;}
+imgBox.src = imagens[atual].src;
+}
+
+function ant(){
+atual--;
+if(atual<0){atual=imagens.length-1;}
+imgBox.src = imagens[atual].src;
+}
+
+imagens.forEach((img,i)=>{
+img.onclick=()=>abrir(i);
+});
+
+document.getElementById("closeBox").onclick=fechar;
+document.getElementById("next").onclick=prox;
+document.getElementById("prev").onclick=ant;
+
+lightbox.onclick=function(e){
+if(e.target===lightbox){fechar();}
+}
+
+document.addEventListener("keydown",function(e){
+
+if(lightbox.style.display==="flex"){
+
+if(e.key==="Escape")fechar();
+if(e.key==="ArrowRight")prox();
+if(e.key==="ArrowLeft")ant();
+
+}
+
+});
+
 </script>
 
 </body>
 </html>
-```
