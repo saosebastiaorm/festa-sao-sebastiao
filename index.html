@@ -1,41 +1,232 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
-<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
-<style>
-:root{--vinho:#7f1d1d;--verde:#16a34a;--azul:#2563eb;--vermelho:#dc2626;--roxo:#7c3aed;--card:#ffffffee}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:Arial,sans-serif;line-height:1.5;color:#111;background:linear-gradient(rgba(255,248,235,.82),rgba(255,248,235,.82)),url('https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg') center/cover fixed no-repeat}
-.wrap{max-width:1200px;margin:auto;padding:20px}
-.hero{background:linear-gradient(135deg,#5b0f0f,#991b1b);color:#fff;border-radius:0 0 30px 30px;padding:60px 20px;box-shadow:0 20px 40px rgba(0,0,0,.2)}
-.hero-grid,.grid-2,.grid-3{display:grid;gap:20px}.hero-grid{grid-template-columns:1fr}.grid-2,.grid-3{grid-template-columns:1fr}
-.hero h1{font-size:42px;line-height:1.1;margin-bottom:10px}.hero p{font-weight:bold;margin:6px 0}.hero img{width:100%;max-width:280px;display:block;margin:auto;filter:drop-shadow(0 12px 20px rgba(0,0,0,.3))}
-.countdown{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.time-box{background:rgba(255,255,255,.15);padding:10px 14px;border-radius:14px;min-width:82px;text-align:center}.time-number{font-size:26px;font-weight:bold}.time-label{font-size:12px}
-.card{background:var(--card);padding:24px;border-radius:22px;box-shadow:0 14px 30px rgba(0,0,0,.1)}
-.section-title{font-size:28px;color:var(--vinho);margin-bottom:12px}.btn{display:block;text-align:center;text-decoration:none;color:#fff;padding:14px 18px;border-radius:12px;font-weight:bold;margin-top:12px;transition:.2s}.btn:hover{transform:translateY(-2px)}.green{background:var(--verde)}.blue{background:var(--azul)}.red{background:var(--vermelho)}.purple{background:var(--roxo)}
-.logo-grid,.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:18px}.logo-grid img,.gallery img,.gallery iframe{width:100%;border-radius:16px}.logo-box{text-align:center;background:#fff;padding:14px;border-radius:18px}
-footer{text-align:center;padding:30px;font-weight:bold}
-.topnav{position:sticky;top:0;z-index:50;background:#ffffffdd;backdrop-filter:blur(8px);border-bottom:1px solid #eee}.topnav .wrap{display:flex;justify-content:space-between;align-items:center}.menu a{text-decoration:none;color:#333;margin-left:16px;font-weight:bold}
-@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr;align-items:center}.grid-2,.grid-3{grid-template-columns:1fr 1fr}.hero h1{font-size:54px}}
-</style>
+    <!-- Define codificação de caracteres para aceitar acentos -->
+    <meta charset="UTF-8">
+
+    <!-- Responsividade em celulares -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Texto usado por buscadores -->
+    <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura/RO">
+
+    <!-- Título exibido na aba do navegador -->
+    <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+
+    <style>
+    /* Remove margens padrão do navegador */
+    *{margin:0;padding:0;box-sizing:border-box;}
+
+    /* Rolagem suave entre âncoras */
+    html{scroll-behavior:smooth;}
+
+    /* Corpo geral do site */
+    body{
+        font-family:Arial, sans-serif; /* Fonte principal */
+        color:#111; /* Cor padrão do texto */
+        line-height:1.5; /* Espaçamento entre linhas */
+        background:#f8f4ec; /* Fundo base */
+    }
+
+    /* Container central */
+    .wrap{
+        max-width:1200px; /* largura máxima */
+        margin:auto; /* centraliza */
+        padding:20px; /* respiro lateral */
+    }
+
+    /* Cabeçalho principal */
+    .hero{
+        background:linear-gradient(135deg,#5b0f0f,#991b1b);
+        color:#fff;
+        padding:60px 20px;
+        border-radius:0 0 30px 30px;
+    }
+
+    /* Grade do topo */
+    .hero-grid{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:30px;
+        align-items:center;
+    }
+
+    /* Título principal */
+    .hero h1{font-size:42px;line-height:1.1;}
+
+    /* Texto comum do topo */
+    .hero p{margin-top:10px;font-size:18px;font-weight:bold;}
+
+    /* Logo centralizada */
+    .hero-side{text-align:center;}
+    .hero-side img{max-width:280px;width:100%;}
+
+    /* Contador regressivo */
+    .countdown{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+    .time-box{background:rgba(255,255,255,.15);padding:10px 14px;border-radius:12px;min-width:80px;text-align:center;}
+    .time-number{font-size:28px;font-weight:bold;}
+    .time-label{font-size:12px;}
+
+    /* Botões gerais */
+    .btn,.hero-btn{
+        display:inline-block;
+        padding:14px 20px;
+        border-radius:12px;
+        text-decoration:none;
+        color:#fff;
+        font-weight:bold;
+        margin-top:12px;
+    }
+
+    .hero-btn{background:#16a34a;}
+    .green{background:#16a34a;}
+    .blue{background:#2563eb;}
+    .purple{background:#7c3aed;}
+    .red{background:#dc2626;}
+
+    /* Cards brancos */
+    .card{
+        background:#fff;
+        padding:24px;
+        border-radius:22px;
+        box-shadow:0 10px 25px rgba(0,0,0,.08);
+        margin-top:18px;
+    }
+
+    /* Grades internas */
+    .grid-2,.grid-3{display:grid;grid-template-columns:1fr;gap:18px;}
+
+    /* Títulos de seção */
+    .section-title{font-size:28px;color:#7f1d1d;margin-bottom:14px;}
+
+    /* Galeria */
+    .gallery{display:grid;grid-template-columns:1fr;gap:15px;}
+    .gallery img,.gallery iframe,.gallery video{width:100%;border-radius:18px;}
+
+    /* Rodapé */
+    footer{text-align:center;padding:30px;font-weight:bold;}
+
+    /* Responsivo desktop */
+    @media(min-width:900px){
+        .hero-grid{grid-template-columns:1.1fr .9fr;}
+        .grid-2{grid-template-columns:1fr 1fr;}
+        .grid-3{grid-template-columns:1fr 1fr;}
+        .gallery{grid-template-columns:repeat(3,1fr);}
+    }
+    </style>
 </head>
 <body>
-<nav class="topnav"><div class="wrap"><strong>6ª FPSS</strong><div class="menu"><a href="#programacao">Programação</a><a href="#bingo">Bingo</a><a href="#redes">Redes</a><a href="#galeria">Galeria</a></div></div></nav>
-<header class="hero"><div class="wrap"><div class="hero-grid"><div><h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1><p>24 de Janeiro de 2027 • Rolim de Moura/RO</p><p>Fé, tradição e grande confraternização</p><div class="countdown" id="countdown"><div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div><div class="time-box"><div class="time-number" id="horas">0</div><div class="time-label">HORAS</div></div><div class="time-box"><div class="time-number" id="minutos">0</div><div class="time-label">MIN</div></div><div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div></div><a class="btn green" target="_blank" href="https://wa.me/5569993982037?text=Olá Rafael! Tenho interesse na cartela da 6ª FPSS.">Comprar Cartela</a></div><div><img alt="Logo FPSS" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png"></div></div></div></header>
+
+<!-- TOPO PRINCIPAL -->
+<header class="hero">
+    <div class="wrap">
+        <div class="hero-grid">
+
+            <!-- BLOCO DE TEXTO -->
+            <div>
+                <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
+                <p>24 de Janeiro de 2027 • Rolim de Moura/RO</p>
+                <p>Fé, tradição e grande confraternização</p>
+
+                <!-- CONTADOR -->
+                <div class="countdown" id="countdown">
+                    <div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div>
+                    <div class="time-box"><div class="time-number" id="horas">0</div><div class="time-label">HORAS</div></div>
+                    <div class="time-box"><div class="time-number" id="minutos">0</div><div class="time-label">MIN</div></div>
+                    <div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div>
+                </div>
+
+                <!-- BOTÃO PRINCIPAL -->
+                <a href="https://wa.me/5569993982037" class="hero-btn" target="_blank">Comprar Cartela</a>
+            </div>
+
+            <!-- BLOCO DA LOGO -->
+            <div class="hero-side">
+                <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
+            </div>
+        </div>
+    </div>
+</header>
+
 <main class="wrap">
-<section id="programacao" class="grid-2" style="margin-top:20px"><div class="card"><h2 class="section-title">Programação Oficial</h2><p>10h - Santa Missa</p><p>11h - Almoço com Churrasco no Espeto</p><p>Show ao Vivo com Cuyabano e Douradense</p><p>15h - Sorteio Presencial</p><p>17h - Show de Prêmios</p></div><div id="bingo" class="card"><h2 class="section-title">Bingo Beneficente</h2><p><strong style="font-size:32px;color:#dc2626">R$ 25.000,00 em prêmios</strong></p><p><strong style="color:#16a34a">13 chances de ganhar</strong></p><p style="margin-top:12px">Cartela R$ 20,00</p><p>PIX: <strong>69999005245</strong><br>Titular: <strong>Paróquia Nossa Senhora Aparecida</strong></p><img style="margin-top:14px;width:100%;border-radius:18px" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png"></div></section>
-<section class="grid-3" style="margin-top:20px"><div class="card"><h2 class="section-title">Compre sua Cartela</h2><p><strong>André</strong> - Coordenador</p><a class="btn green" target="_blank" href="https://wa.me/5569981102306">Falar com André</a><p style="margin-top:12px"><strong>Rafael</strong> - Bingo</p><a class="btn green" target="_blank" href="https://wa.me/5569993982037">Comprar Cartela com Rafael</a></div><div id="redes" class="card"><h2 class="section-title">Redes Sociais</h2><a class="btn purple" target="_blank" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3">Instagram</a><a class="btn blue" target="_blank" href="https://www.facebook.com/saosebastiaorolim">Facebook</a><a class="btn red" target="_blank" href="https://www.youtube.com/watch?v=N9PLCErzT08&list=PLkUhtmOyYFAq_fUTuI1Hs2nJkCO2iiPF-">YouTube</a></div></section>
-<section style="margin-top:20px" class="card"><h2 class="section-title">Parceiros Oficiais</h2><div class="logo-grid"><div class="logo-box"><img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png"><p>Central Modas</p></div><div class="logo-box"><img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png"><p>Grande Rede</p></div><div class="logo-box"><img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png"><p>Norte Motos</p></div></div></section>
-<section id="galeria" style="margin-top:20px" class="card"><h2 class="section-title">Momentos da 5ª Festa</h2><div class="gallery"><img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg"><img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Foto_aree_Frente.jpg"><img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg"><iframe height="240" src="https://www.youtube.com/embed/N9PLCErzT08" title="Comunidade São Sebastião" allowfullscreen></iframe></div></section>
+
+<!-- PROGRAMAÇÃO E BINGO -->
+<section class="grid-2">
+    <div class="card">
+        <h2 class="section-title">Programação Oficial</h2>
+        <p>10h - Santa Missa</p>
+        <p>11h - Almoço com Churrasco no Espeto</p>
+        <p>Show ao Vivo com Cuyabano e Douradense</p>
+        <p>15h - Sorteio Presencial</p>
+        <p>17h - Show de Prêmios</p>
+    </div>
+
+    <div class="card">
+        <h2 class="section-title">Bingo Beneficente</h2>
+        <p><strong>R$ 25.000,00 em prêmios</strong></p>
+        <p>13 chances de ganhar</p>
+        <p>Cartela R$ 20,00</p>
+    </div>
+</section>
+
+<!-- CONTATOS E REDES -->
+<section class="grid-3">
+    <div class="card">
+        <h2 class="section-title">Compre sua Cartela</h2>
+        <a class="btn green" href="https://wa.me/5569981102306">André</a>
+        <a class="btn green" href="https://wa.me/5569993982037">Rafael</a>
+    </div>
+
+    <div class="card">
+        <h2 class="section-title">Redes Sociais</h2>
+        <a class="btn purple" href="#">Instagram</a>
+        <a class="btn blue" href="#">Facebook</a>
+        <a class="btn red" href="#">YouTube</a>
+    </div>
+</section>
+
+<!-- GALERIA -->
+<section class="card">
+    <h2 class="section-title">Momentos da 5ª Festa</h2>
+    <div class="gallery">
+        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
+        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
+        <iframe height="250" src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
+    </div>
+</section>
+
 </main>
-<footer>Comunidade São Sebastião • Rolim de Moura/RO</footer>
+
+<footer>
+Comunidade São Sebastião • Rolim de Moura/RO
+</footer>
+
 <script>
-const dataEvento=new Date('2027-01-24T10:00:00').getTime();
-function atualizar(){const agora=Date.now();const d=dataEvento-agora;if(d<=0){document.getElementById('countdown').innerHTML='<div class="time-box"><div class="time-number">HOJE</div><div class="time-label">A FESTA COMEÇOU</div></div>';return;}document.getElementById('dias').textContent=Math.floor(d/86400000);document.getElementById('horas').textContent=Math.floor(d%86400000/3600000);document.getElementById('minutos').textContent=Math.floor(d%3600000/60000);document.getElementById('segundos').textContent=Math.floor(d%60000/1000)} setInterval(atualizar,1000);atualizar();
+/* Data do evento em milissegundos */
+const dataEvento = new Date("Jan 24, 2027 10:00:00").getTime();
+
+/* Atualiza contador */
+function atualizarContador(){
+    const agora = new Date().getTime();
+    const distancia = dataEvento - agora;
+
+    if(distancia <= 0){
+        document.getElementById("countdown").innerHTML = "HOJE É O EVENTO";
+        return;
+    }
+
+    document.getElementById("dias").textContent = Math.floor(distancia/(1000*60*60*24));
+    document.getElementById("horas").textContent = Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
+    document.getElementById("minutos").textContent = Math.floor((distancia%(1000*60*60))/(1000*60));
+    document.getElementById("segundos").textContent = Math.floor((distancia%(1000*60))/1000);
+}
+
+/* Atualiza a cada 1 segundo */
+setInterval(atualizarContador,1000);
+
+/* Executa imediatamente */
+atualizarContador();
 </script>
+
 </body>
 </html>
