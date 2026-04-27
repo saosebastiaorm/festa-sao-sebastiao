@@ -32,28 +32,62 @@ padding:20px;
 TOPO HERO
 ================================================== */
 .hero{
-background:linear-gradient(135deg,#5b0f0f,#991b1b);
+background:
+linear-gradient(135deg, rgba(90,0,0,.92), rgba(160,10,10,.88)),
+radial-gradient(circle at top right, rgba(255,255,255,.12), transparent 35%);
 color:#fff;
-padding:60px 20px;
-border-radius:0 0 28px 28px;
+padding:70px 20px;
+position:relative;
+overflow:hidden;
+border-radius:0 0 30px 30px;
+box-shadow:0 18px 45px rgba(0,0,0,.18);
+}
+
+.hero::before{
+content:"";
+position:absolute;
+top:-60px;
+right:-60px;
+width:220px;
+height:220px;
+background:rgba(255,255,255,.06);
+border-radius:50%;
+filter:blur(4px);
+}
+
+.hero::after{
+content:"";
+position:absolute;
+bottom:-80px;
+left:-80px;
+width:260px;
+height:260px;
+background:rgba(255,255,255,.04);
+border-radius:50%;
 }
 
 .hero-grid{
 display:grid;
-grid-template-columns:1fr;
-gap:30px;
+grid-template-columns:1.15fr .85fr;
+gap:40px;
 align-items:center;
+position:relative;
+z-index:2;
 }
 
 .hero h1{
-font-size:46px;
-line-height:1.1;
+font-size:58px;
+line-height:1.03;
+font-weight:900;
+letter-spacing:-1px;
+margin-bottom:14px;
+text-shadow:0 8px 18px rgba(0,0,0,.22);
 }
 
 .hero p{
-margin-top:10px;
-font-size:19px;
-font-weight:bold;
+font-size:20px;
+margin-top:8px;
+opacity:.96;
 }
 
 .hero-side{
@@ -61,9 +95,17 @@ text-align:center;
 }
 
 .hero-side img{
-max-width:320px;
+max-width:340px;
 width:100%;
-filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));
+filter:
+drop-shadow(0 18px 28px rgba(0,0,0,.28));
+animation:flutuar 4s ease-in-out infinite;
+}
+
+@keyframes flutuar{
+0%{transform:translateY(0px);}
+50%{transform:translateY(-10px);}
+100%{transform:translateY(0px);}
 }
 
 /* ==================================================
@@ -73,26 +115,28 @@ CONTADOR
 display:flex;
 gap:12px;
 flex-wrap:wrap;
-margin-top:25px;
+margin:28px 0 18px;
 }
 
 .time-box{
-background:rgba(255,255,255,.15);
-padding:12px 16px;
-border-radius:14px;
-min-width:90px;
+background:rgba(255,255,255,.14);
+backdrop-filter:blur(8px);
+padding:14px 16px;
+border-radius:16px;
+min-width:88px;
 text-align:center;
-backdrop-filter:blur(4px);
+border:1px solid rgba(255,255,255,.10);
 }
 
 .time-number{
 font-size:30px;
-font-weight:bold;
+font-weight:900;
 }
 
 .time-label{
-font-size:12px;
+font-size:11px;
 letter-spacing:1px;
+opacity:.9;
 }
 
 /* ==================================================
