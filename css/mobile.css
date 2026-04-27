@@ -1,1 +1,191 @@
+/* ==================================================
+ARQUIVO: css/mobile.css
+RESPONSIVO CELULAR / TABLET
+================================================== */
 
+/* TABLET E DESKTOP */
+@media(min-width:900px){
+
+.hero-grid{
+grid-template-columns:1.1fr .9fr;
+}
+
+.grid-2{
+grid-template-columns:1fr 1fr;
+}
+
+.two-grid{
+grid-template-columns:1fr 1fr;
+align-items:start;
+}
+
+}
+
+/* CELULAR */
+@media(max-width:899px){
+
+.wrap{
+padding:16px;
+}
+
+.hero{
+padding:40px 16px;
+border-radius:0 0 22px 22px;
+}
+
+.hero h1{
+font-size:34px;
+line-height:1.15;
+}
+
+.hero p{
+font-size:17px;
+}
+
+.hero-side img{
+max-width:240px;
+margin:auto;
+}
+
+.countdown{
+gap:8px;
+}
+
+.time-box{
+min-width:72px;
+padding:10px;
+}
+
+.time-number{
+font-size:24px;
+}
+
+.time-label{
+font-size:11px;
+}
+
+.section-title{
+font-size:26px;
+line-height:1.2;
+}
+
+.section-subtitle{
+font-size:16px;
+}
+
+.card{
+padding:18px;
+border-radius:18px;
+margin-top:18px;
+}
+
+.btn{
+display:block;
+width:100%;
+text-align:center;
+margin-right:0;
+margin-top:12px;
+padding:14px;
+font-size:16px;
+}
+
+.partner-box img{
+height:110px;
+}
+
+.section-img{
+height:240px;
+}
+
+.promo-img{
+max-width:100%;
+}
+
+.gallery{
+grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+gap:12px;
+}
+
+.gallery img,
+.gallery iframe{
+height:150px;
+border-radius:14px;
+}
+
+#closeBox{
+font-size:34px;
+right:18px;
+top:12px;
+}
+
+.arrow{
+font-size:38px;
+padding:6px;
+}
+
+#prev{
+left:10px;
+}
+
+#next{
+right:10px;
+}
+
+input,
+select,
+textarea{
+font-size:16px;
+padding:12px;
+}
+
+.price-box,
+.total-box{
+font-size:20px;
+padding:12px;
+}
+
+footer{
+font-size:14px;
+padding:26px 14px;
+}
+
+}
+
+/* TELAS MUITO PEQUENAS */
+@media(max-width:420px){
+
+.hero h1{
+font-size:28px;
+}
+
+.hero p{
+font-size:15px;
+}
+
+.time-box{
+min-width:64px;
+padding:8px;
+}
+
+.time-number{
+font-size:21px;
+}
+
+.section-title{
+font-size:22px;
+}
+
+.gallery{
+grid-template-columns:1fr 1fr;
+}
+
+.gallery img,
+.gallery iframe{
+height:130px;
+}
+
+.card{
+padding:15px;
+}
+
+}
