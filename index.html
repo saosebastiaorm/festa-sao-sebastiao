@@ -3,12 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
 <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
 <meta name="theme-color" content="#8b1111">
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
+
+<!-- PROTEÇÃO BÁSICA CONTRA FLASH DE CONTEÚDO -->
+<style>
+html, body { overflow-x:hidden; }
+</style>
+
 </head>
 
 <body>
@@ -16,6 +23,7 @@
 <!-- HERO -->
 <header class="hero">
 <div class="wrap">
+
 <div class="hero-grid">
 
 <div>
@@ -54,7 +62,9 @@
 </div>
 
 <div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
+<img 
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png"
+alt="Logo FPSS">
 </div>
 
 </div>
@@ -73,6 +83,7 @@
 
 <div>
 <img class="section-img"
+alt="Churrasco FPSS"
 src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/Screenshot_2026-04-26-22-16-35-784_com.google.android.googlequicksearchbox-edit.jpg">
 
 <div class="price-box">R$ 60,00</div>
@@ -103,7 +114,7 @@ src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/I
 
 <div class="total-box" id="valorTotal">R$ 60,00</div>
 
-<button onclick="enviarPedidoWhats()" class="btn green full">
+<button type="button" onclick="enviarPedidoWhats()" class="btn green full">
 Confirmar Pedido
 </button>
 
@@ -121,13 +132,8 @@ Confirmar Pedido
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
 
-<a href="https://wa.me/556981102306" class="btn green">
-Comprar com André
-</a>
-
-<a href="https://wa.me/5569993982037" class="btn blue">
-Comprar com Rafael
-</a>
+<a href="https://wa.me/556981102306" class="btn green">Comprar com André</a>
+<a href="https://wa.me/5569993982037" class="btn blue">Comprar com Rafael</a>
 
 </section>
 
@@ -161,11 +167,11 @@ Comprar com Rafael
 
 <div class="gallery">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
+<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
+<img alt="Grande Rede" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
+<img alt="Norte Motos" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
 
 </div>
 
@@ -178,11 +184,14 @@ Comprar com Rafael
 
 <div class="gallery">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
+<img alt="Evento FPSS"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Foto_aree_Frente.jpg">
+<img alt="Área frontal"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Foto_aree_Frente.jpg">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
+<img alt="Vista aérea"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
 
 </div>
 
@@ -198,7 +207,7 @@ Comunidade São Sebastião • Rolim de Moura / RO
 <div id="lightbox">
 <span id="closeBox">×</span>
 <span class="arrow" id="prev">&#10094;</span>
-<img id="imgBox">
+<img id="imgBox" alt="Imagem ampliada">
 <span class="arrow" id="next">&#10095;</span>
 </div>
 
