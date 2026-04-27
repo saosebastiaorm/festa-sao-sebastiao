@@ -665,6 +665,148 @@ src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/I
 
 </section>
 
+<!-- ===================================================== -->
+<!-- SEÇÃO CADASTRO DE NOVIDADES DA FESTA FPSS             -->
+<!-- ETAPA 1 - FORMULÁRIO HTML                             -->
+<!-- Cole dentro do <main> do seu site                     -->
+<!-- ===================================================== -->
+
+<section class="card novidades-section">
+
+    <!-- TÍTULO -->
+    <h2 class="section-title">📢 Receba Novidades da Festa</h2>
+
+    <!-- SUBTÍTULO -->
+    <p class="novidades-subtitulo">
+        Cadastre seu nome e WhatsApp para receber notícias, avisos,
+        promoções de cartelas, churrasco e novidades da 6ª FPSS.
+    </p>
+
+    <!-- FORMULÁRIO -->
+    <form id="formNovidades">
+
+        <!-- NOME -->
+        <label>Nome Completo</label>
+        <input
+        type="text"
+        id="nomeNovidade"
+        placeholder="Digite seu nome"
+        required>
+
+        <!-- WHATSAPP -->
+        <label>WhatsApp</label>
+        <input
+        type="tel"
+        id="foneNovidade"
+        placeholder="(69) 99999-9999"
+        required>
+
+        <!-- CIDADE -->
+        <label>Cidade</label>
+        <input
+        type="text"
+        id="cidadeNovidade"
+        placeholder="Ex: Rolim de Moura">
+
+        <!-- BOTÃO -->
+        <button
+        type="button"
+        onclick="salvarNovidade()"
+        class="btn green novidades-btn">
+
+        📲 Quero Receber Novidades
+
+        </button>
+
+    </form>
+
+    <!-- RETORNO -->
+    <div id="msgRetorno" class="msg-retorno"></div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- CSS DA SEÇÃO                                          -->
+<!-- Cole dentro do <style>                                -->
+<!-- ===================================================== -->
+
+<style>
+
+.novidades-section{
+margin-top:22px;
+}
+
+.novidades-subtitulo{
+font-size:18px;
+color:#444;
+margin-bottom:20px;
+}
+
+#formNovidades label{
+display:block;
+margin-top:14px;
+margin-bottom:6px;
+font-weight:bold;
+}
+
+#formNovidades input{
+width:100%;
+padding:14px;
+border:1px solid #ccc;
+border-radius:10px;
+font-size:16px;
+}
+
+.novidades-btn{
+width:100%;
+margin-top:18px;
+padding:16px;
+font-size:18px;
+}
+
+.msg-retorno{
+margin-top:16px;
+font-weight:bold;
+color:#16a34a;
+text-align:center;
+}
+
+</style>
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT TEMPORÁRIO                                 -->
+<!-- ETAPA 1 TESTE LOCAL                                   -->
+<!-- Cole antes do </body>                                 -->
+<!-- ===================================================== -->
+
+<script>
+
+function salvarNovidade(){
+
+let nome =
+document.getElementById("nomeNovidade").value;
+
+let fone =
+document.getElementById("foneNovidade").value;
+
+if(nome === "" || fone === ""){
+
+document.getElementById("msgRetorno").innerHTML =
+"⚠️ Preencha nome e WhatsApp.";
+
+return;
+
+}
+
+document.getElementById("msgRetorno").innerHTML =
+"✅ Cadastro preenchido com sucesso! Próxima etapa: conectar ao Google Sheets.";
+
+document.getElementById("formNovidades").reset();
+
+}
+
+</script>
+   
 
 <!-- ===================================================== -->
 <!-- SEÇÃO LOCALIZAÇÃO / COMO CHEGAR - FPSS                -->
