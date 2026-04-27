@@ -1,54 +1,29 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
-
-<meta name="description"
-content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
-
+<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
 <meta name="theme-color" content="#8b1111">
 
-<link rel="icon"
-href="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
-
-<!-- CSS -->
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
-
 </head>
 
 <body>
 
-<!-- =========================================
-TOPO HERO
-========================================= -->
+<!-- HERO -->
 <header class="hero">
-
 <div class="wrap">
-
 <div class="hero-grid">
 
-<!-- TEXTO -->
 <div>
+<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 
-<h1>
-6ª FPSS<br>
-Festa do Padroeiro São Sebastião
-</h1>
+<p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
+<p>Fé, tradição e grande confraternização</p>
 
-<p>
-24 de Janeiro de 2027 • Rolim de Moura / RO
-</p>
-
-<p>
-Fé, tradição e grande confraternização
-</p>
-
-<!-- CONTADOR -->
 <div class="countdown" id="countdown">
 
 <div class="time-box">
@@ -73,429 +48,133 @@ Fé, tradição e grande confraternização
 
 </div>
 
-<!-- BOTÕES -->
-<a
-href="https://wa.me/556981102306"
-target="_blank"
-class="btn green">
-
-Comprar Cartela
-
-</a>
-
-<a
-href="#churrasco"
-class="btn red">
-
-Comprar Churrasco
-
-</a>
+<a href="https://wa.me/556981102306" class="btn green">Comprar Cartela</a>
+<a href="#churrasco" class="btn red">Comprar Churrasco</a>
 
 </div>
 
-<!-- LOGO -->
 <div class="hero-side">
-
-<img
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png"
-alt="Logo FPSS">
-
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
 </div>
 
 </div>
 </div>
-
 </header>
 
-<!-- =========================================
-ABERTURA MAIN
-========================================= -->
 <main class="wrap">
 
-<!-- =========================================
-CHURRASCO ANTECIPADO
-========================================= -->
+<!-- CHURRASCO -->
 <section class="card" id="churrasco">
 
 <h2 class="section-title">🔥 Churrasco Antecipado</h2>
+<p>Garanta seu almoço antecipadamente e retire sem fila no dia da festa.</p>
 
-<p class="section-subtitle">
-Garanta seu almoço antecipadamente e retire sem fila no dia da festa.
-</p>
+<div class="grid-2">
 
-<div class="two-grid">
-
-<!-- BLOCO ESQUERDO -->
 <div>
+<img class="section-img"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/Screenshot_2026-04-26-22-16-35-784_com.google.android.googlequicksearchbox-edit.jpg">
 
-<img
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/Screenshot_2026-04-26-22-16-35-784_com.google.android.googlequicksearchbox-edit.jpg"
-alt="Churrasco no espeto"
-class="section-img">
-
-<div class="price-box">
-R$ 60,00
-</div>
+<div class="price-box">R$ 60,00</div>
 
 <ul class="info-list">
 <li>🥩 Churrasco no espeto</li>
-<li>⏰ Retirada até 15:00h</li>
-<li>💳 Pagamento via Pix</li>
-<li>📲 Pedido confirmado no WhatsApp</li>
+<li>⏰ Retirada até 15h</li>
+<li>💳 Pagamento Pix</li>
+<li>📲 Confirmação WhatsApp</li>
 </ul>
-
 </div>
 
-<!-- BLOCO DIREITO -->
 <div class="form-box">
 
 <h3>📋 Fazer Pedido</h3>
 
-<label>Nome Completo</label>
+<label>Nome</label>
 <input type="text" id="nomeCliente">
 
 <label>Telefone</label>
 <input type="text" id="telefoneCliente">
 
 <label>Quantidade</label>
-<input
-type="number"
-id="quantidadePedido"
-value="1"
-min="1">
+<input type="number" id="quantidadePedido" value="1">
 
-<label>Horário previsto para retirar</label>
+<label>Retirada</label>
 <input type="time" id="horarioRetirada">
 
-<div class="total-box" id="valorTotal">
-R$ 60,00
-</div>
+<div class="total-box" id="valorTotal">R$ 60,00</div>
 
-<button
-onclick="enviarPedidoWhats()"
-class="btn green full">
-
+<button onclick="enviarPedidoWhats()" class="btn green full">
 Confirmar Pedido
-
 </button>
 
-<p class="small-center">
-Pedidos recebidos por André<br>
-69 8110-2306
-</p>
-
 </div>
 
 </div>
-
 </section>
 
-<!-- =========================================
-SORTEIO BENEFICENTE
-========================================= -->
+<!-- SORTEIO -->
 <section class="card">
 
 <h2 class="section-title">🎁 Sorteio Beneficente</h2>
 
-<div class="grid-2">
-
-<div>
-
-<img
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png"
-alt="Cartela"
-class="promo-img">
-
-</div>
-
-<div>
-
 <p><strong>R$ 25.000,00 em prêmios</strong></p>
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
-<p>PIX: 69999005245</p>
-<p>Titular: Paróquia Nossa Senhora Aparecida</p>
 
-<a
-href="https://wa.me/556981102306"
-target="_blank"
-class="btn green">
-
+<a href="https://wa.me/556981102306" class="btn green">
 Comprar com André
-
 </a>
 
-<a
-href="https://wa.me/5569993982037"
-target="_blank"
-class="btn blue">
-
+<a href="https://wa.me/5569993982037" class="btn blue">
 Comprar com Rafael
-
 </a>
-
-</div>
-
-</div>
 
 </section>
 
-<!-- =========================================
-PROGRAMAÇÃO OFICIAL
-========================================= -->
+<!-- PROGRAMACAO -->
 <section class="card">
 
 <h2 class="section-title">📅 Programação Oficial</h2>
 
 <p>10h • Santa Missa</p>
-<p>11h • Almoço com Churrasco no Espeto</p>
-<p>Show ao vivo com Cuyabano e Douradense</p>
+<p>11h • Almoço com Churrasco</p>
 <p>15h • Sorteio Presencial</p>
 <p>17h • Show de Prêmios</p>
 
 </section>
 
-<!-- =========================================
-REDES SOCIAIS
-========================================= -->
+<!-- REDES -->
 <section class="card">
 
 <h2 class="section-title">📲 Redes Sociais</h2>
 
-<a
-href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3"
-target="_blank"
-class="btn purple">
-
-Instagram
-
-</a>
-
-<a
-href="https://www.facebook.com/saosebastiaorolim/"
-target="_blank"
-class="btn blue">
-
-Facebook
-
-</a>
-
-<a
-href="https://youtube.com/@saosebastiaorm_festa?si=tfrmjlTuU9MEmlEY"
-target="_blank"
-class="btn red">
-
-YouTube
-
-</a>
-
-<a
-href="https://t.me/+8qryuFS5-eNmNWMx"
-target="_blank"
-class="btn telegram">
-
-Telegram
-
-</a>
+<a class="btn purple" href="#">Instagram</a>
+<a class="btn blue" href="#">Facebook</a>
+<a class="btn red" href="#">YouTube</a>
 
 </section>
 
-<!-- =========================================
-NOVIDADES
-========================================= -->
-<section class="card">
-
-<h2 class="section-title">📢 Receba Novidades</h2>
-
-<p class="section-subtitle">
-Cadastre-se para receber avisos e novidades da festa.
-</p>
-
-<div class="form-box">
-
-<label>Nome Completo</label>
-<input type="text" id="nomeNovidade">
-
-<label>WhatsApp</label>
-<input type="text" id="foneNovidade">
-
-<label>Cidade</label>
-<input type="text" id="cidadeNovidade">
-
-<button
-onclick="salvarNovidade()"
-class="btn green full">
-
-Quero Receber Novidades
-
-</button>
-
-</div>
-
-</section>
-
-<!-- =========================================
-DOAÇÕES
-========================================= -->
-<section class="card">
-
-<h2 class="section-title">
-🤝 Faça sua Doação
-</h2>
-
-<p class="section-subtitle">
-Ajude a realizar uma grande festa.
-</p>
-
-<div class="two-grid">
-
-<!-- ESQUERDA -->
-<div>
-
-<img
-src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=80"
-alt="Doação"
-class="section-img">
-
-<ul class="info-list">
-<li>🐂 Gado</li>
-<li>🎁 Brindes para leilão</li>
-<li>🎉 Prendas para bingo</li>
-<li>💰 Ajuda financeira</li>
-<li>🧰 Serviços</li>
-</ul>
-
-</div>
-
-<!-- DIREITA -->
-<div class="form-box">
-
-<label>Nome Completo</label>
-<input type="text" id="nomeDoacao">
-
-<label>Telefone</label>
-<input type="text" id="foneDoacao">
-
-<label>Tipo de Doação</label>
-<select id="tipoDoacao">
-<option>Gado</option>
-<option>Brindes</option>
-<option>Prendas</option>
-<option>Financeira</option>
-<option>Serviços</option>
-<option>Outro</option>
-</select>
-
-<label>Descrição</label>
-<textarea id="descricaoDoacao"></textarea>
-
-<button
-onclick="enviarDoacaoWhats()"
-class="btn green full">
-
-Informar Doação
-
-</button>
-
-</div>
-
-</div>
-
-</section>
-
-  <!-- =========================================
-LOCALIZAÇÃO
-========================================= -->
-<section class="card">
-
-<h2 class="section-title">📍 Como Chegar</h2>
-
-<p class="section-subtitle">
-Comunidade São Sebastião - Zona Rural de Rolim de Moura / RO
-</p>
-
-<div class="two-grid">
-
-<div>
-
-<img
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/FB_IMG_1775562098853.jpg"
-alt="Localização"
-class="section-img">
-
-</div>
-
-<div>
-
-<p>📌 LH 188 Km 4 lado Ruralha</p>
-<p>🚗 Acesso por carro, moto e utilitários</p>
-<p>🕘 Chegue cedo para melhor estacionamento</p>
-
-<a
-href="https://maps.app.goo.gl/jPckZuqQnV9oaJGx6?g_st=aw"
-target="_blank"
-class="btn green">
-
-Abrir no Google Maps
-
-</a>
-
-<a
-href="https://wa.me/556981102306"
-target="_blank"
-class="btn blue">
-
-Pedir Ajuda no WhatsApp
-
-</a>
-
-</div>
-
-</div>
-
-</section>
-
-<!-- =========================================
-PARCEIROS
-========================================= -->
+<!-- PARCEIROS -->
 <section class="card">
 
 <h2 class="section-title">🤝 Parceiros Oficiais</h2>
 
-<div class="grid-2">
+<div class="gallery">
 
-<div class="partner-box">
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
-<h3>Central Modas</h3>
-</div>
 
-<div class="partner-box">
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
-<h3>Grande Rede</h3>
-</div>
 
-<div class="partner-box">
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
-<h3>Norte Motos</h3>
-</div>
-
-<div class="partner-box">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg">
-<h3>Maicon Jóias</h3>
-</div>
 
 </div>
 
 </section>
 
-<!-- =========================================
-GALERIA
-========================================= -->
+<!-- GALERIA -->
 <section class="card">
 
-<h2 class="section-title">
-📸 Fotos de Edições Anteriores
-</h2>
+<h2 class="section-title">📸 Fotos e Vídeos</h2>
 
 <div class="gallery">
 
@@ -505,38 +184,24 @@ GALERIA
 
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Chegada_Folia.jpg">
-
 </div>
 
 </section>
 
 </main>
 
-<!-- =========================================
-RODAPÉ
-========================================= -->
 <footer>
 Comunidade São Sebastião • Rolim de Moura / RO
 </footer>
 
-<!-- =========================================
-LIGHTBOX
-========================================= -->
+<!-- LIGHTBOX -->
 <div id="lightbox">
-
 <span id="closeBox">×</span>
 <span class="arrow" id="prev">&#10094;</span>
-
 <img id="imgBox">
-
 <span class="arrow" id="next">&#10095;</span>
-
 </div>
 
-<!-- =========================================
-SCRIPTS
-========================================= -->
 <script src="js/countdown.js"></script>
 <script src="js/lightbox.js"></script>
 <script src="js/forms.js"></script>
