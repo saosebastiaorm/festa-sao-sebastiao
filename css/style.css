@@ -352,3 +352,61 @@ padding:35px 20px;
 font-weight:bold;
 color:#7f1d1d;
 }
+
+
+/* =====================================
+CORREÇÃO FORMULÁRIOS FPSS
+===================================== */
+
+form,
+.churrasco-form,
+.doacao-form,
+.novidades-section,
+.form-box{
+display:block !important;
+visibility:visible !important;
+opacity:1 !important;
+}
+
+label{
+display:block !important;
+margin-top:14px;
+margin-bottom:6px;
+font-weight:700;
+font-size:15px;
+color:#7f1d1d;
+}
+
+input,
+select,
+textarea{
+display:block !important;
+width:100%;
+background:#fff;
+border:1px solid #cfcfcf;
+padding:12px;
+border-radius:10px;
+font-size:16px;
+color:#111;
+}
+
+textarea{
+resize:vertical;
+min-height:120px;
+}
+
+button{
+display:block;
+width:100%;
+}
+
+#formNovidades{
+display:block !important;
+}
+
+#msgRetorno{
+margin-top:15px;
+font-weight:bold;
+color:#16a34a;
+text-align:center;
+}
