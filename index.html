@@ -1232,7 +1232,131 @@ window.open(
 
 </script>
 
-   
+<!-- ===================================================== -->
+<!-- SEÇÃO PARCEIROS OFICIAIS DA FESTA                     -->
+<!-- RESTAURAR NO SITE FPSS                                -->
+<!-- Cole dentro do <main> onde desejar                    -->
+<!-- ===================================================== -->
+
+<section class="card parceiros-section">
+
+    <!-- TÍTULO -->
+    <h2 class="section-title">🤝 Parceiros Oficiais</h2>
+
+    <!-- SUBTÍTULO -->
+    <p class="parceiros-subtitulo">
+        Empresas e apoiadores que acreditam na nossa tradição
+        e ajudam a tornar a festa possível.
+    </p>
+
+    <!-- GRID DE LOGOS -->
+    <div class="parceiros-grid">
+
+        <!-- PARCEIRO 1 -->
+        <div class="parceiro-box">
+            <img
+            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png"
+            alt="Central Modas">
+            <h3>Central Modas</h3>
+            <p>Apoio oficial da festa</p>
+        </div>
+
+        <!-- PARCEIRO 2 -->
+        <div class="parceiro-box">
+            <img
+            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png"
+            alt="Grande Rede">
+            <h3>Grande Rede</h3>
+            <p>Parceiro da comunidade</p>
+        </div>
+
+        <!-- PARCEIRO 3 -->
+        <div class="parceiro-box">
+            <img
+            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png"
+            alt="Norte Motos">
+            <h3>Norte Motos</h3>
+            <p>Patrocinador oficial</p>
+        </div>
+
+        <!-- PARCEIRO 4 -->
+        <div class="parceiro-box">
+            <img
+            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg"
+            alt="Maicon Jóias">
+            <h3>Maicon Jóias</h3>
+            <p>Apoiador da festa</p>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- CSS DA SEÇÃO                                          -->
+<!-- Cole dentro do <style>                                -->
+<!-- ===================================================== -->
+
+<style>
+
+.parceiros-section{
+margin-top:24px;
+}
+
+.parceiros-subtitulo{
+font-size:18px;
+color:#555;
+margin-bottom:22px;
+text-align:center;
+}
+
+.parceiros-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+
+.parceiro-box{
+background:#ffffff;
+padding:20px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 12px 24px rgba(0,0,0,.08);
+transition:.3s;
+}
+
+.parceiro-box:hover{
+transform:translateY(-6px);
+box-shadow:0 18px 30px rgba(0,0,0,.12);
+}
+
+.parceiro-box img{
+width:100%;
+height:130px;
+object-fit:contain;
+margin-bottom:14px;
+}
+
+.parceiro-box h3{
+font-size:20px;
+color:#7f1d1d;
+margin-bottom:8px;
+}
+
+.parceiro-box p{
+font-size:15px;
+color:#666;
+}
+
+@media(max-width:700px){
+
+.parceiro-box img{
+height:110px;
+}
+
+}
+
+</style>   
 
    
 <!-- ==================================================
