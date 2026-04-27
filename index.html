@@ -1,305 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
 
-<style>
-
-/* ==================================================
-   RESET GERAL
-================================================== */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
-html{
-scroll-behavior:smooth;
-}
-
-body{
-font-family:Arial, Helvetica, sans-serif;
-background:#f8f4ec;
-color:#111;
-line-height:1.5;
-}
-
-/* ==================================================
-   CONTAINER
-================================================== */
-.wrap{
-max-width:1280px;
-margin:auto;
-padding:20px;
-}
-
-/* ==================================================
-   HERO TOPO
-================================================== */
-.hero{
-background:linear-gradient(135deg,#5b0f0f,#991b1b);
-color:#fff;
-padding:60px 20px;
-border-radius:0 0 28px 28px;
-}
-
-.hero-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:30px;
-align-items:center;
-}
-
-.hero h1{
-font-size:46px;
-line-height:1.1;
-}
-
-.hero p{
-margin-top:10px;
-font-size:19px;
-font-weight:bold;
-}
-
-.hero-side{
-text-align:center;
-}
-
-.hero-side img{
-max-width:300px;
-width:100%;
-filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));
-}
-
-/* ==================================================
-   CONTADOR
-================================================== */
-.countdown{
-display:flex;
-gap:12px;
-flex-wrap:wrap;
-margin-top:25px;
-}
-
-.time-box{
-background:rgba(255,255,255,.15);
-padding:12px 16px;
-border-radius:14px;
-min-width:90px;
-text-align:center;
-backdrop-filter:blur(4px);
-}
-
-.time-number{
-font-size:30px;
-font-weight:bold;
-}
-
-.time-label{
-font-size:12px;
-letter-spacing:1px;
-}
-
-/* ==================================================
-   BOTÕES
-================================================== */
-.btn{
-display:inline-block;
-padding:14px 18px;
-border-radius:12px;
-text-decoration:none;
-font-weight:bold;
-color:#fff;
-margin-top:12px;
-margin-right:8px;
-transition:.25s;
-}
-
-.btn:hover{
-transform:translateY(-2px);
-opacity:.92;
-}
-
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.purple{background:#7c3aed;}
-.red{background:#dc2626;}
-.telegram{background:#229ED9;}
-
-/* ==================================================
-   CARDS
-================================================== */
-.card{
-background:#fff;
-padding:24px;
-border-radius:22px;
-box-shadow:0 10px 25px rgba(0,0,0,.08);
-margin-top:22px;
-}
-
-.grid-2,.grid-3{
-display:grid;
-grid-template-columns:1fr;
-gap:20px;
-}
-
-.section-title{
-font-size:30px;
-color:#7f1d1d;
-margin-bottom:16px;
-}
-
-/* ==================================================
-   GALERIA
-================================================== */
-.gallery{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:18px;
-}
-
-.gallery img,
-.gallery iframe{
-width:100%;
-height:230px;
-object-fit:cover;
-border-radius:18px;
-background:#eee;
-box-shadow:0 8px 20px rgba(0,0,0,.10);
-transition:.35s;
-}
-
-.gallery img{
-cursor:pointer;
-}
-
-.gallery img:hover,
-.gallery iframe:hover{
-transform:scale(1.03);
-}
-
-/* ==================================================
-   EDIÇÕES
-================================================== */
-.edicao{
-margin-top:42px;
-}
-
-.edicao h3{
-font-size:28px;
-color:#991b1b;
-border-left:6px solid #991b1b;
-padding-left:14px;
-margin-bottom:16px;
-}
-
-/* ==================================================
-   LIGHTBOX
-================================================== */
-#lightbox{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,.94);
-display:none;
-justify-content:center;
-align-items:center;
-z-index:99999;
-padding:25px;
-}
-
-#lightbox img{
-max-width:95%;
-max-height:92%;
-border-radius:18px;
-}
-
-#closeBox{
-position:absolute;
-top:15px;
-right:25px;
-font-size:44px;
-color:#fff;
-cursor:pointer;
-font-weight:bold;
-}
-
-.arrow{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-font-size:58px;
-color:#fff;
-cursor:pointer;
-padding:10px;
-user-select:none;
-}
-
-#prev{left:20px;}
-#next{right:20px;}
-
-/* ==================================================
-   FOOTER
-================================================== */
-footer{
-text-align:center;
-padding:35px 20px;
-font-weight:bold;
-color:#7f1d1d;
-}
-
-/* ==================================================
-   RESPONSIVO
-================================================== */
-@media(min-width:900px){
-.hero-grid{grid-template-columns:1.1fr .9fr;}
-.grid-2{grid-template-columns:1fr 1fr;}
-.grid-3{grid-template-columns:1fr 1fr;}
-}
-
-@media(max-width:700px){
-
-.hero h1{font-size:34px;}
-
-.gallery{
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-gap:12px;
-}
-
-.gallery img,
-.gallery iframe{
-height:160px;
-}
-
-.arrow{font-size:38px;}
-#closeBox{font-size:34px;}
-
-}
-
-</style>
+<!-- CSS -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/sections.css">
+<link rel="stylesheet" href="css/mobile.css">
 </head>
 
 <body>
 
-<!-- ==================================================
-   TOPO
-================================================== -->
+<!-- ===================================================
+TOPO HERO
+=================================================== -->
 <header class="hero">
 <div class="wrap">
 
 <div class="hero-grid">
 
-<div>
+<div class="hero-texto">
+
 <h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
+
 <p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
 <p>Fé, tradição e grande confraternização</p>
 
+<!-- CONTADOR -->
 <div class="countdown" id="countdown">
 
 <div class="time-box">
@@ -324,1132 +55,172 @@ height:160px;
 
 </div>
 
-<a href="https://wa.me/5569993982037" class="btn green">Comprar Cartela</a>
+<a href="https://wa.me/5569993982037" class="btn green">
+Comprar Cartela
+</a>
 
 </div>
 
 <div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png" alt="Logo FPSS">
 </div>
 
 </div>
 </div>
 </header>
 
-<!-- ==================================================
-   CONTEÚDO
-================================================== -->
+<!-- ===================================================
+CONTEÚDO
+=================================================== -->
 <main class="wrap">
 
-
-<!-- ===================================================== -->
-<!-- SEÇÃO ESPECIAL - CHURRASCO ANTECIPADO FPSS            -->
-<!-- Cole esta seção dentro do <main> do seu site          -->
-<!-- ===================================================== -->
-
+<!-- CHURRASCO -->
 <section class="card churrasco-section">
+<h2 class="section-title">🔥 Churrasco Antecipado</h2>
+<p class="section-subtitle">
+Garanta seu almoço antecipadamente e retire sem fila no dia da festa.
+</p>
 
-    <!-- TÍTULO PRINCIPAL -->
-    <h2 class="section-title">🔥 Churrasco Antecipado</h2>
+<div class="two-grid">
 
-    <!-- SUBTÍTULO -->
-    <p class="churrasco-subtitulo">
-        Garanta seu almoço antecipadamente e retire sem fila no dia da festa.
-    </p>
+<div>
+<img class="section-img"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/Screenshot_2026-04-26-22-16-35-784_com.google.android.googlequicksearchbox-edit.jpg">
 
-    <!-- GRID PRINCIPAL -->
-    <div class="churrasco-grid">
+<div class="price-box">R$ 60,00</div>
 
-        <!-- ======================================== -->
-        <!-- BLOCO ESQUERDO - IMAGEM + INFORMAÇÕES    -->
-        <!-- ======================================== -->
-        <div class="churrasco-info">
+<ul class="info-list">
+<li>🥩 Churrasco no espeto</li>
+<li>⏰ Retirada até 15:00h</li>
+<li>📲 Confirmação no WhatsApp</li>
+<li>💳 Pagamento via Pix</li>
+</ul>
+</div>
 
-            <!-- IMAGEM ILUSTRATIVA -->
-            <img 
-                src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/Screenshot_2026-04-26-22-16-35-784_com.google.android.googlequicksearchbox-edit.jpg"
-                alt="Churrasco no espeto"
-                class="churrasco-img"
-            >
+<div class="form-box">
 
-            <!-- PREÇO -->
-            <div class="preco-box">
-                <span class="preco-label">Valor:</span>
-                <span class="preco-valor">R$ 60,00</span>
-            </div>
+<h3>📋 Fazer Pedido</h3>
 
-            <!-- INFORMAÇÕES -->
-            <ul class="lista-info">
-                <li>🥩 Churrasco no espeto</li>
-                <li>⏰ Retirada máxima até <strong>15:00h</strong></li>
-                <li>📲 Pedido confirmado via WhatsApp</li>
-                <li>💳 Pagamento via Pix</li>
-            </ul>
+<input type="text" id="nomeCliente" placeholder="Nome completo">
+<input type="text" id="telefoneCliente" placeholder="Telefone">
+<input type="number" id="quantidadePedido" min="1" value="1">
+<input type="time" id="horarioRetirada">
 
-            <!-- PIX -->
-            <div class="pix-box">
-                <h3>💳 Pagamento Pix</h3>
-                <p><strong>Chave:</strong> 6999900-5245</p>
-                <p><strong>Titular:</strong> Diocese de Ji-Paraná</p>
-            </div>
+<div class="total-box">
+Total: <span id="valorTotal">R$ 60,00</span>
+</div>
 
-        </div>
+<button class="btn green full" onclick="enviarPedidoWhats()">
+📲 Confirmar Pedido
+</button>
 
-        <!-- ======================================== -->
-        <!-- BLOCO DIREITO - FORMULÁRIO               -->
-        <!-- ======================================== -->
-        <div class="churrasco-form">
+<p class="small-center">
+Pedidos com André<br>
+69 8110-2306
+</p>
 
-            <h3>📋 Fazer Pedido</h3>
-
-            <!-- NOME -->
-            <label>Nome Completo</label>
-            <input type="text" id="nomeCliente" placeholder="Digite seu nome">
-
-            <!-- TELEFONE -->
-            <label>Telefone</label>
-            <input type="text" id="telefoneCliente" placeholder="(69) 99999-9999">
-
-            <!-- QUANTIDADE -->
-            <label>Quantidade</label>
-            <input type="number" id="quantidadePedido" min="1" value="1">
-
-            <!-- HORÁRIO -->
-            <label>Horário previsto para retirar</label>
-            <input type="time" id="horarioRetirada">
-
-            <!-- COMPROVANTE -->
-            <label>Comprovante Pix (opcional)</label>
-            <input type="file">
-
-            <!-- TOTAL -->
-            <div class="total-box">
-                Total: <span id="valorTotal">R$ 60,00</span>
-            </div>
-
-            <!-- BOTÃO -->
-            <button onclick="enviarPedidoWhats()" class="btn green pedido-btn">
-                📲 Confirmar Pedido no WhatsApp
-            </button>
-
-            <!-- RESPONSÁVEL -->
-            <p class="responsavel">
-                Pedidos recebidos por <strong>ANDRÉ</strong><br>
-                📞 69 8110-2306
-            </p>
-
-        </div>
-
-    </div>
+</div>
+</div>
 </section>
 
-<!-- ===================================================== -->
-<!-- CSS DA SEÇÃO                                          -->
-<!-- Cole dentro do <style> do seu site                    -->
-<!-- ===================================================== -->
-
-<style>
-
-.churrasco-section{
-margin-top:22px;
-}
-
-.churrasco-subtitulo{
-margin-bottom:20px;
-font-size:18px;
-color:#444;
-}
-
-.churrasco-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:25px;
-}
-
-.churrasco-img{
-width:100%;
-height:320px;
-object-fit:cover;
-border-radius:18px;
-box-shadow:0 12px 25px rgba(0,0,0,.12);
-}
-
-.preco-box{
-margin-top:15px;
-background:#16a34a;
-color:#fff;
-padding:14px;
-border-radius:14px;
-font-size:22px;
-font-weight:bold;
-text-align:center;
-}
-
-.lista-info{
-margin-top:18px;
-padding-left:20px;
-line-height:2;
-}
-
-.pix-box{
-margin-top:20px;
-padding:18px;
-background:#f5f5f5;
-border-radius:16px;
-}
-
-.churrasco-form{
-background:#fafafa;
-padding:22px;
-border-radius:18px;
-box-shadow:0 10px 20px rgba(0,0,0,.06);
-}
-
-.churrasco-form h3{
-margin-bottom:16px;
-color:#7f1d1d;
-}
-
-.churrasco-form label{
-display:block;
-margin-top:12px;
-margin-bottom:6px;
-font-weight:bold;
-}
-
-.churrasco-form input{
-width:100%;
-padding:12px;
-border:1px solid #ccc;
-border-radius:10px;
-font-size:16px;
-}
-
-.total-box{
-margin-top:18px;
-padding:14px;
-background:#16a34a;
-color:#fff;
-font-size:22px;
-font-weight:bold;
-text-align:center;
-border-radius:12px;
-}
-
-.pedido-btn{
-width:100%;
-margin-top:18px;
-font-size:18px;
-padding:16px;
-}
-
-.responsavel{
-margin-top:18px;
-text-align:center;
-font-size:15px;
-color:#444;
-}
-
-@media(min-width:900px){
-
-.churrasco-grid{
-grid-template-columns:1fr 1fr;
-align-items:start;
-}
-
-}
-
-</style>
-
-<!-- ===================================================== -->
-<!-- JAVASCRIPT                                            -->
-<!-- Cole antes do </body>                                -->
-<!-- ===================================================== -->
-
-<script>
-
-/* Atualiza valor total conforme quantidade */
-document.getElementById("quantidadePedido").addEventListener("input", function(){
-
-let qtd = parseInt(this.value) || 1;
-let total = qtd * 60;
-
-document.getElementById("valorTotal").innerText =
-"R$ " + total.toFixed(2).replace(".", ",");
-
-});
-
-
-/* Enviar pedido no WhatsApp */
-function enviarPedidoWhats(){
-
-let nome =
-document.getElementById("nomeCliente").value;
-
-let telefone =
-document.getElementById("telefoneCliente").value;
-
-let quantidade =
-document.getElementById("quantidadePedido").value;
-
-let horario =
-document.getElementById("horarioRetirada").value;
-
-let total = quantidade * 60;
-
-/* Texto da mensagem */
-let mensagem =
-"Olá ANDRÉ! Pedido de Churrasco FPSS:%0A%0A" +
-"Nome: " + nome + "%0A" +
-"Telefone: " + telefone + "%0A" +
-"Quantidade: " + quantidade + "%0A" +
-"Horário retirada: " + horario + "%0A" +
-"Valor Total: R$ " + total + ",00%0A%0A" +
-"Pagamento via Pix realizado.";
-
-/* Abre WhatsApp */
-window.open(
-"https://wa.me/556981102306?text=" + mensagem,
-"_blank"
-);
-
-}
-
-</script>
-
-
-
-   
-
+<!-- GRID PRINCIPAL -->
 <section class="grid-2">
 
+<!-- CARTELA -->
 <div class="card">
 <h2 class="section-title">Sorteio Beneficente</h2>
-<img style="width:100%;max-width:340px;display:block;margin:auto;border-radius:18px;"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png"><br>
+
+<img class="promo-img"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Artes/VI%20FPSS/Cartela_Frente%20_T-Reduzido.png">
 
 <p><strong>R$ 25.000,00 em prêmios</strong></p>
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
-<p><strong>PIX:</strong> 69999005245</p>
-<p><strong>Titular:</strong> Paróquia Nossa Senhora Aparecida</p><br>
 
-<h2 class="section-title">Compre Já sua Cartela</h2>
-   
-<a class="btn green" href="https://wa.me/5569981102306">Com André</a>
-<p style="margin-top:12px;"><strong>Coordenador Evento</p>
+<a class="btn green" href="https://wa.me/5569981102306">
+Com André
+</a>
 
-<a class="btn green" href="https://wa.me/5569993982037">Com Rafael</a>
-<p style="margin-top:12px;"><strong>Coordenador Bingo</p>
+<a class="btn green" href="https://wa.me/5569993982037">
+Com Rafael
+</a>
 
 </div>
 
+<!-- PROGRAMAÇÃO -->
 <div class="card">
 <h2 class="section-title">Programação Oficial</h2>
+
 <p>10h • Santa Missa</p>
-<p>11h • Almoço com Churrasco no Espeto</p>
-<p>Show ao vivo com Cuyabano e Douradense</p>
+<p>11h • Almoço com Churrasco</p>
+<p>Show ao vivo</p>
 <p>15h • Sorteio Presencial</p>
 <p>17h • Show de Prêmios</p>
 </div>
-   
+
+<!-- REDES -->
 <div class="card">
 <h2 class="section-title">Redes Sociais</h2>
 
-<a class="btn purple" href="https://www.instagram.com/pnsa_css?igsh=aHI4eGR2Ynh5OGl3">Instagram</a>
-<a class="btn blue" href="https://www.facebook.com/saosebastiaorolim/">Facebook</a>
-<a class="btn red" href="https://youtube.com/@saosebastiaorm_festa?si=tfrmjlTuU9MEmlEY">YouTube</a>
-<a class="btn telegram" href="https://t.me/+8qryuFS5-eNmNWMx">Telegram</a>
+<a class="btn purple" href="#">Instagram</a>
+<a class="btn blue" href="#">Facebook</a>
+<a class="btn red" href="#">YouTube</a>
+<a class="btn telegram" href="#">Telegram</a>
 
 </div>
 
 </section>
 
-<!-- ===================================================== -->
-<!-- SEÇÃO CADASTRO DE NOVIDADES DA FESTA FPSS             -->
-<!-- ETAPA 1 - FORMULÁRIO HTML                             -->
-<!-- Cole dentro do <main> do seu site                     -->
-<!-- ===================================================== -->
-
-<section class="card novidades-section">
-
-    <!-- TÍTULO -->
-    <h2 class="section-title">📢 Receba Novidades da Festa</h2>
-
-    <!-- SUBTÍTULO -->
-    <p class="novidades-subtitulo">
-        Cadastre seu nome e WhatsApp para receber notícias, avisos,
-        promoções de cartelas, churrasco e novidades da 6ª FPSS.
-    </p>
-
-    <!-- FORMULÁRIO -->
-    <form id="formNovidades">
-
-        <!-- NOME -->
-        <label>Nome Completo</label>
-        <input
-        type="text"
-        id="nomeNovidade"
-        placeholder="Digite seu nome"
-        required>
-
-        <!-- WHATSAPP -->
-        <label>WhatsApp</label>
-        <input
-        type="tel"
-        id="foneNovidade"
-        placeholder="(69) 99999-9999"
-        required>
-
-        <!-- CIDADE -->
-        <label>Cidade</label>
-        <input
-        type="text"
-        id="cidadeNovidade"
-        placeholder="Ex: Rolim de Moura">
-
-        <!-- BOTÃO -->
-        <button
-        type="button"
-        onclick="salvarNovidade()"
-        class="btn green novidades-btn">
-
-        📲 Quero Receber Novidades
-
-        </button>
-
-    </form>
-
-    <!-- RETORNO -->
-    <div id="msgRetorno" class="msg-retorno"></div>
-
-</section>
-
-<!-- ===================================================== -->
-<!-- CSS DA SEÇÃO                                          -->
-<!-- Cole dentro do <style>                                -->
-<!-- ===================================================== -->
-
-<style>
-
-.novidades-section{
-margin-top:22px;
-}
-
-.novidades-subtitulo{
-font-size:18px;
-color:#444;
-margin-bottom:20px;
-}
-
-#formNovidades label{
-display:block;
-margin-top:14px;
-margin-bottom:6px;
-font-weight:bold;
-}
-
-#formNovidades input{
-width:100%;
-padding:14px;
-border:1px solid #ccc;
-border-radius:10px;
-font-size:16px;
-}
-
-.novidades-btn{
-width:100%;
-margin-top:18px;
-padding:16px;
-font-size:18px;
-}
-
-.msg-retorno{
-margin-top:16px;
-font-weight:bold;
-color:#16a34a;
-text-align:center;
-}
-
-</style>
-
-<!-- ===================================================== -->
-<!-- JAVASCRIPT TEMPORÁRIO                                 -->
-<!-- ETAPA 1 TESTE LOCAL                                   -->
-<!-- Cole antes do </body>                                 -->
-<!-- ===================================================== -->
-
-<script>
-
-function salvarNovidade(){
-
-let nome =
-document.getElementById("nomeNovidade").value;
-
-let fone =
-document.getElementById("foneNovidade").value;
-
-if(nome === "" || fone === ""){
-
-document.getElementById("msgRetorno").innerHTML =
-"⚠️ Preencha nome e WhatsApp.";
-
-return;
-
-}
-
-document.getElementById("msgRetorno").innerHTML =
-"✅ Cadastro preenchido com sucesso! Próxima etapa: conectar ao Google Sheets.";
-
-document.getElementById("formNovidades").reset();
-
-}
-
-</script>
-   
-
-<!-- ===================================================== -->
-<!-- SEÇÃO LOCALIZAÇÃO / COMO CHEGAR - FPSS                -->
-<!-- Cole dentro do <main> do seu site                     -->
-<!-- ===================================================== -->
-
-<section class="card local-section">
-
-    <!-- TÍTULO -->
-    <h2 class="section-title">📍 Como Chegar na Festa</h2>
-
-    <!-- SUBTÍTULO -->
-    <p class="local-subtitulo">
-        A festa será realizada na Comunidade São Sebastião, zona rural de Rolim de Moura/RO.
-        Clique abaixo e trace sua rota direto pelo Google Maps.
-    </p>
-
-    <!-- GRID -->
-    <div class="local-grid">
-
-        <!-- BLOCO ESQUERDO -->
-        <div class="local-info">
-
-            <!-- IMAGEM ILUSTRATIVA -->
-            <img
-            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/FB_IMG_1775562098853.jpg"
-            alt="Estrada rural acesso festa"
-            class="local-img">
-
-            <!-- INFORMAÇÕES -->
-            <div class="local-box">
-
-                <p>📌 <strong>Evento:</strong> 6ª Festa do Padroeiro São Sebastião</p>
-
-                <p>🌳 <strong>Local:</strong> LH 188 Km 4 lado Ruralha / Zona Rural</p>
-
-                <p>🏙️ <strong>Cidade:</strong> Rolim de Moura - RO</p>
-
-                <p>🚗 <strong>Acesso:</strong> Carro, moto, caminhonete e utilitário</p>
-
-                <p>🕘 <strong>Chegue cedo</strong> para melhor estacionamento.</p>
-
-            </div>
-
-        </div>
-
-        <!-- BLOCO DIREITO -->
-        <div class="rota-box">
-
-            <h3>🧭 Traçar Rota Agora</h3>
-
-            <p>
-                Use o aplicativo do Google Maps no celular para navegar até o local.
-            </p>
-
-            <!-- BOTÃO MAPS -->
-            <a
-            href="https://maps.app.goo.gl/jPckZuqQnV9oaJGx6?g_st=aw"
-            target="_blank"
-            class="btn green rota-btn">
-
-            📍 Abrir no Google Maps
-
-            </a>
-
-            <!-- BOTÃO WHATSAPP -->
-            <a
-            href="https://wa.me/556981102306?text=Olá! Gostaria de informações para chegar na festa."
-            target="_blank"
-            class="btn blue rota-btn">
-
-            📲 Pedir Ajuda no WhatsApp
-
-            </a>
-
-            <!-- ALERTA -->
-            <div class="dica-rota">
-                ⚠️ Em área rural o sinal pode oscilar.  
-                Recomendado abrir a rota antes de sair.
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-<!-- ===================================================== -->
-<!-- CSS DA SEÇÃO                                          -->
-<!-- Cole dentro do <style>                                -->
-<!-- ===================================================== -->
-
-<style>
-
-.local-section{
-margin-top:22px;
-}
-
-.local-subtitulo{
-font-size:18px;
-color:#444;
-margin-bottom:20px;
-}
-
-.local-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:25px;
-}
-
-.local-img{
-width:100%;
-height:320px;
-object-fit:cover;
-border-radius:18px;
-box-shadow:0 12px 25px rgba(0,0,0,.12);
-}
-
-.local-box{
-margin-top:18px;
-padding:18px;
-background:#f8f8f8;
-border-radius:16px;
-line-height:2;
-}
-
-.rota-box{
-background:#fafafa;
-padding:25px;
-border-radius:18px;
-box-shadow:0 10px 20px rgba(0,0,0,.06);
-}
-
-.rota-box h3{
-margin-bottom:15px;
-color:#7f1d1d;
-font-size:26px;
-}
-
-.rota-box p{
-margin-bottom:15px;
-}
-
-.rota-btn{
-width:100%;
-display:block;
-text-align:center;
-margin-top:14px;
-font-size:18px;
-padding:16px;
-}
-
-.dica-rota{
-margin-top:18px;
-padding:14px;
-background:#fff3cd;
-border-radius:12px;
-font-size:15px;
-line-height:1.6;
-}
-
-@media(min-width:900px){
-
-.local-grid{
-grid-template-columns:1fr 1fr;
-align-items:start;
-}
-
-}
-
-</style>
-
-
-<!-- ===================================================== -->
-<!-- SEÇÃO ESPECIAL - DOAÇÕES PARA A FESTA FPSS            -->
-<!-- Cole dentro do <main> do seu site                     -->
-<!-- ===================================================== -->
-
-<section class="card doacao-section">
-
-    <!-- TÍTULO -->
-    <h2 class="section-title">🤝 Faça sua Doação para a Festa do Padroeiro São Sebastião</h2>
-
-    <!-- SUBTÍTULO -->
-    <p class="doacao-subtitulo">
-        Sua ajuda fortalece a tradição da nossa comunidade.  
-        Toda contribuição é bem-vinda para realizar uma grande festa.
-    </p>
-
-    <!-- GRID PRINCIPAL -->
-    <div class="doacao-grid">
-
-        <!-- ======================================== -->
-        <!-- BLOCO ESQUERDO - IMAGEM + TIPOS          -->
-        <!-- ======================================== -->
-        <div class="doacao-info">
-
-            <!-- IMAGEM -->
-            <img
-            src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=80"
-            alt="Doação para festa comunitária"
-            class="doacao-img">
-
-            <!-- BOX TIPOS -->
-            <div class="tipos-box">
-
-                <h3>🎁 O que você pode doar?</h3>
-
-                <ul class="lista-doacao">
-                    <li>🐂 Gado para churrasco</li>
-                    <li>🎁 Brindes para leilão</li>
-                    <li>🎉 Prendas para bingo</li>
-                    <li>🥤 Bebidas e alimentos</li>
-                    <li>💰 Ajuda financeira</li>
-                    <li>🧰 Materiais e serviços</li>
-                    <li>🙏 Qualquer contribuição voluntária</li>
-                </ul>
-
-            </div>
-
-        </div>
-
-        <!-- ======================================== -->
-        <!-- BLOCO DIREITO - FORMULÁRIO               -->
-        <!-- ======================================== -->
-        <div class="doacao-form">
-
-            <h3>📋 Quero Ajudar</h3>
-
-            <!-- NOME -->
-            <label>Nome Completo</label>
-            <input type="text" id="nomeDoacao" placeholder="Digite seu nome">
-
-            <!-- TELEFONE -->
-            <label>Telefone</label>
-            <input type="text" id="foneDoacao" placeholder="(69) 99999-9999">
-
-            <!-- TIPO -->
-            <label>Tipo de Doação</label>
-            <select id="tipoDoacao">
-
-                <option value="">Selecione</option>
-                <option>Gado</option>
-                <option>Brindes para Leilão</option>
-                <option>Prendas para Bingo</option>
-                <option>Ajuda Financeira</option>
-                <option>Alimentos / Bebidas</option>
-                <option>Serviços</option>
-                <option>Outro</option>
-
-            </select>
-
-            <!-- DESCRIÇÃO -->
-            <label>Descrição</label>
-            <textarea
-            id="descricaoDoacao"
-            rows="4"
-            placeholder="Descreva sua doação"></textarea>
-
-            <!-- BOTÃO -->
-            <button
-            onclick="enviarDoacaoWhats()"
-            class="btn green doacao-btn">
-
-            📲 Informar Doação no WhatsApp
-
-            </button>
-
-            <!-- PIX -->
-            <div class="pix-doacao">
-
-                <h4>💳 Também pode doar via Pix</h4>
-
-                <p><strong>Chave:</strong> 6999900-5245</p>
-                <p><strong>Titular:</strong> Diocese de Ji-Paraná</p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-<!-- ===================================================== -->
-<!-- CSS DA SEÇÃO                                          -->
-<!-- Cole dentro do <style>                                -->
-<!-- ===================================================== -->
-
-<style>
-
-.doacao-section{
-margin-top:22px;
-}
-
-.doacao-subtitulo{
-font-size:18px;
-color:#444;
-margin-bottom:20px;
-}
-
-.doacao-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:25px;
-}
-
-.doacao-img{
-width:100%;
-height:340px;
-object-fit:cover;
-border-radius:18px;
-box-shadow:0 12px 25px rgba(0,0,0,.12);
-}
-
-.tipos-box{
-margin-top:18px;
-padding:20px;
-background:#f8f8f8;
-border-radius:18px;
-}
-
-.tipos-box h3{
-margin-bottom:12px;
-color:#7f1d1d;
-}
-
-.lista-doacao{
-padding-left:20px;
-line-height:2;
-}
-
-.doacao-form{
-background:#fafafa;
-padding:24px;
-border-radius:18px;
-box-shadow:0 10px 20px rgba(0,0,0,.06);
-}
-
-.doacao-form h3{
-margin-bottom:16px;
-color:#7f1d1d;
-font-size:26px;
-}
-
-.doacao-form label{
-display:block;
-margin-top:12px;
-margin-bottom:6px;
-font-weight:bold;
-}
-
-.doacao-form input,
-.doacao-form select,
-.doacao-form textarea{
-width:100%;
-padding:12px;
-border:1px solid #ccc;
-border-radius:10px;
-font-size:16px;
-}
-
-.doacao-btn{
-width:100%;
-margin-top:18px;
-padding:16px;
-font-size:18px;
-}
-
-.pix-doacao{
-margin-top:20px;
-padding:18px;
-background:#e8f5e9;
-border-radius:14px;
-line-height:1.8;
-}
-
-@media(min-width:900px){
-
-.doacao-grid{
-grid-template-columns:1fr 1fr;
-align-items:start;
-}
-
-}
-
-</style>
-
-<!-- ===================================================== -->
-<!-- JAVASCRIPT                                            -->
-<!-- Cole antes do </body>                                 -->
-<!-- ===================================================== -->
-
-<script>
-
-function enviarDoacaoWhats(){
-
-let nome =
-document.getElementById("nomeDoacao").value;
-
-let telefone =
-document.getElementById("foneDoacao").value;
-
-let tipo =
-document.getElementById("tipoDoacao").value;
-
-let descricao =
-document.getElementById("descricaoDoacao").value;
-
-let mensagem =
-"Olá! Quero colaborar com a Festa do Padroeiro São Sebastião.%0A%0A" +
-"Nome: " + nome + "%0A" +
-"Telefone: " + telefone + "%0A" +
-"Tipo de Doação: " + tipo + "%0A" +
-"Descrição: " + descricao;
-
-window.open(
-"https://wa.me/556981102306?text=" + mensagem,
-"_blank"
-);
-
-}
-
-</script>
-
-<!-- ===================================================== -->
-<!-- SEÇÃO PARCEIROS OFICIAIS DA FESTA                     -->
-<!-- RESTAURAR NO SITE FPSS                                -->
-<!-- Cole dentro do <main> onde desejar                    -->
-<!-- ===================================================== -->
-
+<!-- PARCEIROS -->
 <section class="card parceiros-section">
 
-    <!-- TÍTULO -->
-    <h2 class="section-title">🤝 Parceiros Oficiais</h2>
+<h2 class="section-title">🤝 Parceiros Oficiais</h2>
 
-    <!-- SUBTÍTULO -->
-    <p class="parceiros-subtitulo">
-        Empresas e apoiadores que acreditam na nossa tradição
-        e ajudam a tornar a festa possível.
-    </p>
+<div class="partners-grid">
 
-    <!-- GRID DE LOGOS -->
-    <div class="parceiros-grid">
+<div class="partner-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
+<h3>Central Modas</h3>
+</div>
 
-        <!-- PARCEIRO 1 -->
-        <div class="parceiro-box">
-            <img
-            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png"
-            alt="Central Modas">
-            <h3>Central Modas</h3>
-            <p>Apoio oficial da festa</p>
-        </div>
+<div class="partner-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
+<h3>Grande Rede</h3>
+</div>
 
-        <!-- PARCEIRO 2 -->
-        <div class="parceiro-box">
-            <img
-            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png"
-            alt="Grande Rede">
-            <h3>Grande Rede</h3>
-            <p>Parceiro da comunidade</p>
-        </div>
+<div class="partner-box">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
+<h3>Norte Motos</h3>
+</div>
 
-        <!-- PARCEIRO 3 -->
-        <div class="parceiro-box">
-            <img
-            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png"
-            alt="Norte Motos">
-            <h3>Norte Motos</h3>
-            <p>Patrocinador oficial</p>
-        </div>
-
-        <!-- PARCEIRO 4 -->
-        <div class="parceiro-box">
-            <img
-            src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Maicon%20Joias.jpeg"
-            alt="Maicon Jóias">
-            <h3>Maicon Jóias</h3>
-            <p>Apoiador da festa</p>
-        </div>
-
-    </div>
-
+</div>
 </section>
 
-<!-- ===================================================== -->
-<!-- CSS DA SEÇÃO                                          -->
-<!-- Cole dentro do <style>                                -->
-<!-- ===================================================== -->
-
-<style>
-
-.parceiros-section{
-margin-top:24px;
-}
-
-.parceiros-subtitulo{
-font-size:18px;
-color:#555;
-margin-bottom:22px;
-text-align:center;
-}
-
-.parceiros-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:20px;
-}
-
-.parceiro-box{
-background:#ffffff;
-padding:20px;
-border-radius:20px;
-text-align:center;
-box-shadow:0 12px 24px rgba(0,0,0,.08);
-transition:.3s;
-}
-
-.parceiro-box:hover{
-transform:translateY(-6px);
-box-shadow:0 18px 30px rgba(0,0,0,.12);
-}
-
-.parceiro-box img{
-width:100%;
-height:130px;
-object-fit:contain;
-margin-bottom:14px;
-}
-
-.parceiro-box h3{
-font-size:20px;
-color:#7f1d1d;
-margin-bottom:8px;
-}
-
-.parceiro-box p{
-font-size:15px;
-color:#666;
-}
-
-@media(max-width:700px){
-
-.parceiro-box img{
-height:110px;
-}
-
-}
-
-</style>   
-
-   
-<!-- ==================================================
-   GALERIA PREMIUM
-================================================== -->
+<!-- GALERIA -->
 <section class="card">
 
-<h2 class="section-title">Fotos e Vídeos de Edições Anteriores</h2>
+<h2 class="section-title">Fotos e Vídeos</h2>
 
-<div class="edicao">
-<h3>5ª Edição</h3>
 <div class="gallery">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Foto_aree_Frente.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
-</div>
-</div>
 
-<div class="edicao">
-<h3>4ª Edição</h3>
-<div class="gallery">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Cartaz.jpg">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Cartela.jpg">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/IV%20FPSS/Chegada_Folia.jpg">
-<iframe src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
-</div>
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Foto_aree_Frente.jpg">
+
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
+
 </div>
 
-<div class="edicao"Imagensmgmgmgição</h3>
-<div class="gallery">
-        <iframe height="250" src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Carrata_4.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Carreata.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Carreata_3.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Missa.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Cartela.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Cartas.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Adesivo_.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoça_4.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_1.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_2_tenda.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_5.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_6.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_7.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_8.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Charrasco_21.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Balde_Gelo.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Copo.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Ganhador_1.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Ganhador_3.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Ganhador_4.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Ganhardor_2.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Ganhador_5.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Almoço_9.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/III FPSS/Entrevista_Radio.jpg">
-</div>
-</div>
-
-<div class="edicao">
-<h3>2ª Edição</h3>
-<div class="gallery">
-       <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II FPSS/Ganhadora_1.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II FPSS/Ganhadora_2.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II FPSS/visita_comunidades.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II FPSS/Contratar_Vendedor.jpg">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/II FPSS/CARTELA_verso.jpg">
-        <iframe height="250" src="https://www.youtube.com/embed/N9PLCErzT08" allowfullscreen></iframe>
-</div>
-</div>
-
-<div class="edicao">
-<h3>1ª Edição</h3>
-<div class="gallery">
-         <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_1.JPG">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_2.JPG">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_3.JPG">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_4.JPG">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_5.JPG">
-        <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/I FPSS/IFPSSF_AREIA_6.JPG">
-</div>
-</div>
 </section>
 
 </main>
 
+<!-- FOOTER -->
 <footer>
 Comunidade São Sebastião • Rolim de Moura / RO
 </footer>
 
-<!-- ==================================================
-   LIGHTBOX
-================================================== -->
+<!-- LIGHTBOX -->
 <div id="lightbox">
 
 <span id="closeBox">×</span>
@@ -1461,97 +232,11 @@ Comunidade São Sebastião • Rolim de Moura / RO
 
 </div>
 
-<!-- ==================================================
-   JAVASCRIPT
-================================================== -->
-<script>
-
-/* CONTADOR */
-const dataEvento = new Date("Jan 24, 2027 10:00:00").getTime();
-
-function atualizarContador(){
-
-const agora = new Date().getTime();
-const distancia = dataEvento - agora;
-
-if(distancia <= 0){
-document.getElementById("countdown").innerHTML="HOJE É O EVENTO";
-return;
-}
-
-document.getElementById("dias").textContent =
-Math.floor(distancia/(1000*60*60*24));
-
-document.getElementById("horas").textContent =
-Math.floor((distancia%(1000*60*60*24))/(1000*60*60));
-
-document.getElementById("minutos").textContent =
-Math.floor((distancia%(1000*60*60))/(1000*60));
-
-document.getElementById("segundos").textContent =
-Math.floor((distancia%(1000*60))/1000);
-
-}
-
-setInterval(atualizarContador,1000);
-atualizarContador();
-
-/* LIGHTBOX */
-const imagens = document.querySelectorAll(".gallery img");
-const lightbox = document.getElementById("lightbox");
-const imgBox = document.getElementById("imgBox");
-
-let atual = 0;
-
-function abrir(i){
-atual = i;
-imgBox.src = imagens[atual].src;
-lightbox.style.display="flex";
-document.body.style.overflow="hidden";
-}
-
-function fechar(){
-lightbox.style.display="none";
-document.body.style.overflow="auto";
-}
-
-function prox(){
-atual++;
-if(atual>=imagens.length){atual=0;}
-imgBox.src = imagens[atual].src;
-}
-
-function ant(){
-atual--;
-if(atual<0){atual=imagens.length-1;}
-imgBox.src = imagens[atual].src;
-}
-
-imagens.forEach((img,i)=>{
-img.onclick=()=>abrir(i);
-});
-
-document.getElementById("closeBox").onclick=fechar;
-document.getElementById("next").onclick=prox;
-document.getElementById("prev").onclick=ant;
-
-lightbox.onclick=function(e){
-if(e.target===lightbox){fechar();}
-}
-
-document.addEventListener("keydown",function(e){
-
-if(lightbox.style.display==="flex"){
-
-if(e.key==="Escape")fechar();
-if(e.key==="ArrowRight")prox();
-if(e.key==="ArrowLeft")ant();
-
-}
-
-});
-
-</script>
+<!-- JS -->
+<script src="js/countdown.js"></script>
+<script src="js/lightbox.js"></script>
+<script src="js/forms.js"></script>
+<script src="js/main.js"></script>
 
 </body>
 </html>
