@@ -1,239 +1,98 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
-<meta name="theme-color" content="#8b1111">
-
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/mobile.css">
-
-<!-- PROTEÇÃO BÁSICA CONTRA FLASH DE CONTEÚDO -->
-<style>
-html, body { overflow-x:hidden; }
-</style>
-
-</head>
-
-<body>
-
-<!-- HERO -->
-<header class="hero">
-<div class="wrap">
-
-<div class="hero-grid">
-
-<div>
-<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
-
-<p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
-<p>Fé, tradição e grande confraternização</p>
-
-<div class="countdown" id="countdown">
-
-<div class="time-box">
-<div class="time-number" id="dias">0</div>
-<div class="time-label">DIAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="horas">0</div>
-<div class="time-label">HORAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="minutos">0</div>
-<div class="time-label">MIN</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="segundos">0</div>
-<div class="time-label">SEG</div>
-</div>
-
-</div>
-
-<a href="https://wa.me/556981102306" class="btn green">Comprar Cartela</a>
-<a href="#churrasco" class="btn red">Comprar Churrasco</a>
-
-</div>
-
-<div class="hero-side">
-<img 
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/logo/vi-fpss/v-fpss-logo.png.png"
-alt="Logo FPSS">
-</div>
-
-</div>
-</div>
-</header>
-
-<main class="wrap">
-
-<!-- CHURRASCO -->
-<section class="card" id="churrasco">
-
-<h2 class="section-title">🔥 Churrasco Antecipado</h2>
-<p>Garanta seu almoço antecipadamente e retire sem fila no dia da festa.</p>
-
-<div class="grid-2">
-
-<div>
-<img class="section-img"
-alt="Churrasco FPSS"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/diversas/churrasco-antecipado.jpg">
-
-<div class="price-box">R$ 60,00</div>
-
-<ul class="info-list">
-<li>🥩 Churrasco no espeto</li>
-<li>⏰ Retirada até 15h</li>
-<li>💳 Pagamento Pix</li>
-<li>📲 Confirmação WhatsApp</li>
-</ul>
-</div>
-
-<div class="form-box">
-
-<h3>📋 Fazer Pedido</h3>
-
-<label>Nome</label>
-<input type="text" id="nomeCliente">
-
-<label>Telefone</label>
-<input type="text" id="telefoneCliente">
-
-<label>Quantidade</label>
-<input type="number" id="quantidadePedido" value="1">
-
-<label>Retirada</label>
-<input type="time" id="horarioRetirada">
-
-<div class="total-box" id="valorTotal">R$ 60,00</div>
-
-<button type="button" onclick="enviarPedidoWhats()" class="btn green full">
-Confirmar Pedido
-</button>
-
-</div>
-
-</div>
-</section>
-
-<!-- SORTEIO -->
-<section class="card">
-
-<h2 class="section-title">🎁 Sorteio Beneficente</h2>
-
-<p><strong>R$ 25.000,00 em prêmios</strong></p>
-<p>13 chances de ganhar</p>
-<p>Cartela R$ 20,00</p>
-
-<a href="https://wa.me/556981102306" class="btn green">Comprar com André</a>
-<a href="https://wa.me/5569993982037" class="btn blue">Comprar com Rafael</a>
-
-</section>
-
-<!-- PROGRAMACAO -->
-<section class="card">
-
-<h2 class="section-title">📅 Programação Oficial</h2>
-
-<p>10h • Santa Missa</p>
-<p>11h • Almoço com Churrasco</p>
-<p>15h • Sorteio Presencial</p>
-<p>17h • Show de Prêmios</p>
-
-</section>
-
-<!-- REDES -->
-<section class="card">
-
-<h2 class="section-title">📲 Redes Sociais</h2>
-
-<a class="btn purple" href="#">Instagram</a>
-<a class="btn blue" href="#">Facebook</a>
-<a class="btn red" href="#">YouTube</a>
-
-</section>
-
-<!-- PARCEIROS -->
-<section class="card">
-
-<h2 class="section-title">🤝 Parceiros Oficiais</h2>
-
-<div class="gallery">
-
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-agro-forte.jpeg">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-central-modas.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-franca-solar.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-salatiel.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-jaco.png">
-
-  <img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-trento.jpg">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-norte-motos.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-favorito.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-cta.jpeg">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-blue-ray.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-grande-rede.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-jarri-joalheiro.jpg">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-maicom-joia.jpeg">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-super-ricart.png">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-valsom.jpg">
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-folha-verde.jpeg">
-  
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-rei-do-pano.png">
-
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-manelao.png">
-
-
-
-
-  
-</div>
-
-</section>
-
-<!-- GALERIA -->
-<section class="card">
-
-<h2 class="section-title">📸 Fotos e Vídeos</h2>
-
-<div class="gallery">
-
-<img alt="Evento FPSS"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-almoço-barracao.jpg">
-
-<img alt="Área frontal"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-imagem-area-frente.jpg">
-
-<img alt="Vista aérea"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg">
-
-</div>
-
-</section>
-
-</main>
-
-<footer>
-Comunidade São Sebastião • Rolim de Moura / RO
-</footer>
-
-<!-- LIGHTBOX -->
-<div id="lightbox">
-<span id="closeBox">×</span>
-<span class="arrow" id="prev">&#10094;</span>
-<img id="imgBox" alt="Imagem ampliada">
-<span class="arrow" id="next">&#10095;</span>
-</div>
-
-<script src="js/countdown.js"></script>
-<script src="js/lightbox.js"></script>
-<script src="js/forms.js"></script>
-
-</body>
-</html>
+/* FPSS MASTER RESET */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial, Helvetica, sans-serif;
+background:#f8f4ec;
+color:#111;
+overflow-x:hidden;
+}
+
+/* CONTAINER */
+.wrap{
+max-width:1200px;
+margin:auto;
+padding:20px;
+}
+
+/* HERO */
+.hero{
+background:linear-gradient(135deg,#5b0f0f,#991b1b);
+color:#fff;
+padding:60px 20px;
+border-radius:0 0 25px 25px;
+}
+
+.hero-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:20px;
+}
+
+/* IMAGENS PADRÃO */
+img{
+max-width:100%;
+display:block;
+border-radius:14px;
+}
+
+/* CARDS */
+.card{
+background:#fff;
+padding:22px;
+border-radius:18px;
+margin-top:20px;
+box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+/* TITULOS */
+.section-title{
+color:#7f1d1d;
+margin-bottom:14px;
+font-size:28px;
+}
+
+/* GRID */
+.grid-2{
+display:grid;
+grid-template-columns:1fr;
+gap:18px;
+}
+
+/* BOTÕES */
+.btn{
+display:inline-block;
+padding:14px 18px;
+border-radius:12px;
+color:#fff;
+text-decoration:none;
+margin-top:10px;
+font-weight:bold;
+}
+
+.green{background:#16a34a;}
+.blue{background:#2563eb;}
+.red{background:#dc2626;}
+.purple{background:#7c3aed;}
+
+/* GALERIA */
+.gallery{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:14px;
+}
+
+.gallery img{
+height:200px;
+object-fit:cover;
+cursor:pointer;
+transition:.3s;
+}
+
+.gallery img:hover{
+transform:scale(1.03);
+}
