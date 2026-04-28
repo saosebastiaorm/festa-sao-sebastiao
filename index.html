@@ -6,9 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+<meta name="description" content="6ª Festa do Padroeiro São Sebastião em Rolim de Moura RO. Churrasco, sorteio beneficente, programação oficial e tradição da comunidade.">
+<meta name="theme-color" content="#8b1111">
 
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura / RO">
-<meta name="theme-color" content="#7b1113">
+<meta property="og:title" content="6ª FPSS • Festa do Padroeiro São Sebastião">
+<meta property="og:description" content="24 de Janeiro de 2027 • Rolim de Moura / RO">
+<meta property="og:type" content="website">
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
@@ -17,112 +20,92 @@
 
 <body>
 
-<!-- TOPO -->
+<!-- =====================================================
+   HERO
+===================================================== -->
 <header class="hero">
+<div class="wrap">
 
-<div class="overlay"></div>
+<div class="hero-grid">
 
-<div class="wrap hero-grid">
+<div>
 
-<div class="hero-left">
+<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 
-<span class="tag-topo">✨ Evento Oficial 2027</span>
+<p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
+<p>Fé, tradição e grande confraternização</p>
 
-<h1>
-6ª FPSS<br>
-Festa do Padroeiro São Sebastião
-</h1>
-
-<p class="hero-text">
-24 de Janeiro de 2027 • Rolim de Moura / RO
-</p>
-
-<p class="hero-sub">
-Fé, tradição, confraternização e grande encontro das famílias.
-</p>
-
-<!-- CONTADOR -->
 <div class="countdown" id="countdown">
 
 <div class="time-box">
-<span id="dias">0</span>
-<small>Dias</small>
+<div class="time-number" id="dias">0</div>
+<div class="time-label">DIAS</div>
 </div>
 
 <div class="time-box">
-<span id="horas">0</span>
-<small>Horas</small>
+<div class="time-number" id="horas">0</div>
+<div class="time-label">HORAS</div>
 </div>
 
 <div class="time-box">
-<span id="minutos">0</span>
-<small>Min</small>
+<div class="time-number" id="minutos">0</div>
+<div class="time-label">MIN</div>
 </div>
 
 <div class="time-box">
-<span id="segundos">0</span>
-<small>Seg</small>
+<div class="time-number" id="segundos">0</div>
+<div class="time-label">SEG</div>
 </div>
 
 </div>
 
-<div class="hero-buttons">
-
-<a href="https://wa.me/556981102306" target="_blank" class="btn gold">
-Comprar Cartela
-</a>
-
-<a href="#churrasco" class="btn red">
-Comprar Churrasco
-</a>
+<a href="https://wa.me/556981102306" class="btn green">Comprar Cartela</a>
+<a href="#churrasco" class="btn red">Comprar Churrasco</a>
 
 </div>
 
-</div>
-
-<div class="hero-right">
+<div class="hero-side">
 
 <img
-src="assets/images/logo/fp-ss-logo.png"
-alt="Logo FPSS"
-class="hero-logo">
+src="assets/imagens/logo/vi-fpss/v-fpss-logo.png.png"
+alt="Logo FPSS">
 
 </div>
 
 </div>
-
+</div>
 </header>
 
-<!-- CONTEÚDO -->
+<!-- =====================================================
+   MAIN
+===================================================== -->
 <main class="wrap">
 
-<!-- CHURRASCO -->
+<!-- =====================================================
+   CHURRASCO
+===================================================== -->
 <section class="card" id="churrasco">
 
 <h2 class="section-title">🔥 Churrasco Antecipado</h2>
 
-<p class="section-sub">
-Garanta seu almoço antecipadamente e retire sem fila no dia da festa.
-</p>
+<p>Garanta seu almoço antecipadamente e retire sem fila no dia da festa.</p>
 
 <div class="grid-2">
 
 <div>
 
 <img
-src="assets/images/banners/churrasco-antecipado.jpg"
-alt="Churrasco FPSS"
-class="main-img">
+class="section-img"
+src="assets/imagens/diversas/churrasco-antecipado.jpg"
+alt="Churrasco FPSS">
 
-<div class="price-box">
-R$ 60,00
-</div>
+<div class="price-box">R$ 60,00</div>
 
-<ul class="list">
+<ul class="info-list">
 <li>🥩 Churrasco no espeto</li>
 <li>⏰ Retirada até 15h</li>
 <li>💳 Pagamento Pix</li>
-<li>📲 Confirmação via WhatsApp</li>
+<li>📲 Confirmação WhatsApp</li>
 </ul>
 
 </div>
@@ -138,16 +121,14 @@ R$ 60,00
 <input type="text" id="telefoneCliente">
 
 <label>Quantidade</label>
-<input type="number" id="quantidadePedido" value="1" min="1">
+<input type="number" id="quantidadePedido" min="1" value="1">
 
-<label>Horário de Retirada</label>
+<label>Retirada</label>
 <input type="time" id="horarioRetirada">
 
-<div class="total-box" id="valorTotal">
-R$ 60,00
-</div>
+<div class="total-box" id="valorTotal">R$ 60,00</div>
 
-<button onclick="enviarPedidoWhats()" class="btn green full">
+<button type="button" onclick="enviarPedidoWhats()" class="btn green full">
 Confirmar Pedido
 </button>
 
@@ -157,7 +138,9 @@ Confirmar Pedido
 
 </section>
 
-<!-- SORTEIO -->
+<!-- =====================================================
+   SORTEIO
+===================================================== -->
 <section class="card">
 
 <h2 class="section-title">🎁 Sorteio Beneficente</h2>
@@ -166,89 +149,78 @@ Confirmar Pedido
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
 
-<div class="btn-group">
-
-<a href="https://wa.me/556981102306" target="_blank" class="btn green">
-Comprar com André
-</a>
-
-<a href="https://wa.me/5569993982037" target="_blank" class="btn blue">
-Comprar com Rafael
-</a>
-
-</div>
+<a href="https://wa.me/556981102306" class="btn green">Comprar com André</a>
+<a href="https://wa.me/5569993982037" class="btn blue">Comprar com Rafael</a>
 
 </section>
 
-<!-- PROGRAMAÇÃO -->
+<!-- =====================================================
+   PROGRAMAÇÃO
+===================================================== -->
 <section class="card">
 
 <h2 class="section-title">📅 Programação Oficial</h2>
 
-<div class="programacao">
-
 <p>10h • Santa Missa</p>
-<p>11h • Almoço com Churrasco</p>
+<p>11h • Almoço com Churrasco no Espeto</p>
 <p>15h • Sorteio Presencial</p>
 <p>17h • Show de Prêmios</p>
 
-</div>
-
 </section>
 
-<!-- REDES -->
+<!-- =====================================================
+   REDES
+===================================================== -->
 <section class="card">
 
 <h2 class="section-title">📲 Redes Sociais</h2>
 
-<div class="btn-group">
-
-<a href="https://www.instagram.com/pnsa_css/" class="btn purple" target="_blank">
-Instagram
-</a>
-
-<a href="https://www.facebook.com/saosebastiaorolim/" class="btn blue" target="_blank">
-Facebook
-</a>
-
-<a href="https://youtube.com/@saosebastiaorm_festa" class="btn red" target="_blank">
-YouTube
-</a>
-
-</div>
+<a class="btn purple" href="#">Instagram</a>
+<a class="btn blue" href="#">Facebook</a>
+<a class="btn red" href="#">YouTube</a>
 
 </section>
 
-<!-- PARCEIROS -->
+<!-- =====================================================
+   PARCEIROS
+===================================================== -->
 <section class="card">
 
 <h2 class="section-title">🤝 Parceiros Oficiais</h2>
 
-<div class="gallery parceiros">
+<div class="gallery">
 
-<img src="assets/images/parceiros/vi-fpss/agro-forte.jpeg" alt="">
-<img src="assets/images/parceiros/vi-fpss/central-modas.png" alt="">
-<img src="assets/images/parceiros/vi-fpss/franca-solar.png" alt="">
-<img src="assets/images/parceiros/vi-fpss/norte-motos.png" alt="">
-<img src="assets/images/parceiros/vi-fpss/grande-rede.png" alt="">
-<img src="assets/images/parceiros/vi-fpss/rei-do-pano.png" alt="">
-<img src="assets/images/parceiros/vi-fpss/manelao.png" alt="">
-<img src="assets/images/parceiros/vi-fpss/super-ricart.png" alt="">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-central-modas.png" alt="Parceiro">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-grande-rede.png" alt="Parceiro">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-norte-motos.png" alt="Parceiro">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-favorito.png" alt="Parceiro">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-blue-ray.png" alt="Parceiro">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-super-ricart.png" alt="Parceiro">
 
 </div>
 
 </section>
 
-<!-- GALERIA -->
+<!-- =====================================================
+   GALERIA
+===================================================== -->
 <section class="card">
 
-<h2 class="section-title">📸 Fotos da Festa</h2>
+<h2 class="section-title">📸 Fotos e Vídeos</h2>
 
 <div class="gallery">
 
-<img src="assets/images/eventos/v-fpss/v-fpss-almoco-barracao.jpg" alt="">
-<img src="assets/images/eventos/v-fpss/v-fpss-imagem-area-frente.jpg" alt="">
-<img src="assets/images/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg" alt="">
+<img
+src="assets/imagens/eventos/v-fpss/v-fpss-almoço-barracao.jpg"
+alt="Evento FPSS">
+
+<img
+src="assets/imagens/eventos/v-fpss/v-fpss-imagem-area-frente.jpg"
+alt="Área frontal">
+
+<img
+src="assets/imagens/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg"
+alt="Vista aérea">
 
 </div>
 
@@ -256,19 +228,16 @@ YouTube
 
 </main>
 
-<!-- RODAPÉ -->
-<footer class="footer">
-
-<div class="wrap">
-
-<p>Comunidade São Sebastião • Rolim de Moura / RO</p>
-<p>6ª FPSS © 2027</p>
-
-</div>
-
+<!-- =====================================================
+   FOOTER
+===================================================== -->
+<footer>
+Comunidade São Sebastião • Rolim de Moura / RO
 </footer>
 
-<!-- LIGHTBOX -->
+<!-- =====================================================
+   LIGHTBOX
+===================================================== -->
 <div id="lightbox">
 
 <span id="closeBox">×</span>
@@ -281,7 +250,9 @@ YouTube
 
 </div>
 
-<!-- JS -->
+<!-- =====================================================
+   SCRIPTS
+===================================================== -->
 <script src="js/countdown.js"></script>
 <script src="js/lightbox.js"></script>
 <script src="js/forms.js"></script>
