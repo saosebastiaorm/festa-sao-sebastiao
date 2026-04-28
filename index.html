@@ -1,98 +1,261 @@
-/* FPSS MASTER RESET */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-body{
-font-family:Arial, Helvetica, sans-serif;
-background:#f8f4ec;
-color:#111;
+<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
+<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
+<meta name="theme-color" content="#8b1111">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mobile.css">
+
+<style>
+html,body{
 overflow-x:hidden;
 }
+</style>
 
-/* CONTAINER */
-.wrap{
-max-width:1200px;
-margin:auto;
-padding:20px;
-}
+</head>
 
-/* HERO */
-.hero{
-background:linear-gradient(135deg,#5b0f0f,#991b1b);
-color:#fff;
-padding:60px 20px;
-border-radius:0 0 25px 25px;
-}
+<body>
 
-.hero-grid{
-display:grid;
-grid-template-columns:1fr;
-gap:20px;
-}
+<!-- HERO -->
+<header class="hero">
+<div class="wrap">
 
-/* IMAGENS PADRÃO */
-img{
-max-width:100%;
-display:block;
-border-radius:14px;
-}
+<div class="hero-grid">
 
-/* CARDS */
-.card{
-background:#fff;
-padding:22px;
-border-radius:18px;
-margin-top:20px;
-box-shadow:0 10px 25px rgba(0,0,0,.08);
-}
+<div class="hero-content">
 
-/* TITULOS */
-.section-title{
-color:#7f1d1d;
-margin-bottom:14px;
-font-size:28px;
-}
+<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
 
-/* GRID */
-.grid-2{
-display:grid;
-grid-template-columns:1fr;
-gap:18px;
-}
+<p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
+<p>Fé, tradição e grande confraternização</p>
 
-/* BOTÕES */
-.btn{
-display:inline-block;
-padding:14px 18px;
-border-radius:12px;
-color:#fff;
-text-decoration:none;
-margin-top:10px;
-font-weight:bold;
-}
+<div class="countdown" id="countdown">
 
-.green{background:#16a34a;}
-.blue{background:#2563eb;}
-.red{background:#dc2626;}
-.purple{background:#7c3aed;}
+<div class="time-box">
+<div class="time-number" id="dias">0</div>
+<div class="time-label">DIAS</div>
+</div>
 
-/* GALERIA */
-.gallery{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:14px;
-}
+<div class="time-box">
+<div class="time-number" id="horas">0</div>
+<div class="time-label">HORAS</div>
+</div>
 
-.gallery img{
-height:200px;
-object-fit:cover;
-cursor:pointer;
-transition:.3s;
-}
+<div class="time-box">
+<div class="time-number" id="minutos">0</div>
+<div class="time-label">MIN</div>
+</div>
 
-.gallery img:hover{
-transform:scale(1.03);
-}
+<div class="time-box">
+<div class="time-number" id="segundos">0</div>
+<div class="time-label">SEG</div>
+</div>
+
+</div>
+
+<a href="https://wa.me/556981102306" class="btn green">Comprar Cartela</a>
+<a href="#churrasco" class="btn red">Comprar Churrasco</a>
+
+</div>
+
+<div class="hero-side">
+<img
+src="assets/images/logo/fp-ss-logo.png"
+alt="Logo FPSS">
+</div>
+
+</div>
+</div>
+</header>
+
+<!-- MAIN -->
+<main class="wrap">
+
+<!-- CHURRASCO -->
+<section class="card" id="churrasco">
+
+<h2 class="section-title">🔥 Churrasco Antecipado</h2>
+<p>Garanta seu almoço antecipadamente e retire sem fila no dia da festa.</p>
+
+<div class="grid-2">
+
+<div>
+
+<img
+class="section-img"
+src="assets/images/banners/churrasco-antecipado.jpg"
+alt="Churrasco FPSS">
+
+<div class="price-box">R$ 60,00</div>
+
+<ul class="info-list">
+<li>🥩 Churrasco no espeto</li>
+<li>⏰ Retirada até 15h</li>
+<li>💳 Pagamento Pix</li>
+<li>📲 Confirmação WhatsApp</li>
+</ul>
+
+</div>
+
+<div class="form-box">
+
+<h3>📋 Fazer Pedido</h3>
+
+<label>Nome</label>
+<input type="text" id="nomeCliente">
+
+<label>Telefone</label>
+<input type="text" id="telefoneCliente">
+
+<label>Quantidade</label>
+<input type="number" id="quantidadePedido" min="1" value="1">
+
+<label>Retirada</label>
+<input type="time" id="horarioRetirada">
+
+<div class="total-box" id="valorTotal">R$ 60,00</div>
+
+<button type="button" onclick="enviarPedidoWhats()" class="btn green full">
+Confirmar Pedido
+</button>
+
+</div>
+
+</div>
+</section>
+
+<!-- SORTEIO -->
+<section class="card">
+
+<h2 class="section-title">🎁 Sorteio Beneficente</h2>
+
+<p><strong>R$ 25.000,00 em prêmios</strong></p>
+<p>13 chances de ganhar</p>
+<p>Cartela R$ 20,00</p>
+
+<a href="https://wa.me/556981102306" class="btn green">
+Comprar com André
+</a>
+
+<a href="https://wa.me/5569993982037" class="btn blue">
+Comprar com Rafael
+</a>
+
+</section>
+
+<!-- PROGRAMAÇÃO -->
+<section class="card">
+
+<h2 class="section-title">📅 Programação Oficial</h2>
+
+<p>10h • Santa Missa</p>
+<p>11h • Almoço com Churrasco</p>
+<p>15h • Sorteio Presencial</p>
+<p>17h • Show de Prêmios</p>
+
+</section>
+
+<!-- REDES -->
+<section class="card">
+
+<h2 class="section-title">📲 Redes Sociais</h2>
+
+<a class="btn purple" href="https://www.instagram.com/pnsa_css/" target="_blank">
+Instagram
+</a>
+
+<a class="btn blue" href="https://www.facebook.com/saosebastiaorolim/" target="_blank">
+Facebook
+</a>
+
+<a class="btn red" href="https://youtube.com/@saosebastiaorm_festa" target="_blank">
+YouTube
+</a>
+
+</section>
+
+<!-- PARCEIROS -->
+<section class="card">
+
+<h2 class="section-title">🤝 Parceiros Oficiais</h2>
+
+<div class="gallery">
+
+<img src="assets/images/parceiros/vi-fpss/agro-forte.jpeg" alt="Agro Forte">
+<img src="assets/images/parceiros/vi-fpss/central-modas.png" alt="Central Modas">
+<img src="assets/images/parceiros/vi-fpss/franca-solar.png" alt="França Solar">
+<img src="assets/images/parceiros/vi-fpss/salatiel.png" alt="Salatiel">
+<img src="assets/images/parceiros/vi-fpss/jaco.png" alt="Jaco">
+<img src="assets/images/parceiros/vi-fpss/trento.jpg" alt="Trento">
+<img src="assets/images/parceiros/vi-fpss/norte-motos.png" alt="Norte Motos">
+<img src="assets/images/parceiros/vi-fpss/favorito.png" alt="Favorito">
+<img src="assets/images/parceiros/vi-fpss/cta.jpeg" alt="CTA">
+<img src="assets/images/parceiros/vi-fpss/blue-ray.png" alt="Blue Ray">
+<img src="assets/images/parceiros/vi-fpss/grande-rede.png" alt="Grande Rede">
+<img src="assets/images/parceiros/vi-fpss/jarri-joalheiro.jpg" alt="Jarri Joalheiro">
+<img src="assets/images/parceiros/vi-fpss/maicom-joia.jpeg" alt="Maicom Joia">
+<img src="assets/images/parceiros/vi-fpss/super-ricart.png" alt="Super Ricart">
+<img src="assets/images/parceiros/vi-fpss/valsom.jpg" alt="Valsom">
+<img src="assets/images/parceiros/vi-fpss/folha-verde.jpeg" alt="Folha Verde">
+<img src="assets/images/parceiros/vi-fpss/rei-do-pano.png" alt="Rei do Pano">
+<img src="assets/images/parceiros/vi-fpss/manelao.png" alt="Manelao">
+
+</div>
+
+</section>
+
+<!-- GALERIA -->
+<section class="card">
+
+<h2 class="section-title">📸 Fotos e Vídeos</h2>
+
+<div class="gallery">
+
+<img
+src="assets/images/eventos/v-fpss/v-fpss-almoco-barracao.jpg"
+alt="Almoço no barracão">
+
+<img
+src="assets/images/eventos/v-fpss/v-fpss-imagem-area-frente.jpg"
+alt="Área frontal">
+
+<img
+src="assets/images/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg"
+alt="Imagem aérea">
+
+</div>
+
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+Comunidade São Sebastião • Rolim de Moura / RO
+</footer>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+
+<span id="closeBox">×</span>
+
+<span class="arrow" id="prev">&#10094;</span>
+
+<img id="imgBox" alt="Imagem ampliada">
+
+<span class="arrow" id="next">&#10095;</span>
+
+</div>
+
+<!-- JS -->
+<script src="js/countdown.js"></script>
+<script src="js/lightbox.js"></script>
+<script src="js/forms.js"></script>
+
+</body>
+</html>
