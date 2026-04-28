@@ -8,8 +8,14 @@
 <meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
 <meta name="theme-color" content="#8b1111">
 
-<link rel="stylesheet" href="./css/style.css">
-<link rel="stylesheet" href="./css/mobile.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mobile.css">
+
+<style>
+html,body{
+overflow-x:hidden;
+}
+</style>
 
 </head>
 <body>
@@ -17,7 +23,6 @@
 <!-- HERO -->
 <header class="hero">
 <div class="wrap">
-
 <div class="hero-grid">
 
 <div>
@@ -81,8 +86,7 @@ alt="Logo FPSS">
 
 <div>
 
-<img
-class="section-img"
+<img class="section-img"
 src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/diversas/churrasco-antecipado.jpg"
 alt="Churrasco FPSS">
 
@@ -108,20 +112,23 @@ alt="Churrasco FPSS">
 <input type="text" id="telefoneCliente">
 
 <label>Quantidade</label>
-<input type="number" id="quantidadePedido" min="1" value="1">
+<input type="number" id="quantidadePedido" value="1">
 
 <label>Retirada</label>
 <input type="time" id="horarioRetirada">
 
 <div class="total-box" id="valorTotal">R$ 60,00</div>
 
-<button type="button" onclick="enviarPedidoWhats()" class="btn green full">
+<button type="button"
+onclick="enviarPedidoWhats()"
+class="btn green full">
 Confirmar Pedido
 </button>
 
 </div>
 
 </div>
+
 </section>
 
 <!-- SORTEIO -->
@@ -133,8 +140,13 @@ Confirmar Pedido
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
 
-<a href="https://wa.me/556981102306" class="btn green">Comprar com André</a>
-<a href="https://wa.me/5569993982037" class="btn blue">Comprar com Rafael</a>
+<a href="https://wa.me/556981102306" class="btn green">
+Comprar com André
+</a>
+
+<a href="https://wa.me/5569993982037" class="btn blue">
+Comprar com Rafael
+</a>
 
 </section>
 
@@ -144,7 +156,7 @@ Confirmar Pedido
 <h2 class="section-title">📅 Programação Oficial</h2>
 
 <p>10h • Santa Missa</p>
-<p>11h • Almoço com Churrasco no Espeto</p>
+<p>11h • Almoço com Churrasco</p>
 <p>15h • Sorteio Presencial</p>
 <p>17h • Show de Prêmios</p>
 
@@ -155,9 +167,9 @@ Confirmar Pedido
 
 <h2 class="section-title">📲 Redes Sociais</h2>
 
-<a class="btn purple" href="#">Instagram</a>
-<a class="btn blue" href="#">Facebook</a>
-<a class="btn red" href="#">YouTube</a>
+<a href="#" class="btn purple">Instagram</a>
+<a href="#" class="btn blue">Facebook</a>
+<a href="#" class="btn red">YouTube</a>
 
 </section>
 
@@ -174,11 +186,11 @@ Confirmar Pedido
 
 <img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-norte-motos.png" alt="Norte Motos">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-favorito.png" alt="Favorito">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-maicom-joia.jpeg" alt="Maicom Joia">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main./assets/imagens/parceiros/vi-fpss/vi-fpss-logo-blue-ray.png" alt="Blue Ray">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-super-ricart.png" alt="Super Ricart">
 
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main./assets/imagens/parceiros/vi-fpss/vi-fpss-logo-super-ricart.png" alt="Super Ricart">
+<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-rei-do-pano.png" alt="Rei do Pano">
 
 </div>
 
@@ -192,16 +204,16 @@ Confirmar Pedido
 <div class="gallery">
 
 <img
-src="./assets/imagens/eventos/v-fpss/v-fpss-almoço-barracao.jpg"
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-almoço-barracao.jpg"
 alt="Evento FPSS">
 
 <img
-src="./assets/imagens/eventos/v-fpss/v-fpss-imagem-area-frente.jpg"
-alt="Área frontal">
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-imagem-area-frente.jpg"
+alt="Área Frontal">
 
 <img
-src="./assets/imagens/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg"
-alt="Vista aérea">
+src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg"
+alt="Vista Aérea">
 
 </div>
 
@@ -218,7 +230,6 @@ Comunidade São Sebastião • Rolim de Moura / RO
 <div id="lightbox">
 
 <span id="closeBox">×</span>
-
 <span class="arrow" id="prev">&#10094;</span>
 
 <img id="imgBox" alt="Imagem ampliada">
@@ -227,10 +238,9 @@ Comunidade São Sebastião • Rolim de Moura / RO
 
 </div>
 
-<!-- JS -->
-<script src="./js/countdown.js"></script>
-<script src="./js/lightbox.js"></script>
-<script src="./js/forms.js"></script>
+<script src="js/countdown.js"></script>
+<script src="js/lightbox.js"></script>
+<script src="js/forms.js"></script>
 
 </body>
 </html>
