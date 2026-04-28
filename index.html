@@ -11,7 +11,6 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
 
-<!-- PROTEÇÃO BÁSICA CONTRA FLASH DE CONTEÚDO -->
 <style>
 html, body { overflow-x:hidden; }
 </style>
@@ -33,38 +32,19 @@ html, body { overflow-x:hidden; }
 <p>Fé, tradição e grande confraternização</p>
 
 <div class="countdown" id="countdown">
-
-<div class="time-box">
-<div class="time-number" id="dias">0</div>
-<div class="time-label">DIAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="horas">0</div>
-<div class="time-label">HORAS</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="minutos">0</div>
-<div class="time-label">MIN</div>
-</div>
-
-<div class="time-box">
-<div class="time-number" id="segundos">0</div>
-<div class="time-label">SEG</div>
-</div>
-
+<div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div>
+<div class="time-box"><div class="time-number" id="horas">0</div><div class="time-label">HORAS</div></div>
+<div class="time-box"><div class="time-number" id="minutos">0</div><div class="time-label">MIN</div></div>
+<div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div>
 </div>
 
 <a href="https://wa.me/556981102306" class="btn green">Comprar Cartela</a>
-<a href="#churrasco" class="btn red">Comprar Churrasco</a>
+<a href="#churrasco" class="btn red">Churrasco Antecipado</a>
 
 </div>
 
 <div class="hero-side">
-<img 
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Logo/FPSS/Logo_FPSS_-_IA-removebg.png"
-alt="Logo FPSS">
+<img src="assets/imagens/logo/vi-fpss/v-fpss-logo.png" alt="FPSS Logo">
 </div>
 
 </div>
@@ -77,28 +57,28 @@ alt="Logo FPSS">
 <section class="card" id="churrasco">
 
 <h2 class="section-title">🔥 Churrasco Antecipado</h2>
-<p>Garanta seu almoço antecipadamente e retire sem fila no dia da festa.</p>
+<p>Garanta seu almoço antecipado e retire sem fila no dia da festa.</p>
 
 <div class="grid-2">
 
 <div>
 <img class="section-img"
-alt="Churrasco FPSS"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/Diversas/Screenshot_2026-04-26-22-16-35-784_com.google.android.googlequicksearchbox-edit.jpg">
+src="assets/imagens/diversas/churrasco-antecipado.jpg"
+alt="Churrasco FPSS">
 
 <div class="price-box">R$ 60,00</div>
 
 <ul class="info-list">
 <li>🥩 Churrasco no espeto</li>
 <li>⏰ Retirada até 15h</li>
-<li>💳 Pagamento Pix</li>
+<li>💳 Pix disponível</li>
 <li>📲 Confirmação WhatsApp</li>
 </ul>
 </div>
 
 <div class="form-box">
 
-<h3>📋 Fazer Pedido</h3>
+<h3>📋 Pedido</h3>
 
 <label>Nome</label>
 <input type="text" id="nomeCliente">
@@ -109,12 +89,12 @@ src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/I
 <label>Quantidade</label>
 <input type="number" id="quantidadePedido" value="1">
 
-<label>Retirada</label>
+<label>Horário</label>
 <input type="time" id="horarioRetirada">
 
 <div class="total-box" id="valorTotal">R$ 60,00</div>
 
-<button type="button" onclick="enviarPedidoWhats()" class="btn green full">
+<button class="btn green full" onclick="enviarPedidoWhats()">
 Confirmar Pedido
 </button>
 
@@ -132,19 +112,19 @@ Confirmar Pedido
 <p>13 chances de ganhar</p>
 <p>Cartela R$ 20,00</p>
 
-<a href="https://wa.me/556981102306" class="btn green">Comprar com André</a>
-<a href="https://wa.me/5569993982037" class="btn blue">Comprar com Rafael</a>
+<a class="btn green" href="https://wa.me/556981102306">André</a>
+<a class="btn blue" href="https://wa.me/5569993982037">Rafael</a>
 
 </section>
 
 <!-- PROGRAMACAO -->
 <section class="card">
 
-<h2 class="section-title">📅 Programação Oficial</h2>
+<h2 class="section-title">📅 Programação</h2>
 
 <p>10h • Santa Missa</p>
 <p>11h • Almoço com Churrasco</p>
-<p>15h • Sorteio Presencial</p>
+<p>15h • Sorteio</p>
 <p>17h • Show de Prêmios</p>
 
 </section>
@@ -163,15 +143,14 @@ Confirmar Pedido
 <!-- PARCEIROS -->
 <section class="card">
 
-<h2 class="section-title">🤝 Parceiros Oficiais</h2>
+<h2 class="section-title">🤝 Parceiros</h2>
 
 <div class="gallery">
 
-<img alt="Central Modas" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Central%20Modas.png">
-
-<img alt="Grande Rede" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/Grande%20Rede.png">
-
-<img alt="Norte Motos" src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Logo/FPSS/VI%20FPSS/NORTE%20MOTOS.png">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-central-modas.png">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-norte-motos.png">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-grande-rede.png">
+<img src="assets/imagens/parceiros/vi-fpss/vi-fpss-logo-maicom-joia.jpeg">
 
 </div>
 
@@ -184,14 +163,9 @@ Confirmar Pedido
 
 <div class="gallery">
 
-<img alt="Evento FPSS"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Almoço_barracao.jpg">
-
-<img alt="Área frontal"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Foto_aree_Frente.jpg">
-
-<img alt="Vista aérea"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/Imagens/Site/FPSS/Eventos/V%20FPSS/Imagem_aerea_lateral.jpg">
+<img src="assets/imagens/eventos/v-fpss/v-fpss-almoço-barracao.jpg">
+<img src="assets/imagens/eventos/v-fpss/v-fpss-imagem-area-frente.jpg">
+<img src="assets/imagens/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg">
 
 </div>
 
@@ -206,9 +180,9 @@ Comunidade São Sebastião • Rolim de Moura / RO
 <!-- LIGHTBOX -->
 <div id="lightbox">
 <span id="closeBox">×</span>
-<span class="arrow" id="prev">&#10094;</span>
-<img id="imgBox" alt="Imagem ampliada">
-<span class="arrow" id="next">&#10095;</span>
+<span class="arrow" id="prev">❮</span>
+<img id="imgBox">
+<span class="arrow" id="next">❯</span>
 </div>
 
 <script src="js/countdown.js"></script>
