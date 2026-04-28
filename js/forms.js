@@ -1,25 +1,27 @@
-/* =====================================================
-   FPSS MASTER
-   ARQUIVO: /js/forms.js
-   FORMULÁRIOS OFICIAIS
-===================================================== */
-
 (function(){
 
 /* =====================================================
-   CHURRASCO
+   FPSS MASTER
+   FORMULÁRIOS OFICIAIS
 ===================================================== */
 
+/* =========================
+   ELEMENTOS
+========================= */
 const campoQtd = document.getElementById("quantidadePedido");
 const campoNome = document.getElementById("nomeCliente");
 const campoTelefone = document.getElementById("telefoneCliente");
 const campoHorario = document.getElementById("horarioRetirada");
 const boxTotal = document.getElementById("valorTotal");
 
+/* =========================
+   CONFIGURAÇÃO
+========================= */
 const PRECO = 60;
+const PIX_CHAVE = "6999900-5245"; // <-- ALTERE AQUI
 
 /* =========================
-   FORMATA VALOR
+   FORMATA MOEDA
 ========================= */
 function moeda(v){
 return "R$ " + v.toFixed(2).replace(".",",");
@@ -40,7 +42,6 @@ campoQtd.value = 1;
 }
 
 const total = qtd * PRECO;
-
 boxTotal.textContent = moeda(total);
 
 }
@@ -61,7 +62,18 @@ return txt.replace(/\D/g,"");
 }
 
 /* =========================
-   ENVIAR WHATSAPP
+   VALIDA HORÁRIO
+========================= */
+function horarioValido(h){
+
+if(!h) return false;
+
+return h >= "09:00" && h <= "16:00";
+
+}
+
+/* =========================
+   WHATSAPP
 ========================= */
 window.enviarPedidoWhats = function(){
 
@@ -75,6 +87,7 @@ if(isNaN(qtd) || qtd < 1){
 qtd = 1;
 }
 
+/* VALIDACOES */
 if(nome === ""){
 alert("Informe seu nome.");
 if(campoNome) campoNome.focus();
@@ -87,16 +100,25 @@ if(campoTelefone) campoTelefone.focus();
 return;
 }
 
+if(!horarioValido(horario)){
+alert("Horário inválido. Escolha entre 09:00 e 16:00.");
+if(campoHorario) campoHorario.focus();
+return;
+}
+
+/* TOTAL */
 const total = qtd * PRECO;
 
+/* MENSAGEM WHATSAPP */
 const msg =
-"Olá André! Pedido de Churrasco FPSS:%0A%0A" +
-"Nome: " + nome + "%0A" +
-"Telefone: " + telefone + "%0A" +
-"Quantidade: " + qtd + "%0A" +
-"Horário retirada: " + (horario || "Não informado") + "%0A" +
-"Valor Total: " + moeda(total) + "%0A%0A" +
-"Quero confirmar meu pedido.";
+"🔥 PEDIDO CHURRASCO FPSS%0A%0A" +
+"👤 Nome: " + nome + "%0A" +
+"📞 Telefone: " + telefone + "%0A" +
+"🍖 Quantidade: " + qtd + "%0A" +
+"⏰ Retirada: " + horario + "%0A%0A" +
+"💳 PIX: " + PIX_CHAVE + "%0A%0A" +
+"💰 Total: " + moeda(total) + "%0A%0A" +
+"📎 Após pagamento, envie o comprovante aqui no WhatsApp.";
 
 window.open(
 "https://wa.me/556981102306?text=" + msg,
@@ -105,10 +127,9 @@ window.open(
 
 };
 
-/* =====================================================
-   MÁSCARA TELEFONE (opcional)
-===================================================== */
-
+/* =========================
+   MÁSCARA TELEFONE
+========================= */
 if(campoTelefone){
 
 campoTelefone.addEventListener("input",function(){
