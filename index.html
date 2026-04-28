@@ -75,6 +75,35 @@ alt="Churrasco FPSS">
 
 <h3>📋 Pedido</h3>
 
+<section class="card" id="churrasco">
+
+<h2 class="section-title">🔥 Churrasco Antecipado</h2>
+
+<p>Retirada disponível somente entre <strong>09:00 e 16:00</strong>.</p>
+
+<div class="grid-2">
+
+<div>
+
+<img class="section-img"
+src="assets/imagens/diversas/churrasco-antecipado.jpg"
+alt="Churrasco FPSS">
+
+<div class="price-box">R$ 60,00</div>
+
+<ul class="info-list">
+<li>⏰ Retirada: 09h às 16h</li>
+<li>💳 Pagamento via PIX</li>
+<li>📲 Confirmação via WhatsApp</li>
+<li>📎 Enviar comprovante</li>
+</ul>
+
+</div>
+
+<div class="form-box">
+
+<h3>📋 Fazer Pedido</h3>
+
 <label>Nome</label>
 <input type="text" id="nomeCliente">
 
@@ -84,13 +113,13 @@ alt="Churrasco FPSS">
 <label>Quantidade</label>
 <input type="number" id="quantidadePedido" value="1">
 
-<label>Horário Retirada</label>
-<input type="time" id="horarioRetirada">
+<label>Horário de Retirada (09:00 - 16:00)</label>
+<input type="time" id="horarioRetirada" min="09:00" max="16:00">
 
-<div class="total-box" id="valorTotal">R$ 60,00</div>
+<div class="total-box">R$ 60,00 por unidade</div>
 
 <button class="btn green full" onclick="enviarPedidoWhats()">
-Confirmar Pedido
+Confirmar Pedido no WhatsApp
 </button>
 
 </div>
