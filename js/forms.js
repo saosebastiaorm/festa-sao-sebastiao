@@ -1,138 +1,134 @@
-/* ==================================================
-ARQUIVO: js/forms.js
-FORMULÁRIOS FPSS - WHATSAPP
-================================================== */
+/* =====================================================
+   FPSS MASTER
+   ARQUIVO: /js/forms.js
+   FORMULÁRIOS OFICIAIS
+===================================================== */
 
-/* ==========================================
-PEDIDO CHURRASCO
-========================================== */
-function enviarPedidoWhats(){
+(function(){
 
-const nome =
-document.getElementById("nomeCliente").value.trim();
+/* =====================================================
+   CHURRASCO
+===================================================== */
 
-const telefone =
-document.getElementById("telefoneCliente").value.trim();
+const campoQtd = document.getElementById("quantidadePedido");
+const campoNome = document.getElementById("nomeCliente");
+const campoTelefone = document.getElementById("telefoneCliente");
+const campoHorario = document.getElementById("horarioRetirada");
+const boxTotal = document.getElementById("valorTotal");
 
-const quantidade =
-document.getElementById("quantidadePedido").value;
+const PRECO = 60;
 
-const horario =
-document.getElementById("horarioRetirada").value;
+/* =========================
+   FORMATA VALOR
+========================= */
+function moeda(v){
+return "R$ " + v.toFixed(2).replace(".",",");
+}
 
-if(nome === "" || telefone === ""){
+/* =========================
+   ATUALIZA TOTAL
+========================= */
+function atualizarTotal(){
 
-alert("Preencha nome e telefone.");
-return;
+if(!campoQtd || !boxTotal) return;
+
+let qtd = parseInt(campoQtd.value);
+
+if(isNaN(qtd) || qtd < 1){
+qtd = 1;
+campoQtd.value = 1;
+}
+
+const total = qtd * PRECO;
+
+boxTotal.textContent = moeda(total);
 
 }
 
-const total = Number(quantidade) * 60;
+/* =========================
+   EVENTO QUANTIDADE
+========================= */
+if(campoQtd){
+campoQtd.addEventListener("input",atualizarTotal);
+atualizarTotal();
+}
+
+/* =========================
+   LIMPAR TELEFONE
+========================= */
+function limparNumero(txt){
+return txt.replace(/\D/g,"");
+}
+
+/* =========================
+   ENVIAR WHATSAPP
+========================= */
+window.enviarPedidoWhats = function(){
+
+const nome = campoNome ? campoNome.value.trim() : "";
+const telefone = campoTelefone ? campoTelefone.value.trim() : "";
+const horario = campoHorario ? campoHorario.value.trim() : "";
+
+let qtd = campoQtd ? parseInt(campoQtd.value) : 1;
+
+if(isNaN(qtd) || qtd < 1){
+qtd = 1;
+}
+
+if(nome === ""){
+alert("Informe seu nome.");
+if(campoNome) campoNome.focus();
+return;
+}
+
+if(telefone === ""){
+alert("Informe seu telefone.");
+if(campoTelefone) campoTelefone.focus();
+return;
+}
+
+const total = qtd * PRECO;
 
 const msg =
-`Olá André! Pedido de Churrasco FPSS:
+"Olá André! Pedido de Churrasco FPSS:%0A%0A" +
+"Nome: " + nome + "%0A" +
+"Telefone: " + telefone + "%0A" +
+"Quantidade: " + qtd + "%0A" +
+"Horário retirada: " + (horario || "Não informado") + "%0A" +
+"Valor Total: " + moeda(total) + "%0A%0A" +
+"Quero confirmar meu pedido.";
 
-Nome: ${nome}
-Telefone: ${telefone}
-Quantidade: ${quantidade}
-Horário retirada: ${horario}
-Valor Total: R$ ${total},00
+window.open(
+"https://wa.me/556981102306?text=" + msg,
+"_blank"
+);
 
-Pagamento via Pix realizado.`;
+};
 
-const url =
-"https://wa.me/556981102306?text=" +
-encodeURIComponent(msg);
+/* =====================================================
+   MÁSCARA TELEFONE (opcional)
+===================================================== */
 
-window.open(url,"_blank");
+if(campoTelefone){
 
+campoTelefone.addEventListener("input",function(){
+
+let v = limparNumero(this.value).slice(0,11);
+
+if(v.length > 10){
+v = v.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, "($1) $2-$3");
+}else if(v.length > 6){
+v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+}else if(v.length > 2){
+v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+}else{
+v = v.replace(/^(\d*)/, "($1");
 }
 
-/* ==========================================
-ATUALIZA TOTAL AUTOMÁTICO
-========================================== */
-const campoQtd =
-document.getElementById("quantidadePedido");
-
-if(campoQtd){
-
-campoQtd.addEventListener("input", function(){
-
-const qtd = Number(this.value) || 1;
-const total = qtd * 60;
-
-document.getElementById("valorTotal").textContent =
-"R$ " + total + ",00";
+this.value = v;
 
 });
 
 }
 
-/* ==========================================
-DOAÇÃO
-========================================== */
-function enviarDoacaoWhats(){
-
-const nome =
-document.getElementById("nomeDoacao")?.value.trim() || "";
-
-const telefone =
-document.getElementById("foneDoacao")?.value.trim() || "";
-
-const tipo =
-document.getElementById("tipoDoacao")?.value || "";
-
-const descricao =
-document.getElementById("descricaoDoacao")?.value || "";
-
-const msg =
-`Olá! Quero colaborar com a Festa do Padroeiro São Sebastião.
-
-Nome: ${nome}
-Telefone: ${telefone}
-Tipo de Doação: ${tipo}
-Descrição: ${descricao}`;
-
-const url =
-"https://wa.me/556981102306?text=" +
-encodeURIComponent(msg);
-
-window.open(url,"_blank");
-
-}
-
-/* ==========================================
-NOVIDADES
-========================================== */
-function salvarNovidade(){
-
-const nome =
-document.getElementById("nomeNovidade")?.value.trim() || "";
-
-const fone =
-document.getElementById("foneNovidade")?.value.trim() || "";
-
-const cidade =
-document.getElementById("cidadeNovidade")?.value.trim() || "";
-
-if(nome === "" || fone === ""){
-
-alert("Preencha nome e WhatsApp.");
-return;
-
-}
-
-const msg =
-`Olá! Quero receber novidades da festa.
-
-Nome: ${nome}
-WhatsApp: ${fone}
-Cidade: ${cidade}`;
-
-const url =
-"https://wa.me/5569993982037?text=" +
-encodeURIComponent(msg);
-
-window.open(url,"_blank");
-
-}
+})();
