@@ -1,38 +1,50 @@
-/* ==================================================
-ARQUIVO: js/lightbox.js
-GALERIA PREMIUM FPSS
-================================================== */
+/* =====================================================
+   FPSS MASTER
+   ARQUIVO: /js/lightbox.js
+   GALERIA PREMIUM
+===================================================== */
+
+(function(){
 
 const imagens = document.querySelectorAll(".gallery img");
 const lightbox = document.getElementById("lightbox");
 const imgBox = document.getElementById("imgBox");
+const btnClose = document.getElementById("closeBox");
+const btnPrev = document.getElementById("prev");
+const btnNext = document.getElementById("next");
+
+if(!imagens.length || !lightbox || !imgBox) return;
 
 let atual = 0;
 
-/* ABRIR */
-function abrirImagem(i){
+/* =========================
+   ABRIR
+========================= */
+function abrir(i){
 
 atual = i;
-
 imgBox.src = imagens[atual].src;
+imgBox.alt = imagens[atual].alt || "Imagem FPSS";
 
 lightbox.style.display = "flex";
-
 document.body.style.overflow = "hidden";
 
 }
 
-/* FECHAR */
-function fecharImagem(){
+/* =========================
+   FECHAR
+========================= */
+function fechar(){
 
 lightbox.style.display = "none";
-
 document.body.style.overflow = "auto";
 
 }
 
-/* PRÓXIMA */
-function proximaImagem(){
+/* =========================
+   PRÓXIMA
+========================= */
+function proxima(){
 
 atual++;
 
@@ -41,11 +53,14 @@ atual = 0;
 }
 
 imgBox.src = imagens[atual].src;
+imgBox.alt = imagens[atual].alt || "Imagem FPSS";
 
 }
 
-/* ANTERIOR */
-function imagemAnterior(){
+/* =========================
+   ANTERIOR
+========================= */
+function anterior(){
 
 atual--;
 
@@ -54,56 +69,90 @@ atual = imagens.length - 1;
 }
 
 imgBox.src = imagens[atual].src;
+imgBox.alt = imagens[atual].alt || "Imagem FPSS";
 
 }
 
-/* CLIQUE NAS FOTOS */
-imagens.forEach((img, i) => {
+/* =========================
+   CLIQUE NAS IMAGENS
+========================= */
+imagens.forEach((img,index)=>{
 
-img.addEventListener("click", function(){
-
-abrirImagem(i);
-
+img.addEventListener("click",function(){
+abrir(index);
 });
 
 });
 
-/* BOTÕES */
-document.getElementById("closeBox")
-.addEventListener("click", fecharImagem);
+/* =========================
+   BOTÕES
+========================= */
+if(btnClose){
+btnClose.addEventListener("click",fechar);
+}
 
-document.getElementById("next")
-.addEventListener("click", proximaImagem);
+if(btnNext){
+btnNext.addEventListener("click",proxima);
+}
 
-document.getElementById("prev")
-.addEventListener("click", imagemAnterior);
+if(btnPrev){
+btnPrev.addEventListener("click",anterior);
+}
 
-/* FECHAR FUNDO */
-lightbox.addEventListener("click", function(e){
+/* =========================
+   FECHAR FORA DA IMAGEM
+========================= */
+lightbox.addEventListener("click",function(e){
 
 if(e.target === lightbox){
-fecharImagem();
+fechar();
 }
 
 });
 
-/* TECLADO */
-document.addEventListener("keydown", function(e){
+/* =========================
+   TECLADO
+========================= */
+document.addEventListener("keydown",function(e){
 
-if(lightbox.style.display === "flex"){
+if(lightbox.style.display !== "flex") return;
 
 if(e.key === "Escape"){
-fecharImagem();
+fechar();
 }
 
 if(e.key === "ArrowRight"){
-proximaImagem();
+proxima();
 }
 
 if(e.key === "ArrowLeft"){
-imagemAnterior();
-}
-
+anterior();
 }
 
 });
+
+/* =========================
+   TOUCH SWIPE MOBILE
+========================= */
+let inicioX = 0;
+
+lightbox.addEventListener("touchstart",function(e){
+inicioX = e.changedTouches[0].clientX;
+});
+
+lightbox.addEventListener("touchend",function(e){
+
+let fimX = e.changedTouches[0].clientX;
+let dist = fimX - inicioX;
+
+if(dist > 50){
+anterior();
+}
+
+if(dist < -50){
+proxima();
+}
+
+});
+
+})();
