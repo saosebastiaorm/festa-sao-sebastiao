@@ -1,247 +1,163 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- =====================================================
+FPSS MASTER VENDAS
+SEÇÃO PROFISSIONAL DE ALTA CONVERSÃO
+COLE NO INDEX.HTML
+===================================================== -->
 
-<title>6ª FPSS • Festa do Padroeiro São Sebastião</title>
-<meta name="description" content="6ª Festa do Padroeiro São Sebastião - Rolim de Moura RO">
-<meta name="theme-color" content="#8b1111">
+<section class="hero hero-vendas">
 
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/mobile.css">
-
-<style>
-html, body { overflow-x:hidden; }
-</style>
-
-</head>
-
-<body>
-
-<header class="hero">
 <div class="wrap">
 
 <div class="hero-grid">
 
-<!-- CONTEÚDO PRINCIPAL -->
 <div>
 
-<h1>6ª FPSS<br>Festa do Padroeiro São Sebastião</h1>
+<span class="badge-topo">🔥 EVENTO OFICIAL FPSS</span>
 
-<p>24 de Janeiro de 2027 • Rolim de Moura / RO</p>
-<p>Fé, tradição e grande confraternização</p>
+<h1>6ª Festa do Padroeiro São Sebastião</h1>
 
-<div class="countdown" id="countdown">
-<div class="time-box"><div class="time-number" id="dias">0</div><div class="time-label">DIAS</div></div>
-<div class="time-box"><div class="time-number" id="horas">0</div><div class="time-label">HORAS</div></div>
-<div class="time-box"><div class="time-number" id="minutos">0</div><div class="time-label">MIN</div></div>
-<div class="time-box"><div class="time-number" id="segundos">0</div><div class="time-label">SEG</div></div>
+<p class="subhero">
+Garanta agora seu <strong>churrasco antecipado</strong> e sua
+<strong>cartela premiada</strong>. Participe da festa e concorra a
+<strong>R$ 25 MIL em prêmios</strong>.
+</p>
+
+<div class="cta-group">
+<a href="#comprar" class="btn red">🍖 Comprar Agora</a>
+<a href="#premiacao" class="btn green">🎟 Ver Premiação</a>
 </div>
 
-<a href="https://wa.me/556981102306" class="btn green">Comprar Cartela</a>
+<div class="mini-info">
+<span>⚠️ Quantidades Limitadas</span>
+<span>📲 Compra Rápida no WhatsApp</span>
+<span>🎉 Evento Tradicional</span>
+</div>
 
 </div>
 
-<!-- LADO / LOGO -->
 <div class="hero-side">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/logo/vi-fpss/v-fpss-logo.png" alt="FPSS Logo">
+
+<div class="price-card destaque">
+<h3>🍖 Churrasco</h3>
+<div class="valor">R$ 60</div>
+<p>Antecipado</p>
+</div>
+
+<div class="price-card">
+<h3>🎟 Cartela</h3>
+<div class="valor">R$ 20</div>
+<p>R$ 25 mil em prêmios</p>
 </div>
 
 </div>
+
 </div>
-</header>
 
-<main class="wrap">
+</div>
+</section>
 
-<h3>📋 Pedido</h3>
 
-<section class="card" id="churrasco">
 
-<h2 class="section-title">🔥 Churrasco Antecipado</h2>
-<p>Garanta seu almoço antecipado e retire sem fila no dia da festa.</p>
+<section class="card" id="comprar">
+
+<h2 class="section-title">🔥 Garanta Agora Seu Pedido</h2>
 
 <div class="grid-2">
 
-<div>
-<img class="section-img"
-src="assets/imagens/diversas/churrasco-antecipado.jpg"
-alt="Churrasco FPSS">
+<div class="venda-box">
 
-<p>Retirada disponível somente entre <strong>09:00 e 16:00</strong>.</p>
+<h3>🍖 Churrasco Oficial FPSS</h3>
+
+<ul class="info-list">
+<li>✔ Produto tradicional da festa</li>
+<li>✔ Retirada no evento</li>
+<li>✔ Compra antecipada recomendada</li>
+</ul>
 
 <div class="price-box">R$ 60,00</div>
 
+<a target="_blank"
+href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20churrasco%20da%20FPSS"
+class="btn red full">
+📲 Comprar Churrasco
+</a>
+
+</div>
+
+
+<div class="venda-box">
+
+<h3>🎟 Cartela Premiada</h3>
+
 <ul class="info-list">
-<li>⏰ Retirada: 09h às 16h</li>
-<li>💳 Pagamento via PIX</li>
-<li>📲 Confirmação via WhatsApp</li>
-<li>📎 Enviar comprovante</li>
+<li>✔ Apenas R$ 20,00</li>
+<li>✔ Concorra a R$ 25 mil</li>
+<li>✔ Sorteios oficiais no evento</li>
 </ul>
-</div>
 
-<div class="form-box">
+<div class="price-box">R$ 20,00</div>
 
-<h3>📋 Fazer Pedido</h3>
-
-<label>Nome</label>
-<input type="text" id="nomeCliente">
-
-<label>Telefone</label>
-<input type="text" id="telefoneCliente">
-
-<label>Quantidade</label>
-<input type="number" id="quantidadePedido" value="1">
-
-<label>Horário de Retirada (09:00 - 16:00)</label>
-<input type="time" id="horarioRetirada" min="09:00" max="16:00">
-
-<div class="total-box">R$ 60,00 por unidade</div>
-
-<button class="btn green full" onclick="enviarPedidoWhats()">
-Confirmar Pedido no WhatsApp
-</button>
+<a target="_blank"
+href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20da%20FPSS"
+class="btn green full">
+📲 Comprar Cartela
+</a>
 
 </div>
 
 </div>
-</section>
-
-<section class="card">
-
-<h2 class="section-title">🎁 Sorteio Beneficente</h2>
-
-<p><strong>R$ 25.000,00 em prêmios</strong></p>
-<p>13 chances de ganhar</p>
-
-<a class="btn green" href="https://wa.me/556981102306">André</a>
-<a class="btn blue" href="https://wa.me/5569993982037">Rafael</a>
 
 </section>
 
-<section class="card">
 
-<h2 class="section-title">📅 Programação Oficial</h2>
 
-<p>10h • Santa Missa</p>
-<p>11h • Almoço com Churrasco</p>
-<p>15h • Sorteio de Prêmios</p>
-<p>17h • Show ao Vivo</p>
+<section class="card" id="premiacao">
+
+<h2 class="section-title">💰 Premiação Oficial - R$ 25 MIL</h2>
+
+<div class="premios-grid">
+
+<div class="premio-card ouro">
+<h3>🥇 1º Prêmio - 17h</h3>
+<p>R$ 2.000 Presencial</p>
+<p>R$ 10.000 Computadorizado</p>
+</div>
+
+<div class="premio-card prata">
+<h3>🥈 2º Prêmio - 17h</h3>
+<p>R$ 2.000 Presencial</p>
+<p>R$ 5.000 Computadorizado</p>
+</div>
+
+<div class="premio-card bronze">
+<h3>🥉 3º Prêmio - 17h</h3>
+<p>R$ 1.000 Presencial</p>
+<p>R$ 3.000 Computadorizado</p>
+</div>
+
+<div class="premio-card destaque2">
+<h3>🎉 4º Prêmio - 15h</h3>
+<p>R$ 2.000 durante o almoço</p>
+</div>
+
+</div>
 
 </section>
 
-<section class="card" id="doacao">
 
-<h2 class="section-title">💛 Apoie a FPSS</h2>
 
-<p>
-Ajude a manter a Festa do Padroeiro São Sebastião viva e cada vez melhor.
-Sua doação contribui com estrutura, som, alimentação e organização do evento.
+<section class="card center">
+
+<h2 class="section-title">📲 Atendimento Oficial</h2>
+
+<p class="mt-10">
+Pedidos e informações diretamente com André
 </p>
 
-<div class="grid-2">
-
-<div>
-
-<img class="section-img"
-src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/diversas/doacao-fpss.png"
-alt="Doação FPSS">
-
-<div class="price-box">
-PIX: (chave aqui)
-</div>
-
-<ul class="info-list">
-<li>💳 PIX instantâneo</li>
-<li>⛪ Apoio à comunidade</li>
-<li>🎉 Festa popular</li>
-<li>🤝 Transparência total</li>
-</ul>
-
-</div>
-
-<div class="form-box">
-
-<h3>📲 Doar agora</h3>
-
-<p>Você também pode enviar sua contribuição direto pelo WhatsApp:</p>
-
-<a class="btn green full" href="https://wa.me/556981102306?text=Quero%20fazer%20uma%20doa%C3%A7%C3%A3o%20para%20a%20FPSS">
-Doar via WhatsApp
+<a target="_blank"
+href="https://wa.me/5569981102306"
+class="btn green">
+WhatsApp André - 69 98110-2306
 </a>
 
-<div style="margin-top:15px;"></div>
-
-<a class="btn blue full" href="#">
-Copiar chave PIX
-</a>
-
-</div>
-
-</div>
-
 </section>
-
-<section class="card">
-
-<h2 class="section-title">📲 Redes Sociais</h2>
-
-<a class="btn purple" href="#">Instagram</a>
-<a class="btn blue" href="#">Facebook</a>
-<a class="btn red" href="#">YouTube</a>
-
-</section>
-
-<section class="card">
-
-<h2 class="section-title">🤝 Patrocinadores Oficiais FPSS</h2>
-
-<div class="gallery">
-
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-central-modas.png" alt="Central Modas">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-agro-forte.jpeg" alt="Agro Forte">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-franca-solar.png" alt="França Solar">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-salatiel.png" alt="Salatiel">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-jaco.png" alt="Jacó">
-
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-trento.jpg" alt="Trento">
-
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/parceiros/vi-fpss/vi-fpss-logo-norte-motos.png" alt="Norte Motos">
-
-</div>
-
-</section>
-
-<section class="card">
-
-<h2 class="section-title">📸 Fotos do Evento</h2>
-
-<div class="gallery">
-
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-almoço-barracao.jpg">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-imagem-area-frente.jpg">
-<img src="https://raw.githubusercontent.com/saosebastiaorm/festa-sao-sebastiao/main/assets/imagens/eventos/v-fpss/v-fpss-imagem-aerea-lateral.jpg">
-
-</div>
-
-</section>
-
-</main>
-
-<footer>
-Comunidade São Sebastião • Rolim de Moura / RO
-</footer>
-
-<div id="lightbox">
-<span id="closeBox">×</span>
-<span class="arrow" id="prev">❮</span>
-<img id="imgBox">
-<span class="arrow" id="next">❯</span>
-</div>
-
-<script src="js/countdown.js"></script>
-<script src="js/lightbox.js"></script>
-<script src="js/forms.js"></script>
-
-</body>
-</html>
