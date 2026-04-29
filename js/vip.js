@@ -8,7 +8,7 @@ document.getElementById("formVIP").addEventListener("submit", function(e){
   const dados = new FormData(form);
 
   const msg = document.getElementById("msgVIP");
-  msg.style.color = "#333";
+
   msg.innerHTML = "⏳ Enviando...";
 
   fetch(URL_SCRIPT, {
@@ -17,13 +17,11 @@ document.getElementById("formVIP").addEventListener("submit", function(e){
   })
   .then(r => r.text())
   .then(() => {
-    msg.style.color = "#1fae42";
-    msg.innerHTML = "✅ Cadastro realizado com sucesso!";
+    msg.innerHTML = "✅ Entrou no VIP com sucesso!";
     form.reset();
   })
   .catch(() => {
-    msg.style.color = "#ff1f1f";
-    msg.innerHTML = "❌ Erro ao enviar. Tente novamente.";
+    msg.innerHTML = "❌ Erro ao enviar.";
   });
 
 });
