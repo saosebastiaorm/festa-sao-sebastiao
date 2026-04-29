@@ -1,261 +1,76 @@
-/* =====================================================
-   FPSS MASTER MILIONÁRIA
-   ARQUIVO: /css/mobile.css
-   RESPONSIVIDADE PREMIUM (VERSÃO CORRIGIDA)
-===================================================== */
-
-
 /* =========================================
-   BASE FIX (NOVO PADRÃO DA GALERIA)
+   FPSS MASTER VENDAS MOBILE
 ========================================= */
 
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  align-items: stretch;
-}
-
-.gallery img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: contain;
-
-  background: #fff;
-  padding: 12px;
-
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.gallery img:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.15);
-}
-
-
-/* =========================================
-   TABLETS
-========================================= */
-@media (max-width: 1024px){
-
-.wrap{
-padding:18px;
-}
-
-.hero{
-padding:50px 20px;
-}
-
-.hero h1{
-font-size:42px;
-}
-
-.hero-side img{
-max-width:280px;
-}
-
-.section-title{
-font-size:30px;
-}
-
-.gallery{
-grid-template-columns:repeat(2,1fr);
-}
-
-.countdown{
-justify-content:center;
-}
-
-.btn{
-font-size:15px;
-padding:13px 18px;
-}
-
-}
-
-
-/* =========================================
-   CELULAR GRANDE
-========================================= */
 @media (max-width: 768px){
 
-.hero{
+.hero-vendas{
 padding:38px 18px;
-border-radius:0 0 24px 24px;
 }
 
-.hero-grid{
-grid-template-columns:1fr;
-gap:28px;
-text-align:center;
+.badge-topo{
+font-size:12px;
+padding:7px 12px;
 }
 
-.hero h1{
-font-size:34px;
-line-height:1.15;
+.subhero{
+font-size:17px;
+line-height:1.45;
 }
 
-.hero p{
-font-size:16px;
-}
-
-.hero-side img{
-max-width:220px;
-margin:auto;
-}
-
-.countdown{
-justify-content:center;
+.cta-group{
+display:flex;
+flex-direction:column;
 gap:10px;
 }
 
-.time-box{
-min-width:74px;
-padding:10px;
-}
-
-.time-number{
-font-size:24px;
-}
-
-.time-label{
-font-size:11px;
-}
-
-.grid-2,
-.grid-3{
-grid-template-columns:1fr;
-gap:18px;
-}
-
-.card{
-padding:20px;
-border-radius:20px;
-margin-top:18px;
-}
-
-.section-title{
-font-size:26px;
-margin-bottom:14px;
-}
-
-/* GALERIA CORRIGIDA (SEM HEIGHT FIXO) */
-.gallery{
-grid-template-columns:1fr 1fr;
-gap:12px;
-}
-
-.btn{
-display:block;
+.cta-group .btn{
 width:100%;
 margin-right:0;
-text-align:center;
-font-size:15px;
-padding:14px;
 }
 
-.form-box,
-.doacao-form,
-.rota-box{
-padding:18px;
-}
-
-input,
-select,
-textarea{
-font-size:16px;
-}
-
-.price-box,
-.total-box{
-font-size:22px;
-}
-
-}
-
-
-/* =========================================
-   CELULAR MÉDIO
-========================================= */
-@media (max-width: 560px){
-
-.wrap{
-padding:14px;
-}
-
-.hero{
-padding:30px 14px;
-}
-
-.hero h1{
-font-size:29px;
-}
-
-.hero p{
-font-size:15px;
-}
-
-.hero-side img{
-max-width:190px;
-}
-
-.countdown{
+.mini-info{
+display:flex;
+flex-direction:column;
 gap:8px;
+font-size:13px;
+margin-top:16px;
 }
 
-.time-box{
-min-width:64px;
-padding:8px;
-border-radius:12px;
-}
-
-.time-number{
-font-size:21px;
-}
-
-.time-label{
-font-size:10px;
-}
-
-.section-title{
-font-size:23px;
-}
-
-/* GALERIA 1 COLUNA */
-.gallery{
-grid-template-columns:1fr;
-}
-
-.card{
+.price-card{
 padding:18px;
+border-radius:18px;
 }
 
-.price-box,
-.total-box{
+.price-card h3{
 font-size:20px;
 }
 
-.btn{
-padding:13px;
-font-size:14px;
-}
-
-#lightbox img{
-max-width:96%;
-max-height:80%;
-}
-
-.arrow{
-font-size:36px;
-}
-
-#closeBox{
+.price-card .valor{
 font-size:34px;
-top:10px;
-right:14px;
+}
+
+.venda-box{
+padding:18px;
+border-radius:18px;
+}
+
+.premios-grid{
+grid-template-columns:1fr;
+gap:14px;
+}
+
+.premio-card{
+padding:18px;
+border-radius:18px;
+}
+
+.premio-card h3{
+font-size:20px;
+}
+
+.premio-card p{
+font-size:16px;
 }
 
 }
@@ -264,104 +79,23 @@ right:14px;
 /* =========================================
    CELULAR PEQUENO
 ========================================= */
+
 @media (max-width: 390px){
 
-.hero h1{
-font-size:24px;
+.subhero{
+font-size:15px;
 }
 
-.hero p{
-font-size:14px;
+.price-card .valor{
+font-size:30px;
 }
 
-.time-box{
-min-width:58px;
-}
-
-.time-number{
+.premio-card h3{
 font-size:18px;
 }
 
-.section-title{
-font-size:20px;
-}
-
-.card{
-padding:16px;
-}
-
-/* NÃO MAIS HEIGHT FIXO */
-.gallery img{
-aspect-ratio:4/3;
-}
-
-.btn{
-font-size:13px;
-padding:12px;
-}
-
-.price-box,
-.total-box{
-font-size:18px;
-}
-
-}
-
-
-/* =========================================
-   LANDSCAPE MOBILE
-========================================= */
-@media (max-height: 500px) and (orientation: landscape){
-
-.hero{
-padding:20px 16px;
-}
-
-.hero-grid{
-grid-template-columns:1fr 1fr;
-text-align:left;
-}
-
-.hero h1{
-font-size:26px;
-}
-
-.hero-side img{
-max-width:160px;
-}
-
-/* SEM HEIGHT FIXO */
-.gallery img{
-aspect-ratio:4/3;
-}
-
-}
-
-
-/* =========================================
-   ULTRA LARGE
-========================================= */
-@media (min-width: 1600px){
-
-.wrap{
-max-width:1500px;
-}
-
-.hero h1{
-font-size:62px;
-}
-
-.hero p{
-font-size:22px;
-}
-
-.section-title{
-font-size:40px;
-}
-
-/* PADRÃO LIMPO */
-.gallery img{
-aspect-ratio:4/3;
+.premio-card p{
+font-size:15px;
 }
 
 }
