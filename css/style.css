@@ -1,385 +1,139 @@
 /* =====================================================
-   FPSS MASTER DEFINITIVO (VERSÃO CORRIGIDA)
-   ARQUIVO: /css/style.css
+FPSS MASTER VENDAS CSS
+COLE NO STYLE.CSS
 ===================================================== */
 
-
-/* =========================
-   RESET
-========================= */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
+.hero-vendas{
+position:relative;
+overflow:hidden;
 }
 
-html{
-scroll-behavior:smooth;
-}
-
-body{
-font-family:Arial, Helvetica, sans-serif;
-background:#f7f3eb;
-color:#111;
-line-height:1.55;
-overflow-x:hidden;
-}
-
-
-/* =========================
-   CONTAINER
-========================= */
-.wrap{
-max-width:1280px;
-margin:auto;
-padding:20px;
-}
-
-
-/* =========================
-   LINKS
-========================= */
-a{
-text-decoration:none;
-color:inherit;
-}
-
-
-/* =========================
-   HERO
-========================= */
-.hero{
-background:linear-gradient(135deg,#5a0d0d,#8b1111,#b91c1c);
-color:#fff;
-padding:60px 20px;
-border-radius:0 0 28px 28px;
-box-shadow:0 14px 30px rgba(0,0,0,.18);
-}
-
-.hero-grid{
-display:grid;
-grid-template-columns:1.1fr .9fr;
-gap:30px;
-align-items:center;
-}
-
-.hero h1{
-font-size:54px;
-line-height:1.08;
-font-weight:800;
+.badge-topo{
+display:inline-block;
+background:#ffffff22;
+padding:8px 14px;
+border-radius:30px;
+font-size:13px;
+font-weight:700;
 margin-bottom:14px;
 }
 
-.hero p{
-font-size:18px;
-margin-top:8px;
-font-weight:600;
-opacity:.96;
+.subhero{
+font-size:20px;
+max-width:620px;
+margin-bottom:18px;
 }
 
-.hero-side{
-text-align:center;
-}
-
-.hero-side img{
-max-width:320px;
-width:100%;
-filter:drop-shadow(0 14px 24px rgba(0,0,0,.35));
-}
-
-
-/* =========================
-   COUNTDOWN
-========================= */
-.countdown{
+.cta-group{
 display:flex;
 gap:12px;
 flex-wrap:wrap;
-margin-top:24px;
-}
-
-.time-box{
-background:rgba(255,255,255,.14);
-backdrop-filter:blur(6px);
-padding:14px 16px;
-border-radius:16px;
-min-width:90px;
-text-align:center;
-border:1px solid rgba(255,255,255,.12);
-}
-
-.time-number{
-font-size:30px;
-font-weight:800;
-}
-
-.time-label{
-font-size:12px;
-letter-spacing:1px;
-margin-top:3px;
-}
-
-
-/* =========================
-   BUTTONS
-========================= */
-.btn{
-display:inline-block;
-padding:14px 20px;
-border-radius:14px;
-font-weight:700;
-margin-top:14px;
-margin-right:8px;
-transition:.25s ease;
-cursor:pointer;
-border:none;
-text-align:center;
-}
-
-.btn:hover{
-transform:translateY(-2px);
-opacity:.94;
-}
-
-.full{
-width:100%;
-margin-right:0;
-}
-
-.green{background:#16a34a;color:#fff;}
-.red{background:#dc2626;color:#fff;}
-.blue{background:#2563eb;color:#fff;}
-.purple{background:#7c3aed;color:#fff;}
-.orange{background:#ea580c;color:#fff;}
-
-
-/* =========================
-   CARDS
-========================= */
-.card{
-background:#fff;
-padding:26px;
-border-radius:24px;
-box-shadow:0 10px 26px rgba(0,0,0,.08);
-margin-top:24px;
-}
-
-.section-title{
-font-size:32px;
-color:#7f1d1d;
-margin-bottom:16px;
-line-height:1.2;
-}
-
-
-/* =========================
-   GRID
-========================= */
-.grid-2{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:22px;
-}
-
-.grid-3{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:22px;
-}
-
-
-/* =========================
-   IMAGENS PADRÃO
-========================= */
-.section-img{
-width:100%;
-height:340px;
-object-fit:cover;
-border-radius:20px;
-box-shadow:0 12px 24px rgba(0,0,0,.10);
-}
-
-
-/* =========================
-   PRICE
-========================= */
-.price-box{
-margin-top:16px;
-background:#16a34a;
-color:#fff;
-padding:16px;
-border-radius:14px;
-font-size:26px;
-font-weight:800;
-text-align:center;
-}
-
-
-/* =========================
-   LISTAS
-========================= */
-.info-list{
-list-style:none;
 margin-top:18px;
 }
 
-.info-list li{
-padding:10px 0;
-border-bottom:1px solid #eee;
-font-size:16px;
+.mini-info{
+display:flex;
+gap:14px;
+flex-wrap:wrap;
+margin-top:20px;
+font-size:14px;
+font-weight:700;
+opacity:.95;
 }
 
+.price-card{
+background:#fff;
+color:#111;
+padding:20px;
+border-radius:22px;
+box-shadow:0 14px 30px rgba(0,0,0,.12);
+margin-bottom:16px;
+text-align:center;
+}
 
-/* =========================
-   FORM
-========================= */
-.form-box{
+.price-card h3{
+font-size:22px;
+margin-bottom:10px;
+}
+
+.price-card .valor{
+font-size:42px;
+font-weight:900;
+color:#b91c1c;
+}
+
+.price-card.destaque{
+transform:scale(1.04);
+border:2px solid #facc15;
+}
+
+.venda-box{
 background:#fafafa;
 padding:24px;
-border-radius:20px;
+border-radius:24px;
 border:1px solid #eee;
 }
 
-.form-box h3{
-font-size:28px;
-margin-bottom:14px;
-color:#7f1d1d;
-}
-
-label{
-display:block;
-margin-top:14px;
-margin-bottom:6px;
-font-weight:700;
-font-size:15px;
-}
-
-input,
-select,
-textarea{
-width:100%;
-padding:13px;
-border:1px solid #d4d4d4;
-border-radius:12px;
-font-size:16px;
-outline:none;
-transition:.2s;
-background:#fff;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-border-color:#b91c1c;
-box-shadow:0 0 0 3px rgba(185,28,28,.08);
-}
-
-.total-box{
-margin-top:18px;
-background:#111827;
-color:#fff;
-padding:15px;
-border-radius:14px;
-text-align:center;
-font-size:24px;
-font-weight:800;
-}
-
-
-/* =========================
-   GALLERY (CORRIGIDA)
-========================= */
-.gallery{
+.premios-grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
 gap:18px;
-margin-top:12px;
+margin-top:18px;
 }
 
-.gallery img,
-.gallery iframe{
-width:100%;
-aspect-ratio:4/3;
-object-fit:contain;
-
-border-radius:18px;
-box-shadow:0 10px 22px rgba(0,0,0,.10);
-transition:.25s;
+.premio-card{
+padding:24px;
+border-radius:22px;
+color:#111;
 background:#fff;
-padding:12px;
-}
-
-.gallery img{
-cursor:pointer;
-}
-
-.gallery img:hover,
-.gallery iframe:hover{
-transform:scale(1.03);
-}
-
-
-/* =========================
-   LIGHTBOX
-========================= */
-#lightbox{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.94);
-display:none;
-justify-content:center;
-align-items:center;
-z-index:99999;
-padding:20px;
-}
-
-#imgBox{
-max-width:95%;
-max-height:92%;
-border-radius:16px;
-}
-
-#closeBox{
-position:absolute;
-top:14px;
-right:22px;
-font-size:44px;
-color:#fff;
-cursor:pointer;
-font-weight:800;
-}
-
-.arrow{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-font-size:56px;
-color:#fff;
-cursor:pointer;
-padding:10px;
-user-select:none;
-}
-
-#prev{left:18px;}
-#next{right:18px;}
-
-
-/* =========================
-   FOOTER
-========================= */
-footer{
+box-shadow:0 10px 24px rgba(0,0,0,.08);
 text-align:center;
-padding:34px 20px;
-font-weight:700;
-color:#7f1d1d;
-font-size:15px;
 }
 
+.premio-card h3{
+font-size:22px;
+margin-bottom:12px;
+}
 
-/* =========================
-   UTILIDADES
-========================= */
-.center{text-align:center;}
-.mt-10{margin-top:10px;}
-.mt-20{margin-top:20px;}
-.hidden{display:none;}
+.premio-card p{
+font-size:17px;
+margin-top:6px;
+font-weight:700;
+}
+
+.ouro{
+border-top:6px solid #facc15;
+}
+
+.prata{
+border-top:6px solid #cbd5e1;
+}
+
+.bronze{
+border-top:6px solid #fb923c;
+}
+
+.destaque2{
+border-top:6px solid #16a34a;
+}
+
+@media(max-width:768px){
+
+.subhero{
+font-size:17px;
+}
+
+.cta-group{
+flex-direction:column;
+}
+
+.price-card .valor{
+font-size:34px;
+}
+
+.mini-info{
+flex-direction:column;
+gap:8px;
+}
+
+}
