@@ -1,19 +1,83 @@
-<section class="hero-fpss">
-  <div class="hero-box">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <h1>🔥 FESTA DO PADROEIRO SÃO SEBASTIÃO</h1>
+<title>Enquete Premiada FPSS</title>
 
-    <p class="sub">
-      Participe da enquete oficial e concorra a uma camiseta exclusiva da festa
-    </p>
+<link rel="stylesheet" href="css/enquete.css">
+
+</head>
+
+<body>
+
+<section class="enquete">
+
+  <div class="topo">
+    <h1>🎁 ENQUETE PREMIADA OFICIAL</h1>
+    <p>Responda em 1 minuto e concorra a uma camiseta da Festa do Padroeiro São Sebastião</p>
 
     <div class="alerta">
-      🎯 Mais de 300 pessoas já estão participando
+      🔥 Mais de 300 pessoas já participaram
     </div>
-
-    <a href="enquete.html" class="btn-principal">
-      QUERO PARTICIPAR AGORA 🚀
-    </a>
-
   </div>
+
+  <form id="formEnquete">
+
+    <!-- DADOS PESSOAIS -->
+    <h3>📌 Seus dados</h3>
+
+    <input type="text" name="nome" placeholder="Nome completo" required>
+
+    <input type="tel" name="whatsapp" id="whatsapp" placeholder="WhatsApp com DDD" required>
+
+    <input type="number" name="idade" placeholder="Idade" required>
+
+    <input type="text" name="cep" id="cep" placeholder="CEP" required>
+
+    <input type="text" name="cidade" id="cidade" placeholder="Cidade" required>
+
+    <input type="text" name="bairro" id="bairro" placeholder="Bairro" required>
+
+    <input type="text" name="rua" id="rua" placeholder="Rua / Endereço" required>
+
+
+    <!-- PESQUISA -->
+    <h3>📊 Pesquisa da Festa</h3>
+
+    <label>Você já participou da festa?</label>
+    <select name="participou" required>
+      <option value="">Selecione</option>
+      <option>Sim</option>
+      <option>Não</option>
+    </select>
+
+    <label>Já comprou cartela?</label>
+    <select name="cartela" required>
+      <option value="">Selecione</option>
+      <option>Sim</option>
+      <option>Não</option>
+    </select>
+
+    <label>O que foi bom nas festas anteriores?</label>
+    <textarea name="bom" placeholder="Ex: organização, comida, bingo..."></textarea>
+
+    <label>O que devemos melhorar?</label>
+    <textarea name="melhorar" placeholder="Sua sugestão"></textarea>
+
+
+    <button type="submit">
+      🔥 CONCORRER À CAMISETA AGORA
+    </button>
+
+    <div id="msg"></div>
+
+  </form>
+
 </section>
+
+<script src="js/enquete.js"></script>
+
+</body>
+</html>
