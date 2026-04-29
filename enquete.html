@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Enquete Premiada FPSS</title>
+<title>Enquete Oficial FPSS</title>
 
 <link rel="stylesheet" href="css/enquete.css">
 
@@ -15,20 +15,25 @@
 <section class="enquete">
 
   <div class="topo">
-    <h1>🎁 ENQUETE PREMIADA OFICIAL</h1>
-    <p>Responda em 1 minuto e concorra a uma camiseta da Festa do Padroeiro São Sebastião</p>
+    <h1>🔥 ENQUETE OFICIAL FPSS</h1>
+    <p>Ajude a melhorar a Festa do Padroeiro São Sebastião e concorra a uma camiseta oficial</p>
 
     <div class="alerta">
-      🔥 Mais de 300 pessoas já participaram
+      🎁 Participação gratuita + sorteio da camiseta
     </div>
   </div>
 
   <form id="formEnquete">
 
-    <!-- DADOS PESSOAIS -->
-    <h3>📌 Seus dados</h3>
+    <!-- ORIGEM (IMPORTANTE PARA O APPS SCRIPT) -->
+    <input type="hidden" name="origem" value="ENQUETE">
 
-    <input type="text" name="nome" placeholder="Nome completo" required>
+    <!-- DADOS PESSOAIS -->
+    <h3>📌 Dados pessoais</h3>
+
+    <input type="text" name="nome" placeholder="Nome" required>
+
+    <input type="text" name="sobrenome" placeholder="Sobrenome" required>
 
     <input type="tel" name="whatsapp" id="whatsapp" placeholder="WhatsApp com DDD" required>
 
@@ -42,7 +47,6 @@
 
     <input type="text" name="rua" id="rua" placeholder="Rua / Endereço" required>
 
-
     <!-- PESQUISA -->
     <h3>📊 Pesquisa da Festa</h3>
 
@@ -53,7 +57,7 @@
       <option>Não</option>
     </select>
 
-    <label>Já comprou cartela?</label>
+    <label>Já comprou cartela em edições anteriores?</label>
     <select name="cartela" required>
       <option value="">Selecione</option>
       <option>Sim</option>
@@ -61,14 +65,13 @@
     </select>
 
     <label>O que foi bom nas festas anteriores?</label>
-    <textarea name="bom" placeholder="Ex: organização, comida, bingo..."></textarea>
+    <textarea name="bom" placeholder="Ex: comida, organização, música..."></textarea>
 
     <label>O que devemos melhorar?</label>
     <textarea name="melhorar" placeholder="Sua sugestão"></textarea>
 
-
     <button type="submit">
-      🔥 CONCORRER À CAMISETA AGORA
+      🚀 ENVIAR E CONCORRER
     </button>
 
     <div id="msg"></div>
