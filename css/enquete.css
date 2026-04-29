@@ -1,1 +1,138 @@
+/* =====================================================
+FPSS - ENQUETE PREMIUM (ALTA CONVERSÃO)
+===================================================== */
 
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#0f0f0f;
+  color:#fff;
+}
+
+/* CONTAINER PRINCIPAL */
+.enquete{
+  max-width:750px;
+  margin:40px auto;
+  padding:25px;
+}
+
+/* TOPO */
+.topo{
+  text-align:center;
+  margin-bottom:25px;
+}
+
+.topo h1{
+  font-size:34px;
+  color:#ff1f1f;
+  margin-bottom:10px;
+}
+
+.topo p{
+  font-size:18px;
+  color:#ddd;
+}
+
+/* ALERTA DE URGÊNCIA */
+.alerta{
+  display:inline-block;
+  margin-top:15px;
+  padding:10px 15px;
+  background:#ffd000;
+  color:#000;
+  font-weight:bold;
+  border-radius:999px;
+  font-size:14px;
+}
+
+/* FORMULÁRIO */
+form{
+  background:#ffffff;
+  color:#333;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 20px 50px rgba(0,0,0,.4);
+}
+
+/* TÍTULOS INTERNOS */
+h3{
+  margin-top:25px;
+  color:#8b1111;
+  font-size:20px;
+  border-left:5px solid #ff1f1f;
+  padding-left:10px;
+}
+
+/* INPUTS */
+input, select, textarea{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  margin-bottom:12px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  font-size:16px;
+  outline:none;
+  transition:.2s;
+  box-sizing:border-box;
+}
+
+/* FOCO */
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:#ff1f1f;
+  box-shadow:0 0 0 3px rgba(255,31,31,.15);
+}
+
+/* TEXTAREA */
+textarea{
+  resize:none;
+}
+
+/* BOTÃO PRINCIPAL */
+button{
+  width:100%;
+  margin-top:20px;
+  padding:18px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#ff1f1f,#8b1111);
+  color:#fff;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.3s;
+  box-shadow:0 10px 25px rgba(255,31,31,.3);
+}
+
+/* HOVER BOTÃO */
+button:hover{
+  transform:scale(1.03);
+  background:linear-gradient(135deg,#ff0000,#8b1111);
+}
+
+/* MENSAGEM */
+#msg{
+  margin-top:15px;
+  text-align:center;
+  font-weight:bold;
+  color:#1fae42;
+}
+
+/* RESPONSIVO */
+@media(max-width:600px){
+
+  .topo h1{
+    font-size:26px;
+  }
+
+  .enquete{
+    margin:20px auto;
+    padding:15px;
+  }
+
+  form{
+    padding:18px;
+  }
+}
