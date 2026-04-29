@@ -1,117 +1,499 @@
+@@ -1,486 +1,117 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Festa do Padroeiro São Sebastião</title>
+<title>6ª Festa do Padroeiro São Sebastião 2027</title>
 
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f0f0f;
-  color:#fff;
-}
+<meta name="description"
+content="24 de Janeiro de 2027. Churrasco R$60, Cartela R$20 e R$25 mil em prêmios. Garanta já sua participação.">
 
-/* HERO PRINCIPAL */
-.hero{
-  background:linear-gradient(135deg,#8b1111,#ff1f1f);
-  padding:90px 20px;
-  text-align:center;
-}
-
-.hero h1{
-  font-size:42px;
-  margin-bottom:15px;
-}
-
-.hero p{
-  font-size:18px;
-  opacity:.9;
-  margin-bottom:20px;
-}
-
-/* ALERTA */
-.badge{
-  display:inline-block;
-  background:#ffd000;
-  color:#000;
-  padding:10px 16px;
-  border-radius:999px;
-  font-weight:bold;
-  margin-bottom:20px;
-}
-
-/* BOTÃO */
-.btn{
-  display:inline-block;
-  background:#00c853;
-  color:#fff;
-  padding:18px 30px;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:bold;
-  text-decoration:none;
-  transition:.3s;
-}
-
-.btn:hover{
-  transform:scale(1.05);
-}
-
-/* SEÇÃO INFO */
-.info{
-  max-width:900px;
-  margin:50px auto;
-  padding:20px;
-  text-align:center;
-}
-
-.card{
-  background:#1c1c1c;
-  padding:20px;
-  margin:15px;
-  border-radius:15px;
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mobile.css">
 
 </head>
 
 <body>
 
-<section class="hero">
+<!-- BARRA TOPO -->
+<div class="barra-urgencia">
+🔥 Evento Oficial FPSS • Cartelas e churrascos limitados
+</div>
 
-  <h1>🔥 FESTA DO PADROEIRO SÃO SEBASTIÃO</h1>
 
-  <div class="badge">🎯 ENQUETE OFICIAL + CAMISETA PREMIADA</div>
+<!-- HERO CONVERSÃO MÁXIMA -->
+<header class="hero hero-vendas">
 
-  <p>
-    Participe da nossa enquete e ajude a melhorar a festa.<br>
-    Você ainda concorre a uma camiseta exclusiva.
-  </p>
+<div class="wrap">
 
-  <a class="btn" href="enquete.html">
-    QUERO PARTICIPAR AGORA 🚀
-  </a>
+<div class="hero-grid">
+
+<div>
+
+<span class="badge-topo">🔥 EVENTO OFICIAL • 24 JAN 2027</span>
+
+<h1>6ª Festa do Padroeiro São Sebastião</h1>
+
+<p class="subhero">
+🍖 Churrasco R$ 60 • 🎟 Cartela R$ 20 <br>
+💰 Concorra a <strong>R$ 25 MIL em prêmios</strong>
+</p>
+
+<div class="cta-group">
+<a href="#comprar" class="btn red">🍖 Comprar Churrasco</a>
+<a href="#comprar" class="btn green">🎟 Comprar Cartela</a>
+</div>
+
+<div class="mini-info">
+<span>⚠️ Quantidades Limitadas</span>
+<span>📲 Compra em 1 clique</span>
+<span>🎉 Evento Tradicional</span>
+</div>
+
+</div>
+
+
+<div class="hero-side">
+
+<div class="price-card destaque">
+<h3>💰 R$ 25 MIL</h3>
+<div class="valor">PRÊMIOS</div>
+<p>Sorteio Oficial</p>
+</div>
+
+<div class="price-card">
+<h3>⏰ Falta Pouco</h3>
+<div class="valor">24 JAN</div>
+<p>Garanta antecipado</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</header>
+
+
+<!-- CONTADOR -->
+<section class="card center">
+
+<div class="wrap">
+
+<h2 class="section-title">⏰ Faltam poucos dias</h2>
+
+<div class="contador-grid">
+
+<div class="tempo-box">
+<span id="dias">00</span>
+<small>Dias</small>
+</div>
+
+<div class="tempo-box">
+<span id="horas">00</span>
+<small>Horas</small>
+</div>
+
+<div class="tempo-box">
+<span id="minutos">00</span>
+<small>Minutos</small>
+</div>
+
+</div>
+
+<p class="mt-20">
+🔥 Garanta antecipado antes que acabe.
+</p>
+
+</div>
 
 </section>
 
-<section class="info">
 
-  <div class="card">
-    🎉 Tradição da comunidade
-  </div>
+<!-- PROVA SOCIAL -->
+<section class="card center">
 
-  <div class="card">
-    🍖 Churrasco, missa e bingo
-  </div>
+<div class="wrap">
 
-  <div class="card">
-    🎁 Sorteios e prêmios especiais
-  </div>
+<h2 class="section-title">⭐ Evento Tradicional da Comunidade</h2>
+
+<p class="mt-10">
+Centenas de pessoas participam todos os anos.
+Garanta já sua cartela e churrasco antecipado.
+</p>
+
+</div>
 
 </section>
+
+
+<!-- COMPRAR -->
+<section class="card" id="comprar">
+
+<div class="wrap">
+
+<h2 class="section-title">🔥 Garanta Agora Seu Pedido</h2>
+
+<div class="grid-2">
+
+<!-- CHURRASCO -->
+<div class="venda-box">
+
+<h3>🍖 Churrasco Oficial FPSS</h3>
+
+<ul class="info-list">
+<li>✔ Produto tradicional da festa</li>
+<li>✔ Retirada no evento</li>
+<li>✔ Compra antecipada recomendada</li>
+</ul>
+
+<div class="price-box">R$ 60,00</div>
+
+<a target="_blank"
+href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20churrasco%20FPSS"
+class="btn red full">
+📲 Comprar Churrasco
+</a>
+
+</div>
+
+
+<!-- CARTELA -->
+<div class="venda-box">
+
+<h3>🎟 Cartela Premiada</h3>
+
+<ul class="info-list">
+<li>✔ Apenas R$ 20</li>
+<li>✔ 13 chances de ganhar</li>
+<li>✔ Sorteio oficial</li>
+</ul>
+
+<div class="price-box">R$ 20,00</div>
+
+<a target="_blank"
+href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS"
+class="btn green full">
+📲 Comprar Cartela
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- PROGRAMAÇÃO -->
+<section class="card">
+
+<div class="wrap">
+
+<h2 class="section-title">📅 Programação Oficial</h2>
+
+<ul class="info-list">
+<li>🕙 10h - Santa Missa</li>
+<li>🕚 11h - Almoço Churrasco + Show Ao Vivo</li>
+<li>🕒 15h - Sorteio do 4º Prêmio</li>
+<li>🕔 17h - Show de Prêmios</li>
+</ul>
+
+</div>
+
+</section>
+
+
+<!-- PREMIAÇÃO -->
+<section class="card" id="premiacao">
+
+<div class="wrap">
+
+<h2 class="section-title">💰 Premiação Oficial - R$ 25 MIL</h2>
+
+<div class="premios-grid">
+
+<div class="premio-card ouro">
+<h3>🥇 1º Prêmio</h3>
+<p>R$ 10.000 Computadorizado</p>
+<p>R$ 2.000 Presencial</p>
+</div>
+
+<div class="premio-card prata">
+<h3>🥈 2º Prêmio</h3>
+<p>R$ 5.000 Computadorizado</p>
+<p>R$ 2.000 Presencial</p>
+</div>
+
+<div class="premio-card bronze">
+<h3>🥉 3º Prêmio</h3>
+<p>R$ 3.000 Computadorizado</p>
+<p>R$ 1.000 Presencial</p>
+</div>
+
+<div class="premio-card destaque2">
+<h3>🎉 4º Prêmio</h3>
+<p>R$ 2.000 Durante o almoço</p>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- CTA EXTRA -->
+<section class="card center">
+
+<div class="wrap">
+
+<h2 class="section-title">🎟 Garanta Sua Chance Agora</h2>
+
+<a href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS"
+target="_blank"
+class="btn green">
+Comprar Cartela no WhatsApp
+</a>
+
+</div>
+
+</section>
+
+
+<!-- SHOW -->
+<section class="card center">
+
+<div class="wrap">
+
+<h2 class="section-title">🎵 Show Ao Vivo</h2>
+
+<p class="mt-10">
+Cuyabano & Douradense
+</p>
+
+</div>
+
+</section>
+
+  <section class="vip-fpss">
+  <div class="vip-box">
+
+    <h2>🔥 ENTRE PARA O GRUPO VIP DA FESTA</h2>
+
+    <p>
+      Receba em primeira mão novidades da Festa do Padroeiro São Sebastião,
+      cartelas, churrasco, sorteios e avisos especiais.
+    </p>
+
+    <form id="formVIP">
+
+      <input type="text" name="nome" placeholder="Seu nome" required>
+
+      <input type="tel" name="whatsapp" placeholder="Seu WhatsApp" required>
+
+      <input type="text" name="cidade" placeholder="Cidade" required>
+
+      <input type="text" name="bairro" placeholder="Bairro" required>
+
+      <button type="submit">
+        QUERO ENTRAR AGORA 🚀
+      </button>
+
+    </form>
+
+    <div id="msgVIP"></div>https://github.com/saosebastiaorm/festa-sao-sebastiao/tree/main
+
+  </div>
+</section>
+
+
+!Sessão Enquete
+<section class="hero-fpss">
+  <div class="hero-box">
+
+    <h1>🔥 FESTA DO PADROEIRO SÃO SEBASTIÃO</h1>
+
+    <p>Participe da enquete e concorra a uma camiseta oficial</p>
+
+    <a href="enquete.html" class="btn-principal">
+      QUERO PARTICIPAR AGORA 🚀
+    </a>
+
+  </div>
+</section>
+
+  
+<style>
+.vip-fpss{
+  padding:60px 20px;
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+
+
+}
+
+.vip-box{
+  max-width:600px;
+  margin:auto;
+  background:#fff;
+  padding:35px;
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,.25);
+  text-align:center;
+}
+
+.vip-box h2{
+  font-size:32px;
+  color:#8b1111;
+  margin-bottom:15px;
+}
+
+.vip-box p{
+  color:#555;
+  font-size:17px;
+  margin-bottom:25px;
+}
+
+.vip-box input{
+  width:100%;
+  padding:15px;
+  margin-bottom:14px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  font-size:16px;
+
+
+}
+
+.vip-box button{
+  width:100%;
+  padding:18px;
+  border:none;
+  border-radius:12px;
+  background:#1fae42;
+  color:#fff;
+
+
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.vip-box button:hover{
+  transform:scale(1.03);
+}
+
+#msgVIP{
+  margin-top:18px;
+  font-weight:bold;
+  color:#1fae42;
+
+
+}
+
+@media(max-width:600px){
+  .vip-box h2{
+    font-size:24px;
+  }
+
+}
+</style>
+
+<script>
+document
+.getElementById("formVIP")
+.addEventListener("submit", function(e){
+
+e.preventDefault();
+
+let form = this;
+let dados = new FormData(form);
+
+fetch("https://script.google.com/macros/s/AKfycbzc4p873RcAhbAegYAC1Wc1esCyhKsI8pNPhvfCYavGPBAHES3ppfeduiKdVE08IUd_/exec",{
+method:"POST",
+body:dados
+})
+.then(r=>r.text())
+.then(res=>{
+document.getElementById("msgVIP").innerHTML =
+"✅ Cadastro realizado com sucesso!";
+form.reset();
+})
+.catch(()=>{
+document.getElementById("msgVIP").innerHTML =
+"❌ Erro ao enviar.";
+});
+
+});
+</script>
+
+<!-- CONTATO -->
+<section class="card center">
+
+<div class="wrap">
+
+<h2 class="section-title">📲 Atendimento Oficial</h2>
+
+<p class="mt-10">
+Pedidos e informações com André
+</p>
+
+<a target="_blank"
+href="https://wa.me/5569981102306"
+class="btn green">
+WhatsApp André - 69 98110-2306
+</a>
+
+</div>
+
+
+
+</section>
+
+
+
+<!-- BOTÃO FIXO -->
+<a href="https://wa.me/5569981102306"
+target="_blank"
+class="whatsapp-fixo">
+📲 Comprar Agora
+</a>
+
+
+<footer>
+6ª Festa do Padroeiro São Sebastião • FPSS 2027
+</footer>
+
+
+<!-- CONTADOR -->
+<script>
+const dataEvento = new Date("2027-01-24 10:00:00").getTime();
+
+function atualizarContador(){
+
+const agora = new Date().getTime();
+const distancia = dataEvento - agora;
+
+if(distancia < 0) return;
+
+const dias = Math.floor(distancia / (1000*60*60*24));
+const horas = Math.floor((distancia % (1000*60*60*24)) / (1000*60*60));
+const minutos = Math.floor((distancia % (1000*60*60)) / (1000*60));
+
+document.getElementById("dias").innerText = dias;
+document.getElementById("horas").innerText = horas;
+document.getElementById("minutos").innerText = minutos;
+}
+
+setInterval(atualizarContador,1000);
+atualizarContador();
+</script>
 
 </body>
 </html>
