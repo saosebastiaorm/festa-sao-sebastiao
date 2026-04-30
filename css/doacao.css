@@ -45,14 +45,15 @@
   transform:scale(1.05);
 }
 
-/* 🔥 AQUI ESTÁ O SEGREDO */
-.doacao-cta .wrap{
-  max-width:600px;
-  margin:0 auto;
-}
-
 .doacao-cta small{
   display:block;
   margin-top:15px;
   opacity:.8;
+}
+
+
+/* 🔥 AQUI ESTÁ O SEGREDO */
+.doacao-cta .wrap{
+  max-width:600px;
+  margin:0 auto;
 }
