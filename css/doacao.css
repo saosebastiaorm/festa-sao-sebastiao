@@ -26,6 +26,20 @@
 .doacao-box input,
 .doacao-box select{
   width:100%;
+
+  .vip{
+  padding:60px 20px;
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+}
+
+.vip-box{
+  max-width:500px;
+  margin:auto;
+  background:#fff;
+  padding:30px;
+  border-radius:20px;
+  text-align:center;
+}
   padding:14px;
   margin-bottom:12px;
   border-radius:10px;
