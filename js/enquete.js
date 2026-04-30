@@ -47,7 +47,7 @@ if (cep) {
 /* =========================
 SUBMIT
 ========================= */
-form.addEventListener("submit", async function(e){
+form.addEventListener("submit", function(e){
   e.preventDefault();
 
   const whatsappValue = (whatsapp?.value || "").trim();
@@ -62,11 +62,11 @@ form.addEventListener("submit", async function(e){
   msg.innerHTML = "⏳ Enviando...";
 
   const dados = new FormData(form);
-  dados.set("origem","ENQUETE");
+  dados.oppend("origem","ENQUETE");
 
   try{
 
-    await fetch(URL_SCRIPT,{
+    fetch(URL_SCRIPT,{
       method:"POST",
       body:dados
     });
