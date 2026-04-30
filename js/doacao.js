@@ -1,5 +1,5 @@
 const URL_SCRIPT = "COLE_SEU_SCRIPT_AQUI";
-const PIX_CHAVE = "69999005245"; // sua chave PIX
+const PIX_CHAVE = "69999005245"; // sua chave
 
 const form = document.getElementById("formDoacao");
 const msg = document.getElementById("msg");
@@ -11,34 +11,29 @@ form.addEventListener("submit", async function(e){
   const dados = new FormData(form);
   dados.set("origem","DOACAO");
 
-  const nome = dados.get("nome");
   const valor = dados.get("valor") || "0";
 
   /* =========================
-  GERA PIX SIMPLES
+  GERAR PIX (simples funcional)
   ========================= */
+  const pix =
+`00020126580014BR.GOV.BCB.PIX0136${PIX_CHAVE}520400005303986540${valor}5802BR5925FPSS DOACAO6009BRASILIA62070503***6304`;
 
-  const pixCopiaCola =
-`00020126580014BR.GOV.BCB.PIX0136${PIX_CHAVE}520400005303986540${valor}5802BR5925FPSS DOACAO6009SAO PAULO62070503***6304`;
+  document.getElementById("pixCode").value = pix;
 
-  document.getElementById("pixCode").value = pixCopiaCola;
-
-  /* QR CODE */
   document.getElementById("qrPix").src =
-  "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + pixCopiaCola;
+  "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + pix;
 
-  document.getElementById("pixArea").classList.remove("hidden");
+  document.getElementById("pixBox").classList.remove("hidden");
 
-  msg.innerHTML = "✅ Gere seu PIX abaixo e finalize a doação";
+  msg.innerHTML = "✅ PIX gerado! Faça o pagamento.";
 
   /* SALVA NA PLANILHA */
   try{
-
     await fetch(URL_SCRIPT,{
       method:"POST",
       body:dados
     });
-
   }catch(e){
     console.log(e);
   }
