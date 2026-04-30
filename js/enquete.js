@@ -8,46 +8,53 @@ const msg = document.getElementById("msg");
 const whatsapp = document.getElementById("whatsapp");
 const cep = document.getElementById("cep");
 
-/* WHATSAPP */
-function validarWhatsApp(numero) {
-  const digitos = (numero || "").replace(/\D/g, "");
-  return digitos.length === 11;
+/* =========================
+VALIDAÇÃO WHATSAPP
+========================= */
+function validarWhatsApp(numero){
+  return (numero || "").replace(/\D/g,"").length === 11;
 }
 
-/* CEP MÁSCARA */
+/* =========================
+CEP MÁSCARA + BUSCA
+========================= */
 if (cep) {
-  cep.addEventListener("input", function () {
-    let v = this.value.replace(/\D/g, "").slice(0, 8);
-    if (v.length > 5) v = v.replace(/^(\d{5})(\d+)/, "$1-$2");
+
+  cep.addEventListener("input", function(){
+    let v = this.value.replace(/\D/g,"").slice(0,8);
+    if(v.length > 5) v = v.replace(/^(\d{5})(\d+)/,"$1-$2");
     this.value = v;
   });
 
-  cep.addEventListener("blur", async function () {
-    let valor = this.value.replace(/\D/g, "");
-    if (valor.length !== 8) return;
+  cep.addEventListener("blur", async function(){
+    let v = this.value.replace(/\D/g,"");
+    if(v.length !== 8) return;
 
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${valor}/json/`);
+      const res = await fetch(`https://viacep.com.br/ws/${v}/json/`);
       const data = await res.json();
 
-      if (!data.erro) {
+      if(!data.erro){
         document.getElementById("cidade").value = data.localidade || "";
         document.getElementById("bairro").value = data.bairro || "";
         document.getElementById("rua").value = data.logradouro || "";
       }
-    } catch (e) {}
+    } catch(e){}
   });
+
 }
 
-/* SUBMIT */
-form.addEventListener("submit", async function (e) {
+/* =========================
+SUBMIT
+========================= */
+form.addEventListener("submit", async function(e){
   e.preventDefault();
 
   const whatsappValue = (whatsapp?.value || "").trim();
 
-  if (!validarWhatsApp(whatsappValue)) {
+  if(!validarWhatsApp(whatsappValue)){
     msg.style.color = "red";
-    msg.innerHTML = "❌ Informe um WhatsApp válido com DDD.";
+    msg.innerHTML = "❌ WhatsApp inválido com DDD.";
     return;
   }
 
@@ -55,12 +62,13 @@ form.addEventListener("submit", async function (e) {
   msg.innerHTML = "⏳ Enviando...";
 
   const dados = new FormData(form);
-  dados.set("origem", "ENQUETE");
+  dados.set("origem","ENQUETE");
 
-  try {
-    await fetch(URL_SCRIPT, {
-      method: "POST",
-      body: dados
+  try{
+
+    await fetch(URL_SCRIPT,{
+      method:"POST",
+      body:dados
     });
 
     msg.style.color = "green";
@@ -68,14 +76,15 @@ form.addEventListener("submit", async function (e) {
 
     form.reset();
 
-    setTimeout(() => {
+    setTimeout(()=>{
       window.location.href = "obrigado.html";
-    }, 1200);
+    },1200);
 
-  } catch (err) {
-    msg.style.color = "red";
-    msg.innerHTML = "❌ Erro ao enviar.";
+  }catch(err){
+    msg.style.color="red";
+    msg.innerHTML="❌ Erro ao enviar.";
   }
+
 });
 
 });
