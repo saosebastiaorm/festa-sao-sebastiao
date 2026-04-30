@@ -85,6 +85,26 @@ form.addEventListener("submit", async function(e){
     msg.innerHTML="❌ Erro ao enviar.";
   }
 
+  // =========================
+// LIMITE DE IDADE (10 a 120 anos)
+// =========================
+const nascimento = document.querySelector('input[name="nascimento"]');
+
+if (nascimento) {
+
+  const hoje = new Date();
+
+  const anoMin = hoje.getFullYear() - 120; // máximo idade
+  const anoMax = hoje.getFullYear() - 10;   // mínimo idade
+
+  const dataMin = `${anoMin}-01-01`;
+  const dataMax = `${anoMax}-12-31`;
+
+  nascimento.setAttribute("min", dataMin);
+  nascimento.setAttribute("max", dataMax);
+
+}
+
 });
 
 });
