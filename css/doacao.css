@@ -1,44 +1,66 @@
 .doacao-fpss{
-  padding:60px 20px;
-  background:linear-gradient(135deg,#0f5132,#198754);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+  padding:20px;
 }
 
-.doacao-box{
-  max-width:600px;
-  margin:auto;
+.box{
   background:#fff;
-  padding:35px;
+  max-width:500px;
+  width:100%;
+  padding:30px;
   border-radius:20px;
-  box-shadow:0 15px 40px rgba(0,0,0,.25);
+  box-shadow:0 20px 50px rgba(0,0,0,.3);
   text-align:center;
 }
 
-.doacao-box h2{
-  color:#0f5132;
-  font-size:28px;
+h1{
+  color:#8b1111;
+  margin-bottom:10px;
 }
 
-.doacao-box input,
-.doacao-box select,
-.doacao-box textarea{
+p{
+  color:#555;
+  margin-bottom:20px;
+}
+
+input, select{
   width:100%;
   padding:14px;
-  margin:10px 0;
-  border:1px solid #ddd;
+  margin-bottom:12px;
   border-radius:10px;
+  border:1px solid #ddd;
 }
 
-.doacao-box button{
+button{
   width:100%;
   padding:16px;
   border:none;
-  border-radius:10px;
-  background:#198754;
+  border-radius:12px;
+  background:#1fae42;
   color:#fff;
+  font-size:18px;
   font-weight:bold;
   cursor:pointer;
 }
 
-#doacaoMsg{
-  margin-top:15px;
+button:hover{
+  transform:scale(1.03);
+}
+
+#pixArea{
+  margin-top:20px;
+}
+
+#pixArea textarea{
+  width:100%;
+  height:100px;
+  margin-bottom:10px;
+}
+
+.hidden{
+  display:none;
 }
