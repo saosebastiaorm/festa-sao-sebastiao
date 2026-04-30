@@ -147,3 +147,53 @@ RESPONSIVO
   }
 
 }
+
+/* =========================
+TOPO ENQUETE FPSS (NOVO VISUAL)
+========================= */
+.enquete-topo{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+/* BADGE SUPERIOR */
+.badge-enquete{
+  display:inline-block;
+  background:#8b1111;
+  color:#fff;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:bold;
+  margin-bottom:10px;
+  letter-spacing:0.5px;
+}
+
+/* TÍTULO PRINCIPAL */
+.enquete-topo h1{
+  font-size:24px;
+  color:#8b1111;
+  font-weight:900;
+  margin-bottom:10px;
+  line-height:1.2;
+}
+
+/* TEXTO SECUNDÁRIO */
+.enquete-topo p{
+  color:#555;
+  font-size:15px;
+  line-height:1.4;
+  margin-bottom:10px;
+}
+
+/* ALERTA DE CONVERSÃO */
+.alerta-topo{
+  display:inline-block;
+  margin-top:8px;
+  background:#fff3cd;
+  color:#856404;
+  padding:8px 12px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:bold;
+}
