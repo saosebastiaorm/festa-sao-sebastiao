@@ -1,53 +1,52 @@
-.doacao{
-  padding:60px 20px;
-  background:linear-gradient(135deg,#0f5132,#198754);
-}
-
-.doacao-box{
-  max-width:500px;
-  margin:0 auto;
-  background:#fff;
-  padding:30px;
-  border-radius:20px;
-  text-align:center;
-  box-shadow:0 15px 40px rgba(0,0,0,.3);
-}
-
-.doacao-box h2{
-  color:#0f5132;
-  margin-bottom:10px;
-}
-
-.doacao-box p{
-  color:#555;
-  margin-bottom:20px;
-}
-
-.doacao-box input,
-.doacao-box select{
-  width:100%;
-
-  .vip{
-  padding:60px 20px;
+.doacao-page{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:40px 15px;
   background:linear-gradient(135deg,#8b1111,#c61f1f);
 }
 
-.vip-box{
-  max-width:500px;
-  margin:auto;
+.doacao-box{
+  width:100%;
+  max-width:520px;
   background:#fff;
   padding:30px;
   border-radius:20px;
-  text-align:center;
+  box-shadow:0 15px 40px rgba(0,0,0,.25);
 }
+
+.doacao-box h1{
+  text-align:center;
+  color:#8b1111;
+}
+
+.sub{
+  text-align:center;
+  margin-bottom:20px;
+  color:#555;
+}
+
+.doacao-box label{
+  font-weight:bold;
+  margin-top:10px;
+  display:block;
+}
+
+.doacao-box input,
+.doacao-box select,
+.doacao-box textarea{
+  width:100%;
   padding:14px;
-  margin-bottom:12px;
+  margin-top:5px;
   border-radius:10px;
   border:1px solid #ddd;
+  font-size:15px;
 }
 
 .doacao-box button{
   width:100%;
+  margin-top:20px;
   padding:16px;
   border:none;
   border-radius:10px;
@@ -57,10 +56,8 @@
   cursor:pointer;
 }
 
-#pixBox{
-  margin-top:20px;
-}
-
-.hidden{
-  display:none;
+#doacaoMsg{
+  margin-top:15px;
+  text-align:center;
+  font-weight:bold;
 }
