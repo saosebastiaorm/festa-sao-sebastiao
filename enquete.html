@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Enquete FPSS</title>
+<title>Enquete FPSS 2027</title>
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/enquete.css">
@@ -13,11 +14,11 @@
 
 <body>
 
-<section class="card center">
+<section class="enquete-fpss">
 
-<div class="wrap">
+<div class="enquete-box">
 
-<h2 class="section-title">🔥 Enquete Oficial FPSS</h2>
+<h1>🔥 Enquete Oficial FPSS</h1>
 
 <p>
 Participe e concorra a uma camiseta exclusiva da Festa do Padroeiro São Sebastião.
@@ -27,11 +28,8 @@ Participe e concorra a uma camiseta exclusiva da Festa do Padroeiro São Sebasti
 
 <input type="hidden" name="origem" value="ENQUETE">
 
-<!-- =========================
-DADOS PESSOAIS
-========================= -->
-
-<h3>📌 Dados pessoais</h3>
+<!-- DADOS -->
+<h2>📌 Dados pessoais</h2>
 
 <label>Nome</label>
 <input type="text" name="nome" required>
@@ -40,30 +38,27 @@ DADOS PESSOAIS
 <input type="text" name="sobrenome" required>
 
 <label>WhatsApp</label>
-<input type="tel" name="whatsapp" required>
+<input type="tel" name="whatsapp" id="whatsapp" required>
 
 <label>Data de nascimento</label>
 <input type="date" name="nascimento" required>
 
 <label>CEP</label>
-<input type="text" name="cep" required>
+<input type="text" name="cep" id="cep" required>
 
 <label>Cidade</label>
-<input type="text" name="cidade" required>
+<input type="text" name="cidade" id="cidade" required>
 
 <label>Bairro</label>
-<input type="text" name="bairro" required>
+<input type="text" name="bairro" id="bairro" required>
 
 <label>Rua / Endereço</label>
-<input type="text" name="rua" required>
+<input type="text" name="rua" id="rua" required>
 
-<!-- =========================
-PERGUNTAS
-========================= -->
+<!-- PERGUNTAS -->
+<h2>📊 Pesquisa da Festa</h2>
 
-<h3>📊 Experiência na Festa</h3>
-
-<label>Você já participou da festa anteriormente?</label>
+<label>Você já participou da festa?</label>
 <select name="participou" required>
   <option value="">Selecione</option>
   <option>Sim, várias vezes</option>
@@ -71,20 +66,20 @@ PERGUNTAS
   <option>Não</option>
 </select>
 
-<label>Você já comprou cartela em outras edições?</label>
+<label>Já comprou cartela?</label>
 <select name="cartela" required>
   <option value="">Selecione</option>
   <option>Sim</option>
   <option>Não</option>
 </select>
 
-<label>Como foi sua experiência nas festas anteriores?</label>
+<label>Como foi sua experiência?</label>
 <textarea name="experiencia" placeholder="Comida, organização, ambiente..."></textarea>
 
-<label>O que devemos melhorar na próxima festa?</label>
-<textarea name="melhorar" placeholder="Sugestões de melhoria..."></textarea>
+<label>O que devemos melhorar?</label>
+<textarea name="melhorar" placeholder="Sugestões..."></textarea>
 
-<button type="submit" class="btn red full">
+<button type="submit">
 🚀 ENVIAR E CONCORRER
 </button>
 
