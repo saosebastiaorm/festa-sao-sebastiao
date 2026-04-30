@@ -230,3 +230,17 @@ padding:13px;
 }
 
 }
+
+@media(max-width:600px){
+
+  .card-box,
+  .vip-box,
+  .doacao-box{
+    padding:20px;
+  }
+
+  .btn{
+    width:100%;
+  }
+
+}
