@@ -1,62 +1,113 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Doação FPSS</title>
+<title>Doação • FPSS 2027</title>
 
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mobile.css">
 <link rel="stylesheet" href="../css/doacao.css">
 
 </head>
+
 <body>
 
-<section class="container">
+<section class="doacao-page">
 
-  <div class="box">
+<div class="doacao-box">
 
-    <h1>🙏 Apoie a Festa</h1>
+<h1>🙏 Apoie a Festa do Padroeiro</h1>
 
-    <p>
-      Sua ajuda faz a festa acontecer. Doe qualquer valor ou contribuição.
-    </p>
+<p class="sub">
+Sua ajuda é fundamental para manter essa tradição viva.
+Você pode doar dinheiro, produtos, serviços ou estrutura.
+</p>
 
-    <form id="formDoacao">
+<form id="formDoacao">
 
-      <input type="text" name="nome" placeholder="Nome completo" required>
+<!-- NOME -->
+<label>Nome</label>
+<input type="text" name="nome" required placeholder="Seu nome">
 
-      <input type="tel" name="whatsapp" placeholder="WhatsApp" required>
+<!-- WHATSAPP -->
+<label>WhatsApp</label>
+<input type="tel" name="whatsapp" required placeholder="(69) 99999-9999">
 
-      <select name="tipo" required>
-        <option value="">Tipo de doação</option>
-        <option value="DINHEIRO">💰 Dinheiro</option>
-        <option value="GADO">🐄 Gado</option>
-        <option value="BRINDE">🎁 Brinde</option>
-        <option value="SERVICO">🛠 Serviço</option>
-      </select>
+<!-- CIDADE -->
+<label>Cidade</label>
+<input type="text" name="cidade" placeholder="Sua cidade">
 
-      <input type="number" name="valor" placeholder="Valor (R$)">
+<!-- TIPO -->
+<label>Tipo de doação</label>
+<select name="tipo_doacao" id="tipoDoacao" required>
 
-      <button type="submit">💚 GERAR PIX</button>
+<option value="">Selecione</option>
 
-    </form>
+<optgroup label="💰 Financeiro">
+<option value="Dinheiro">Dinheiro (PIX)</option>
+<option value="Patrocínio">Patrocínio</option>
+</optgroup>
 
-    <!-- PIX -->
-    <div id="pixBox" class="hidden">
+<optgroup label="🐄 Agro">
+<option value="Gado">Gado</option>
+<option value="Carne">Carne</option>
+<option value="Leite">Leite</option>
+<option value="Produtos Rurais">Produtos Rurais</option>
+</optgroup>
 
-      <h3>📲 Pague com PIX</h3>
+<optgroup label="🍽 Alimentação">
+<option value="Alimentos">Alimentos</option>
+<option value="Bebidas">Bebidas</option>
+<option value="Ingredientes">Ingredientes</option>
+</optgroup>
 
-      <textarea id="pixCode" readonly></textarea>
+<optgroup label="🎁 Evento">
+<option value="Brindes">Brindes</option>
+<option value="Prêmios">Prêmios</option>
+<option value="Camisetas">Camisetas</option>
+</optgroup>
 
-      <button onclick="copiarPix()">📋 Copiar PIX</button>
+<optgroup label="🛠 Serviços">
+<option value="Mão de obra">Mão de obra</option>
+<option value="Som">Som</option>
+<option value="Show">Show</option>
+<option value="Transporte">Transporte</option>
+<option value="Divulgação">Divulgação</option>
+</optgroup>
 
-      <img id="qrPix">
+<optgroup label="🏗 Estrutura">
+<option value="Tendas">Tendas</option>
+<option value="Mesas e cadeiras">Mesas e cadeiras</option>
+<option value="Equipamentos">Equipamentos</option>
+<option value="Gerador">Gerador</option>
+</optgroup>
 
-    </div>
+<optgroup label="📦 Outros">
+<option value="Outros">Outros</option>
+</optgroup>
 
-    <div id="msg"></div>
+</select>
 
-  </div>
+<!-- VALOR -->
+<div id="boxValor">
+<label>Valor (R$)</label>
+<input type="number" name="valor_doacao" placeholder="Ex: 50">
+</div>
+
+<!-- DESCRIÇÃO -->
+<label>Descrição</label>
+<textarea name="descricao_doacao" placeholder="Descreva sua doação"></textarea>
+
+<button type="submit">QUERO AJUDAR 🙏</button>
+
+</form>
+
+<div id="msgDoacao"></div>
+
+</div>
 
 </section>
 
