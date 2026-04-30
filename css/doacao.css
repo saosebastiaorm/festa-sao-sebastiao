@@ -1,63 +1,119 @@
-.doacao-page{
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:40px 15px;
+/* =========================
+DOAÇÃO - HOME (FPSS PADRÃO)
+========================= */
+
+.doacao-cta{
+  padding:70px 20px;
   background:linear-gradient(135deg,#8b1111,#c61f1f);
 }
 
-.doacao-box{
-  width:100%;
-  max-width:520px;
+/* CAIXA CENTRAL */
+.doacao-box-main{
+  max-width:620px;
+  margin:0 auto;
   background:#fff;
-  padding:30px;
-  border-radius:20px;
-  box-shadow:0 15px 40px rgba(0,0,0,.25);
+  padding:40px 30px;
+  border-radius:22px;
+  text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,.25);
+  position:relative;
 }
 
-.doacao-box h1{
-  text-align:center;
+/* TÍTULO */
+.doacao-box-main h2{
   color:#8b1111;
+  font-size:30px;
+  margin-bottom:10px;
+  line-height:1.2;
 }
 
-.sub{
-  text-align:center;
-  margin-bottom:20px;
+/* TEXTO */
+.doacao-box-main p{
   color:#555;
+  font-size:16px;
+  margin-bottom:25px;
 }
 
-.doacao-box label{
+/* VALORES */
+.doacao-valores{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:25px;
+}
+
+.doacao-valores span{
+  background:#f5f5f5;
+  padding:10px 16px;
+  border-radius:12px;
   font-weight:bold;
-  margin-top:10px;
-  display:block;
+  font-size:14px;
+  transition:.2s;
 }
 
-.doacao-box input,
-.doacao-box select,
-.doacao-box textarea{
-  width:100%;
-  padding:14px;
-  margin-top:5px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-size:15px;
+.doacao-valores span:hover{
+  background:#eaeaea;
+  transform:scale(1.05);
 }
 
-.doacao-box button{
-  width:100%;
-  margin-top:20px;
-  padding:16px;
-  border:none;
-  border-radius:10px;
+/* BOTÃO PRINCIPAL */
+.btn-doar{
+  display:inline-block;
   background:#1fae42;
   color:#fff;
+  padding:18px 32px;
+  border-radius:14px;
+  font-size:18px;
   font-weight:bold;
-  cursor:pointer;
+  text-decoration:none;
+  transition:.3s;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
 }
 
-#doacaoMsg{
-  margin-top:15px;
-  text-align:center;
-  font-weight:bold;
+/* HOVER */
+.btn-doar:hover{
+  transform:scale(1.06);
+  box-shadow:0 15px 35px rgba(0,0,0,.3);
+}
+
+/* EFEITO PULSO (CONVERSÃO) */
+.btn-doar{
+  animation:pulseDoar 2s infinite;
+}
+
+@keyframes pulseDoar{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.04)}
+  100%{transform:scale(1)}
+}
+
+/* TEXTO FINAL */
+.doacao-box-main small{
+  display:block;
+  margin-top:18px;
+  color:#777;
+  font-size:13px;
+}
+
+/* =========================
+RESPONSIVO
+========================= */
+
+@media(max-width:600px){
+
+  .doacao-box-main{
+    padding:30px 20px;
+  }
+
+  .doacao-box-main h2{
+    font-size:24px;
+  }
+
+  .btn-doar{
+    width:100%;
+    font-size:16px;
+    padding:16px;
+  }
+
 }
