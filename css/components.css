@@ -1,0 +1,41 @@
+/* BOTÕES */
+.btn{
+  display:inline-block;
+  padding:14px 22px;
+  border-radius:10px;
+  font-weight:bold;
+  transition:.3s;
+}
+
+.btn-green{
+  background:#1fae42;
+  color:#fff;
+}
+
+.btn-red{
+  background:#c61f1f;
+  color:#fff;
+}
+
+.btn:hover{
+  transform:scale(1.05);
+}
+
+/* CARD PADRÃO */
+.card-box{
+  background:#fff;
+  max-width:600px;
+  margin:0 auto;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,.2);
+}
+
+/* INPUTS PADRÃO */
+.input{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
