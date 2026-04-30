@@ -25,58 +25,70 @@
 
   <form id="formEnquete">
 
-    <!-- ORIGEM (IMPORTANTE PARA O APPS SCRIPT) -->
-    <input type="hidden" name="origem" value="ENQUETE">
+<input type="hidden" name="origem" value="ENQUETE">
 
-    <!-- DADOS PESSOAIS -->
-    <h3>📌 Dados pessoais</h3>
+<!-- =========================
+DADOS PESSOAIS
+========================= -->
+<h3>📌 Dados pessoais</h3>
 
-    <input type="text" name="nome" placeholder="Nome" required>
+<label>Nome</label>
+<input type="text" name="nome" placeholder="Seu nome" required>
 
-    <input type="text" name="sobrenome" placeholder="Sobrenome" required>
+<label>Sobrenome</label>
+<input type="text" name="sobrenome" placeholder="Seu sobrenome" required>
 
-    <input type="tel" name="whatsapp" id="whatsapp" placeholder="WhatsApp com DDD" required>
+<label>WhatsApp</label>
+<input type="tel" name="whatsapp" placeholder="DDD + número" required>
 
-    <input type="number" name="idade" placeholder="Idade" required>
+<label>Idade</label>
+<input type="number" name="idade" placeholder="Sua idade" required>
 
-    <input type="text" name="cep" id="cep" placeholder="CEP" required>
+<label>CEP</label>
+<input type="text" name="cep" placeholder="Seu CEP" required>
 
-    <input type="text" name="cidade" id="cidade" placeholder="Cidade" required>
+<label>Cidade</label>
+<input type="text" name="cidade" placeholder="Sua cidade" required>
 
-    <input type="text" name="bairro" id="bairro" placeholder="Bairro" required>
+<label>Bairro</label>
+<input type="text" name="bairro" placeholder="Seu bairro" required>
 
-    <input type="text" name="rua" id="rua" placeholder="Rua / Endereço" required>
+<label>Rua / Endereço</label>
+<input type="text" name="rua" placeholder="Seu endereço completo" required>
 
-    <!-- PESQUISA -->
-    <h3>📊 Pesquisa da Festa</h3>
+<!-- =========================
+PESQUISA DA FESTA
+========================= -->
+<h3>📊 Experiência na Festa</h3>
 
-    <label>Você já participou da festa?</label>
-    <select name="participou" required>
-      <option value="">Selecione</option>
-      <option>Sim</option>
-      <option>Não</option>
-    </select>
+<label>Você já participou da festa anteriormente?</label>
+<select name="participou" required>
+  <option value="">Selecione</option>
+  <option>Sim, participei várias vezes</option>
+  <option>Sim, uma vez</option>
+  <option>Não, nunca participei</option>
+</select>
 
-    <label>Já comprou cartela em edições anteriores?</label>
-    <select name="cartela" required>
-      <option value="">Selecione</option>
-      <option>Sim</option>
-      <option>Não</option>
-    </select>
+<label>Você já comprou cartela em outras edições?</label>
+<select name="cartela" required>
+  <option value="">Selecione</option>
+  <option>Sim</option>
+  <option>Não</option>
+</select>
 
-    <label>O que foi bom nas festas anteriores?</label>
-    <textarea name="bom" placeholder="Ex: comida, organização, música..."></textarea>
+<label>Como foi sua experiência nas festas anteriores?</label>
+<textarea name="experiencia" placeholder="Ex: gostei da organização, comida, ambiente, música..." ></textarea>
 
-    <label>O que devemos melhorar?</label>
-    <textarea name="melhorar" placeholder="Sua sugestão"></textarea>
+<label>O que devemos melhorar na próxima festa?</label>
+<textarea name="melhorar" placeholder="Ex: mais mesas, mais organização, mais opções de comida..." ></textarea>
 
-    <button type="submit">
-      🚀 ENVIAR E CONCORRER
-    </button>
+<button type="submit">
+🚀 ENVIAR E CONCORRER
+</button>
 
-    <div id="msg"></div>
+<div id="msg"></div>
 
-  </form>
+</form>
 
 </section>
 
