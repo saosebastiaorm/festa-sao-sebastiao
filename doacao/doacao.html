@@ -121,6 +121,12 @@ button:hover{
 <input type="tel" name="whatsapp" required>
 
 <label>Tipo de Doação</label>
+<select name="tipo_doacao" id="tipoDoacao" required>
+  <option value="">Selecione</option>
+  <option value="Dinheiro">Dinheiro</option>
+  <option value="Outros">Outros</option>
+</select>
+  
 <select name="tipo_doacao" required>
   <option value="">Selecione</option>
   <option>Dinheiro</option>
@@ -140,38 +146,17 @@ button:hover{
 
 <label>Valor (se for dinheiro)</label>
 <input type="number" name="valor_doacao">
-
-<form id="formDoacao">
-
-<label>Nome</label>
-<input type="text" name="nome" required>
-
-<label>WhatsApp</label>
-<input type="tel" name="whatsapp" required>
-
+  
 <label>Cidade</label>
 <input type="text" name="cidade" required>
 
-<label>Tipo de Doação</label>
-<select name="tipo_doacao" id="tipoDoacao" required>
-  <option value="">Selecione</option>
-  <option value="Dinheiro">Dinheiro</option>
-  <option value="Outros">Outros</option>
-</select>
-
-<!-- CAMPO DINÂMICO -->
+  <!-- CAMPO DINÂMICO -->
 <div id="campoComprovante" style="display:none;">
 
   <label>Anexar comprovante</label>
   <input type="file" id="comprovante" accept="image/*,.pdf">
 
 </div>
-
-<label>Descrição</label>
-<textarea name="descricao_doacao"></textarea>
-
-<label>Valor</label>
-<input type="number" name="valor_doacao">
 
 <button type="submit">QUERO AJUDAR 🙏</button>
 
