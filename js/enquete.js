@@ -2,109 +2,115 @@ const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzc4p873RcAhbAegYAC1
 
 document.addEventListener("DOMContentLoaded", function () {
 
-const form = document.getElementById("formEnquete");
-const msg = document.getElementById("msg");
+  const form = document.getElementById("formEnquete");
+  const msg = document.getElementById("msg");
 
-const whatsapp = document.getElementById("whatsapp");
-const cep = document.getElementById("cep");
+  const whatsapp = document.getElementById("whatsapp");
+  const cep = document.getElementById("cep");
+  const nascimento = document.querySelector('input[name="nascimento"]');
 
-/* =========================
-VALIDAÇÃO WHATSAPP
-========================= */
-function validarWhatsApp(numero){
-  return (numero || "").replace(/\D/g,"").length === 11;
-}
-
-/* =========================
-CEP MÁSCARA + BUSCA
-========================= */
-if (cep) {
-
-  cep.addEventListener("input", function(){
-    let v = this.value.replace(/\D/g,"").slice(0,8);
-    if(v.length > 5) v = v.replace(/^(\d{5})(\d+)/,"$1-$2");
-    this.value = v;
-  });
-
-  cep.addEventListener("blur", async function(){
-    let v = this.value.replace(/\D/g,"");
-    if(v.length !== 8) return;
-
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${v}/json/`);
-      const data = await res.json();
-
-      if(!data.erro){
-        document.getElementById("cidade").value = data.localidade || "";
-        document.getElementById("bairro").value = data.bairro || "";
-        document.getElementById("rua").value = data.logradouro || "";
-      }
-    } catch(e){}
-  });
-
-}
-
-/* =========================
-SUBMIT
-========================= */
-form.addEventListener("submit", function(e){
-  e.preventDefault();
-
-  const whatsappValue = (whatsapp?.value || "").trim();
-
-  if(!validarWhatsApp(whatsappValue)){
-    msg.style.color = "red";
-    msg.innerHTML = "❌ WhatsApp inválido com DDD.";
-    return;
+  /* =========================
+  VALIDA WHATSAPP
+  ========================= */
+  function validarWhatsApp(numero) {
+    return (numero || "").replace(/\D/g, "").length === 11;
   }
 
-  msg.style.color = "#333";
-  msg.innerHTML = "⏳ Enviando...";
+  /* =========================
+  LIMITE DE IDADE (10 a 120 anos)
+  ========================= */
+  if (nascimento) {
 
-  const dados = new FormData(form);
-  dados.oppend("origem","ENQUETE");
+    const hoje = new Date();
 
-  try{
+    const anoMin = hoje.getFullYear() - 120;
+    const anoMax = hoje.getFullYear() - 10;
 
-    fetch(URL_SCRIPT,{
-      method:"POST",
-      body:dados
+    const dataMin = `${anoMin}-01-01`;
+    const dataMax = `${anoMax}-12-31`;
+
+    nascimento.setAttribute("min", dataMin);
+    nascimento.setAttribute("max", dataMax);
+
+  }
+
+  /* =========================
+  MÁSCARA CEP + BUSCA
+  ========================= */
+  if (cep) {
+
+    cep.addEventListener("input", function () {
+      let v = this.value.replace(/\D/g, "").slice(0, 8);
+      if (v.length > 5) v = v.replace(/^(\d{5})(\d+)/, "$1-$2");
+      this.value = v;
     });
 
-    msg.style.color = "green";
-    msg.innerHTML = "✅ Enviado com sucesso!";
+    cep.addEventListener("blur", async function () {
+      let v = this.value.replace(/\D/g, "");
+      if (v.length !== 8) return;
 
-    form.reset();
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${v}/json/`);
+        const data = await res.json();
 
-    setTimeout(()=>{
-      window.location.href = "obrigado.html";
-    },1200);
+        if (!data.erro) {
+          document.getElementById("cidade").value = data.localidade || "";
+          document.getElementById("bairro").value = data.bairro || "";
+          document.getElementById("rua").value = data.logradouro || "";
+        }
 
-  }catch(err){
-    msg.style.color="red";
-    msg.innerHTML="❌ Erro ao enviar.";
+      } catch (e) {
+        console.log("Erro CEP:", e);
+      }
+    });
+
   }
 
-  // =========================
-// LIMITE DE IDADE (10 a 120 anos)
-// =========================
-const nascimento = document.querySelector('input[name="nascimento"]');
+  /* =========================
+  ENVIO FORMULÁRIO
+  ========================= */
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-if (nascimento) {
+    const whatsappValue = (whatsapp?.value || "").trim();
 
-  const hoje = new Date();
+    if (!validarWhatsApp(whatsappValue)) {
+      msg.style.color = "red";
+      msg.innerHTML = "❌ WhatsApp inválido com DDD.";
+      whatsapp.focus();
+      return;
+    }
 
-  const anoMin = hoje.getFullYear() - 120; // máximo idade
-  const anoMax = hoje.getFullYear() - 10;   // mínimo idade
+    msg.style.color = "#333";
+    msg.innerHTML = "⏳ Enviando...";
 
-  const dataMin = `${anoMin}-01-01`;
-  const dataMax = `${anoMax}-12-31`;
+    const dados = new FormData(form);
+    dados.set("origem", "ENQUETE");
 
-  nascimento.setAttribute("min", dataMin);
-  nascimento.setAttribute("max", dataMax);
+    try {
 
-}
+      await fetch(URL_SCRIPT, {
+        method: "POST",
+        body: dados
+      });
 
-});
+      msg.style.color = "green";
+      msg.innerHTML = "✅ Enviado com sucesso!";
+
+      form.reset();
+
+      setTimeout(() => {
+        window.location.href = "obrigado.html";
+      }, 1200);
+
+    } catch (err) {
+
+      console.log(err);
+      msg.style.color = "red";
+      msg.innerHTML = "❌ Erro ao enviar.";
+
+    }
+
+  });
 
 });
