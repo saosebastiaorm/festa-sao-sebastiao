@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
       form.reset();
 
       setTimeout(() => {
-        window.location.href = "enquete/obrigado.html";
+        window.location.href = "../enquete/obrigado.html";
       }, 1200);
 
     } catch (err) {
