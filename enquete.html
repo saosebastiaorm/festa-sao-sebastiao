@@ -4,69 +4,71 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Enquete Oficial FPSS</title>
+<title>Enquete FPSS</title>
 
+<link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/enquete.css">
 
 </head>
 
 <body>
 
-<section class="enquete">
+<section class="card center">
 
-  <div class="topo">
-    <h1>🔥 ENQUETE OFICIAL FPSS</h1>
-    <p>Ajude a melhorar a Festa do Padroeiro São Sebastião e concorra a uma camiseta oficial</p>
+<div class="wrap">
 
-    <div class="alerta">
-      🎁 Participação gratuita + sorteio da camiseta
-    </div>
-  </div>
+<h2 class="section-title">🔥 Enquete Oficial FPSS</h2>
 
-  <form id="formEnquete">
+<p>
+Participe e concorra a uma camiseta exclusiva da Festa do Padroeiro São Sebastião.
+</p>
+
+<form id="formEnquete">
 
 <input type="hidden" name="origem" value="ENQUETE">
 
 <!-- =========================
 DADOS PESSOAIS
 ========================= -->
+
 <h3>📌 Dados pessoais</h3>
 
 <label>Nome</label>
-<input type="text" name="nome" placeholder="Seu nome" required>
+<input type="text" name="nome" required>
 
 <label>Sobrenome</label>
-<input type="text" name="sobrenome" placeholder="Seu sobrenome" required>
+<input type="text" name="sobrenome" required>
 
 <label>WhatsApp</label>
-<input type="tel" name="whatsapp" placeholder="DDD + número" required>
+<input type="tel" name="whatsapp" required>
 
-<label>Idade</label>
-<input type="number" name="idade" placeholder="Sua idade" required>
+<label>Data de nascimento</label>
+<input type="date" name="nascimento" required>
 
 <label>CEP</label>
-<input type="text" name="cep" placeholder="Seu CEP" required>
+<input type="text" name="cep" required>
 
 <label>Cidade</label>
-<input type="text" name="cidade" placeholder="Sua cidade" required>
+<input type="text" name="cidade" required>
 
 <label>Bairro</label>
-<input type="text" name="bairro" placeholder="Seu bairro" required>
+<input type="text" name="bairro" required>
 
 <label>Rua / Endereço</label>
-<input type="text" name="rua" placeholder="Seu endereço completo" required>
+<input type="text" name="rua" required>
 
 <!-- =========================
-PESQUISA DA FESTA
+PERGUNTAS
 ========================= -->
+
 <h3>📊 Experiência na Festa</h3>
 
 <label>Você já participou da festa anteriormente?</label>
 <select name="participou" required>
   <option value="">Selecione</option>
-  <option>Sim, participei várias vezes</option>
+  <option>Sim, várias vezes</option>
   <option>Sim, uma vez</option>
-  <option>Não, nunca participei</option>
+  <option>Não</option>
 </select>
 
 <label>Você já comprou cartela em outras edições?</label>
@@ -77,18 +79,20 @@ PESQUISA DA FESTA
 </select>
 
 <label>Como foi sua experiência nas festas anteriores?</label>
-<textarea name="experiencia" placeholder="Ex: gostei da organização, comida, ambiente, música..." ></textarea>
+<textarea name="experiencia" placeholder="Comida, organização, ambiente..."></textarea>
 
 <label>O que devemos melhorar na próxima festa?</label>
-<textarea name="melhorar" placeholder="Ex: mais mesas, mais organização, mais opções de comida..." ></textarea>
+<textarea name="melhorar" placeholder="Sugestões de melhoria..."></textarea>
 
-<button type="submit">
+<button type="submit" class="btn red full">
 🚀 ENVIAR E CONCORRER
 </button>
 
 <div id="msg"></div>
 
 </form>
+
+</div>
 
 </section>
 
