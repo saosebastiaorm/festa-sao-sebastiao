@@ -10,31 +10,28 @@
 <meta name="description"
 content="24 de Janeiro de 2027. Churrasco R$60, Cartela R$20 e R$25 mil em prêmios. Garanta já sua participação.">
 
-<!-- CSS BASE -->
+<!-- CSS -->
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
-
-<!-- CSS VIP (MOVIDO PARA O HEAD) -->
 <link rel="stylesheet" href="css/vip.css">
+<link rel="stylesheet" href="css/doacao.css">
 
 </head>
 
 <body>
 
-<!-- BARRA TOPO -->
+<!-- BARRA -->
 <div class="barra-urgencia">
 🔥 Evento Oficial FPSS • Cartelas e churrascos limitados
 </div>
 
 <!-- HERO -->
 <header class="hero hero-vendas">
-
 <div class="wrap">
 
 <div class="hero-grid">
 
 <div>
-
 <span class="badge-topo">🔥 EVENTO OFICIAL • 24 JAN 2027</span>
 
 <h1>6ª Festa do Padroeiro São Sebastião</h1>
@@ -54,11 +51,9 @@ content="24 de Janeiro de 2027. Churrasco R$60, Cartela R$20 e R$25 mil em prêm
 <span>📲 Compra em 1 clique</span>
 <span>🎉 Evento Tradicional</span>
 </div>
-
 </div>
 
 <div class="hero-side">
-
 <div class="price-card destaque">
 <h3>💰 R$ 25 MIL</h3>
 <div class="valor">PRÊMIOS</div>
@@ -70,68 +65,31 @@ content="24 de Janeiro de 2027. Churrasco R$60, Cartela R$20 e R$25 mil em prêm
 <div class="valor">24 JAN</div>
 <p>Garanta antecipado</p>
 </div>
-
 </div>
 
 </div>
-
 </div>
-
 </header>
 
 <!-- CONTADOR -->
 <section class="card center">
-
 <div class="wrap">
 
 <h2 class="section-title">⏰ Faltam poucos dias</h2>
 
 <div class="contador-grid">
-
-<div class="tempo-box">
-<span id="dias">00</span>
-<small>Dias</small>
+<div class="tempo-box"><span id="dias">00</span><small>Dias</small></div>
+<div class="tempo-box"><span id="horas">00</span><small>Horas</small></div>
+<div class="tempo-box"><span id="minutos">00</span><small>Minutos</small></div>
 </div>
 
-<div class="tempo-box">
-<span id="horas">00</span>
-<small>Horas</small>
-</div>
-
-<div class="tempo-box">
-<span id="minutos">00</span>
-<small>Minutos</small>
-</div>
+<p class="mt-20">🔥 Garanta antecipado antes que acabe.</p>
 
 </div>
-
-<p class="mt-20">
-🔥 Garanta antecipado antes que acabe.
-</p>
-
-</div>
-
-</section>
-
-<!-- PROVA SOCIAL -->
-<section class="card center">
-
-<div class="wrap">
-
-<h2 class="section-title">⭐ Evento Tradicional da Comunidade</h2>
-
-<p class="mt-10">
-Centenas de pessoas participam todos os anos.
-Garanta já sua cartela e churrasco antecipado.
-</p>
-
-</div>
-
 </section>
 
 <!-- COMPRA -->
 <section class="card" id="comprar">
-
 <div class="wrap">
 
 <h2 class="section-title">🔥 Garanta Agora Seu Pedido</h2>
@@ -139,32 +97,27 @@ Garanta já sua cartela e churrasco antecipado.
 <div class="grid-2">
 
 <div class="venda-box">
-
 <h3>🍖 Churrasco Oficial FPSS</h3>
 
 <ul class="info-list">
-<li>✔ Produto tradicional da festa</li>
+<li>✔ Produto tradicional</li>
 <li>✔ Retirada no evento</li>
-<li>✔ Compra antecipada recomendada</li>
+<li>✔ Compra antecipada</li>
 </ul>
 
 <div class="price-box">R$ 60,00</div>
 
 <a target="_blank"
 href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20churrasco%20FPSS"
-class="btn red full">
-📲 Comprar Churrasco
-</a>
-
+class="btn red full">📲 Comprar Churrasco</a>
 </div>
 
 <div class="venda-box">
-
 <h3>🎟 Cartela Premiada</h3>
 
 <ul class="info-list">
 <li>✔ Apenas R$ 20</li>
-<li>✔ 13 chances de ganhar</li>
+<li>✔ 13 chances</li>
 <li>✔ Sorteio oficial</li>
 </ul>
 
@@ -172,120 +125,92 @@ class="btn red full">
 
 <a target="_blank"
 href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS"
-class="btn green full">
-📲 Comprar Cartela
-</a>
-
+class="btn green full">📲 Comprar Cartela</a>
 </div>
 
 </div>
-
 </div>
-
 </section>
 
+<!-- DOAÇÃO -->
 <section class="doacao-fpss">
+<div class="doacao-box">
 
-  <div class="doacao-box">
+<h2>🙏 AJUDE A REALIZAR A FESTA</h2>
 
-    <h2>🙏 AJUDE A REALIZAR A FESTA</h2>
+<p>Você pode contribuir com qualquer tipo de doação.</p>
 
-    <p>
-      Você pode contribuir com a Festa do Padroeiro São Sebastião
-      com doações de qualquer tipo.
-    </p>
+<form id="formDoacao">
+<input type="text" name="nome" placeholder="Seu nome" required>
+<input type="tel" name="whatsapp" placeholder="WhatsApp" required>
+<input type="text" name="cidade" placeholder="Cidade">
 
-    <form id="formDoacao">
+<select name="tipo_doacao" required>
+<option value="">Tipo de doação</option>
+<option>Dinheiro</option>
+<option>Gado</option>
+<option>Brindes</option>
+<option>Serviço</option>
+<option>Alimentos</option>
+<option>Outros</option>
+</select>
 
-      <input type="text" name="nome" placeholder="Seu nome" required>
+<textarea name="descricao_doacao" placeholder="Descreva a doação"></textarea>
 
-      <input type="tel" name="whatsapp" placeholder="WhatsApp" required>
+<input type="number" name="valor_doacao" placeholder="Valor (R$)">
 
-      <input type="text" name="cidade" placeholder="Cidade">
+<button type="submit">QUERO AJUDAR 🙏</button>
+</form>
 
-      <select name="tipo_doacao" required>
-        <option value="">Tipo de doação</option>
-        <option>Dinheiro</option>
-        <option>Gado</option>
-        <option>Brindes</option>
-        <option>Serviço</option>
-        <option>Alimentos</option>
-        <option>Outros</option>
-      </select>
+<div id="msgDoacao"></div>
 
-      <textarea name="descricao_doacao" placeholder="Descreva a doação"></textarea>
-
-      <input type="number" name="valor_doacao" placeholder="Valor (se for dinheiro)">
-
-      <button type="submit">
-        QUERO AJUDAR 🙏
-      </button>
-
-    </form>
-
-    <div id="msgDoacao"></div>
-
-  </div>
-
+</div>
 </section>
-<link rel="stylesheet" href="css/doacao.css">
-<script src="js/doacao.js"></script>
-  
+
 <!-- ENQUETE -->
 <section class="card center" id="enquete">
-
 <div class="wrap">
 
 <h2 class="section-title">🔥 Enquete Oficial FPSS</h2>
 
 <p class="mt-10">
-Participe da enquete oficial da Festa e concorra a uma camiseta exclusiva.
+Participe e concorra a uma camiseta exclusiva.
 </p>
 
 <a href="enquete.html" class="btn red full">
-🚀 QUERO PARTICIPAR DA ENQUETE
+🚀 QUERO PARTICIPAR
 </a>
 
 </div>
-
 </section>
 
 <!-- VIP -->
 <section class="vip-fpss">
-
 <div class="vip-box">
 
-<h2>🔥 ENTRE PARA O GRUPO VIP DA FESTA</h2>
+<h2>🔥 ENTRE PARA O GRUPO VIP</h2>
 
-<p>
-Receba novidades, cartelas e avisos em primeira mão.
-</p>
+<p>Receba novidades e ofertas antecipadas.</p>
 
 <form id="formVIP">
+<input type="text" name="nome" required placeholder="Seu nome">
+<input type="tel" name="whatsapp" required placeholder="WhatsApp">
+<input type="text" name="cidade" required placeholder="Cidade">
+<input type="text" name="bairro" required placeholder="Bairro">
 
-<input type="text" name="nome" placeholder="Seu nome" required>
-<input type="tel" name="whatsapp" placeholder="Seu WhatsApp" required>
-<input type="text" name="cidade" placeholder="Cidade" required>
-<input type="text" name="bairro" placeholder="Bairro" required>
-
-<button type="submit">
-QUERO ENTRAR AGORA 🚀
-</button>
-
+<button type="submit">QUERO ENTRAR 🚀</button>
 </form>
 
 <div id="msgVIP"></div>
 
 </div>
-
 </section>
 
 <!-- CONTATO -->
 <section class="card center">
-
 <div class="wrap">
 
-<h2 class="section-title">📲 Atendimento Oficial</h2>
+<h2 class="section-title">📲 Atendimento</h2>
 
 <a target="_blank"
 href="https://wa.me/5569981102306"
@@ -294,10 +219,9 @@ WhatsApp Oficial
 </a>
 
 </div>
-
 </section>
 
-<!-- BOTÃO FLUTUANTE -->
+<!-- BOTÃO -->
 <a href="https://wa.me/5569981102306"
 target="_blank"
 class="whatsapp-fixo">
@@ -332,11 +256,12 @@ setInterval(atualizarContador,1000);
 atualizarContador();
 </script>
 
-<!-- SCRIPTS (ORDEM CORRIGIDA) -->
+<!-- JS FINAL -->
 <script src="js/main.js"></script>
 <script src="js/countdown.js"></script>
 <script src="js/lightbox.js"></script>
 <script src="js/vip.js"></script>
+<script src="js/doacao.js"></script>
 
 </body>
 </html>
