@@ -1,138 +1,153 @@
-/* =====================================================
-FPSS - ENQUETE PREMIUM (ALTA CONVERSÃO)
-===================================================== */
-
-body{
+*{
   margin:0;
-  font-family: Arial, sans-serif;
-  background:#0f0f0f;
-  color:#fff;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
 }
 
-/* CONTAINER PRINCIPAL */
-.enquete{
-  max-width:750px;
-  margin:40px auto;
-  padding:25px;
+/* =========================
+FUNDO GERAL
+========================= */
+.enquete-fpss{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:40px 15px;
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
 }
 
-/* TOPO */
-.topo{
+/* =========================
+CAIXA PRINCIPAL
+========================= */
+.enquete-box{
+  width:100%;
+  max-width:600px; /* 🔥 evita tela cheia */
+  margin:0 auto;   /* 🔥 centralização garantida */
+  background:#fff;
+  padding:30px;
+  border-radius:18px;
+  box-shadow:0 20px 50px rgba(0,0,0,.25);
+}
+
+/* =========================
+TÍTULO
+========================= */
+.enquete-box h1{
   text-align:center;
-  margin-bottom:25px;
-}
-
-.topo h1{
-  font-size:34px;
-  color:#ff1f1f;
+  color:#8b1111;
+  font-size:26px;
   margin-bottom:10px;
 }
 
-.topo p{
-  font-size:18px;
-  color:#ddd;
+.enquete-box p{
+  text-align:center;
+  color:#555;
+  margin-bottom:20px;
+  line-height:1.4;
 }
 
-/* ALERTA DE URGÊNCIA */
-.alerta{
-  display:inline-block;
-  margin-top:15px;
-  padding:10px 15px;
-  background:#ffd000;
-  color:#000;
-  font-weight:bold;
-  border-radius:999px;
-  font-size:14px;
-}
-
-/* FORMULÁRIO */
-form{
-  background:#ffffff;
-  color:#333;
-  padding:25px;
-  border-radius:18px;
-  box-shadow:0 20px 50px rgba(0,0,0,.4);
-}
-
-/* TÍTULOS INTERNOS */
-h3{
+/* =========================
+SUBTÍTULOS
+========================= */
+.enquete-box h2{
   margin-top:25px;
+  margin-bottom:10px;
+  font-size:18px;
   color:#8b1111;
-  font-size:20px;
-  border-left:5px solid #ff1f1f;
+  border-left:4px solid #c61f1f;
   padding-left:10px;
 }
 
-/* INPUTS */
-input, select, textarea{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  margin-bottom:12px;
-  border:1px solid #ddd;
-  border-radius:12px;
-  font-size:16px;
-  outline:none;
-  transition:.2s;
-  box-sizing:border-box;
+/* =========================
+LABELS
+========================= */
+.enquete-box label{
+  display:block;
+  margin-top:12px;
+  margin-bottom:5px;
+  font-weight:bold;
+  color:#333;
+  font-size:14px;
 }
 
-/* FOCO */
-input:focus,
-select:focus,
-textarea:focus{
-  border-color:#ff1f1f;
-  box-shadow:0 0 0 3px rgba(255,31,31,.15);
+/* =========================
+INPUTS / SELECT / TEXTAREA
+========================= */
+.enquete-box input,
+.enquete-box select,
+.enquete-box textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  font-size:15px;
+  outline:none;
+  transition:0.2s;
+  background:#fff;
+}
+
+.enquete-box input:focus,
+.enquete-box select:focus,
+.enquete-box textarea:focus{
+  border-color:#c61f1f;
+  box-shadow:0 0 6px rgba(198,31,31,0.3);
 }
 
 /* TEXTAREA */
-textarea{
-  resize:none;
+.enquete-box textarea{
+  min-height:90px;
+  resize:vertical;
 }
 
-/* BOTÃO PRINCIPAL */
-button{
+/* =========================
+BOTÃO
+========================= */
+.enquete-box button{
   width:100%;
-  margin-top:20px;
-  padding:18px;
+  margin-top:25px;
+  padding:15px;
   border:none;
-  border-radius:14px;
-  background:linear-gradient(135deg,#ff1f1f,#8b1111);
+  border-radius:12px;
+  background:#1fae42;
   color:#fff;
   font-size:18px;
   font-weight:bold;
   cursor:pointer;
-  transition:.3s;
-  box-shadow:0 10px 25px rgba(255,31,31,.3);
+  transition:0.3s;
 }
 
-/* HOVER BOTÃO */
-button:hover{
-  transform:scale(1.03);
-  background:linear-gradient(135deg,#ff0000,#8b1111);
+.enquete-box button:hover{
+  transform:scale(1.02);
+  background:#179a3a;
 }
 
-/* MENSAGEM */
+/* =========================
+MENSAGEM
+========================= */
 #msg{
   margin-top:15px;
   text-align:center;
   font-weight:bold;
-  color:#1fae42;
+  font-size:15px;
 }
 
-/* RESPONSIVO */
-@media(max-width:600px){
+/* =========================
+RESPONSIVO
+========================= */
+@media (max-width:480px){
 
-  .topo h1{
-    font-size:26px;
+  .enquete-box{
+    padding:20px;
+    border-radius:14px;
   }
 
-  .enquete{
-    margin:20px auto;
-    padding:15px;
+  .enquete-box h1{
+    font-size:22px;
   }
 
-  form{
-    padding:18px;
+  .enquete-box button{
+    font-size:16px;
+    padding:14px;
   }
 }
