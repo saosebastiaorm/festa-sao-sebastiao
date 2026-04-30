@@ -1,43 +1,42 @@
-const URL_SCRIPT = "COLE_SEU_SCRIPT_AQUI";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzc4p873RcAhbAegYAC1Wc1esCyhKsI8pNPhvfCYavGPBAHES3ppfeduiKdVE08IUd_/exec";
 
-const form = document.getElementById("formDoacao");
-const msg = document.getElementById("msgDoacao");
+document.addEventListener("DOMContentLoaded", function(){
 
-const tipo = document.getElementById("tipoDoacao");
-const boxValor = document.getElementById("boxValor");
+  const form = document.getElementById("formDoacao");
+  const msg = document.getElementById("msg");
 
-/* MOSTRA VALOR SÓ PARA DINHEIRO */
-tipo.addEventListener("change", function(){
+  if(!form) return;
 
-  if(this.value === "Dinheiro" || this.value === "Patrocínio"){
-    boxValor.style.display = "block";
-  } else {
-    boxValor.style.display = "none";
-  }
+  form.addEventListener("submit", async function(e){
+    e.preventDefault();
 
-});
+    msg.style.color = "#333";
+    msg.innerHTML = "⏳ Enviando...";
 
-/* ENVIO */
-form.addEventListener("submit", async function(e){
+    const dados = new FormData(form);
+    dados.set("origem","DOACAO");
 
-  e.preventDefault();
+    try{
 
-  msg.innerHTML = "⏳ Enviando...";
+      await fetch(URL_SCRIPT,{
+        method:"POST",
+        body:dados
+      });
 
-  const dados = new FormData(form);
+      msg.style.color = "green";
+      msg.innerHTML = "✅ Doação enviada com sucesso!";
 
-  try{
+      form.reset();
 
-    await fetch(URL_SCRIPT,{
-      method:"POST",
-      body:dados
-    });
+    }catch(err){
 
-    msg.innerHTML = "✅ Doação registrada com sucesso!";
-    form.reset();
+      console.log(err);
 
-  }catch{
-    msg.innerHTML = "❌ Erro ao enviar.";
-  }
+      msg.style.color = "red";
+      msg.innerHTML = "❌ Erro ao enviar. Tente novamente.";
+
+    }
+
+  });
 
 });
