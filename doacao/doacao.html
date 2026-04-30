@@ -54,11 +54,20 @@ p{
   color:#555;
 }
 
+/* LABEL */
+label{
+  display:block;
+  margin-bottom:5px;
+  font-size:14px;
+  font-weight:bold;
+  color:#333;
+}
+
 /* CAMPOS */
 input, select, textarea{
   width:100%;
   padding:14px;
-  margin-bottom:12px;
+  margin-bottom:15px;
   border-radius:10px;
   border:1px solid #ddd;
   font-size:15px;
@@ -75,6 +84,7 @@ button{
   font-size:16px;
   font-weight:bold;
   cursor:pointer;
+  transition:.3s;
 }
 
 button:hover{
@@ -104,20 +114,32 @@ button:hover{
 
 <form id="formDoacao">
 
-<input type="text" name="nome" placeholder="Seu nome" required>
-<input type="tel" name="whatsapp" placeholder="WhatsApp" required>
+<label>Nome</label>
+<input type="text" name="nome" required>
 
+<label>WhatsApp</label>
+<input type="tel" name="whatsapp" required>
+
+<label>Tipo de Doação</label>
 <select name="tipo_doacao" required>
-<option value="">Tipo de doação</option>
-<option>Dinheiro</option>
-<option>Gado</option>
-<option>Brindes</option>
-<option>Serviço</option>
-<option>Alimentos</option>
-<option>Outros</option>
+  <option value="">Selecione</option>
+  <option>Dinheiro</option>
+  <option>Gado</option>
+  <option>Brindes</option>
+  <option>Serviço</option>
+  <option>Alimentos</option>
+  <option>Bebidas</option>
+  <option>Equipamentos</option>
+  <option>Mão de obra</option>
+  <option>Patrocínio</option>
+  <option>Outros</option>
 </select>
 
-<textarea name="descricao_doacao" placeholder="Descreva sua doação"></textarea>
+<label>Descrição</label>
+<textarea name="descricao_doacao"></textarea>
+
+<label>Valor (se for dinheiro)</label>
+<input type="number" name="valor_doacao">
 
 <button type="submit">QUERO AJUDAR 🙏</button>
 
