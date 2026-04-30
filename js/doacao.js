@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function(){
   const tipo = document.getElementById("tipoDoacao");
   const campoComprovante = document.getElementById("campoComprovante");
   const inputFile = document.getElementById("comprovante");
+  const URL_SCRIPT = "SUA_URL_NOVA_AQUI";
 
   /* MOSTRAR COMPROVANTE */
   tipo.addEventListener("change", function(){
