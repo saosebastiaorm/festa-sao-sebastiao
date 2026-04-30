@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
     msg.innerHTML = "⏳ Enviando...";
 
     const dados = new FormData(form);
-    dados.set("origem", "ENQUETE");
+    dados.set("origem", "tb_cad_enquete");
 
     try {
 
