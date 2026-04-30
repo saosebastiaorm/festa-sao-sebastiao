@@ -5,111 +5,129 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Doação • FPSS 2027</title>
+<title>Doação FPSS</title>
 
-<link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/mobile.css">
-<link rel="stylesheet" href="../css/doacao.css">
+<style>
+
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
+}
+
+/* FUNDO */
+body{
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+}
+
+/* CENTRALIZA */
+.container{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+/* CAIXA */
+.box{
+  width:100%;
+  max-width:500px;
+  background:#fff;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.3);
+}
+
+/* TITULO */
+h1{
+  text-align:center;
+  color:#8b1111;
+  margin-bottom:10px;
+}
+
+p{
+  text-align:center;
+  margin-bottom:20px;
+  color:#555;
+}
+
+/* CAMPOS */
+input, select, textarea{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:15px;
+}
+
+/* BOTAO */
+button{
+  width:100%;
+  padding:16px;
+  background:#1fae42;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{
+  transform:scale(1.03);
+}
+
+/* MSG */
+#msg{
+  margin-top:15px;
+  text-align:center;
+  font-weight:bold;
+}
+
+</style>
 
 </head>
 
 <body>
 
-<section class="doacao-page">
+<div class="container">
 
-<div class="doacao-box">
+<div class="box">
 
-<h1>🙏 Apoie a Festa do Padroeiro</h1>
+<h1>🙏 Apoie a Festa</h1>
 
-<p class="sub">
-Sua ajuda é fundamental para manter essa tradição viva.
-Você pode doar dinheiro, produtos, serviços ou estrutura.
-</p>
+<p>Ajude com qualquer tipo de doação</p>
 
 <form id="formDoacao">
 
-<!-- NOME -->
-<label>Nome</label>
-<input type="text" name="nome" required placeholder="Seu nome">
+<input type="text" name="nome" placeholder="Seu nome" required>
+<input type="tel" name="whatsapp" placeholder="WhatsApp" required>
 
-<!-- WHATSAPP -->
-<label>WhatsApp</label>
-<input type="tel" name="whatsapp" required placeholder="(69) 99999-9999">
-
-<!-- CIDADE -->
-<label>Cidade</label>
-<input type="text" name="cidade" placeholder="Sua cidade">
-
-<!-- TIPO -->
-<label>Tipo de doação</label>
-<select name="tipo_doacao" id="tipoDoacao" required>
-
-<option value="">Selecione</option>
-
-<optgroup label="💰 Financeiro">
-<option value="Dinheiro">Dinheiro (PIX)</option>
-<option value="Patrocínio">Patrocínio</option>
-</optgroup>
-
-<optgroup label="🐄 Agro">
-<option value="Gado">Gado</option>
-<option value="Carne">Carne</option>
-<option value="Leite">Leite</option>
-<option value="Produtos Rurais">Produtos Rurais</option>
-</optgroup>
-
-<optgroup label="🍽 Alimentação">
-<option value="Alimentos">Alimentos</option>
-<option value="Bebidas">Bebidas</option>
-<option value="Ingredientes">Ingredientes</option>
-</optgroup>
-
-<optgroup label="🎁 Evento">
-<option value="Brindes">Brindes</option>
-<option value="Prêmios">Prêmios</option>
-<option value="Camisetas">Camisetas</option>
-</optgroup>
-
-<optgroup label="🛠 Serviços">
-<option value="Mão de obra">Mão de obra</option>
-<option value="Som">Som</option>
-<option value="Show">Show</option>
-<option value="Transporte">Transporte</option>
-<option value="Divulgação">Divulgação</option>
-</optgroup>
-
-<optgroup label="🏗 Estrutura">
-<option value="Tendas">Tendas</option>
-<option value="Mesas e cadeiras">Mesas e cadeiras</option>
-<option value="Equipamentos">Equipamentos</option>
-<option value="Gerador">Gerador</option>
-</optgroup>
-
-<optgroup label="📦 Outros">
-<option value="Outros">Outros</option>
-</optgroup>
-
+<select name="tipo_doacao" required>
+<option value="">Tipo de doação</option>
+<option>Dinheiro</option>
+<option>Gado</option>
+<option>Brindes</option>
+<option>Serviço</option>
+<option>Alimentos</option>
+<option>Outros</option>
 </select>
 
-<!-- VALOR -->
-<div id="boxValor">
-<label>Valor (R$)</label>
-<input type="number" name="valor_doacao" placeholder="Ex: 50">
-</div>
-
-<!-- DESCRIÇÃO -->
-<label>Descrição</label>
 <textarea name="descricao_doacao" placeholder="Descreva sua doação"></textarea>
 
 <button type="submit">QUERO AJUDAR 🙏</button>
 
 </form>
 
-<div id="msgDoacao"></div>
+<div id="msg"></div>
 
 </div>
 
-</section>
-<script src="../js/doacao.js"></script>
+</div>
+
 </body>
 </html>
