@@ -1,137 +1,136 @@
-/* =========================
-RESET LOCAL (EVITA CONFLITO COM STYLE.CSS)
-========================= */
-.enquete-fpss *{
-  box-sizing:border-box;
-  font-family:Arial, sans-serif;
-}
 
 /* =========================
-FUNDO
+RESET ISOLADO FPSS
 ========================= */
 .enquete-fpss{
-  width:100%;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:40px 15px;
-  background:linear-gradient(135deg,#8b1111,#c61f1f);
+  width:100% !important;
+  min-height:100vh !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  padding:40px 15px !important;
+  background:linear-gradient(135deg,#8b1111,#c61f1f) !important;
 }
 
 /* =========================
-CAIXA CENTRAL (ANTI-ESTICAMENTO)
+CAIXA CENTRAL
 ========================= */
-.enquete-box{
-  width:100%;
-  max-width:620px; /* 🔥 trava largura */
-  background:#fff;
-  padding:28px;
-  border-radius:18px;
-  box-shadow:0 25px 60px rgba(0,0,0,.3);
-  overflow:hidden;
+.enquete-fpss .enquete-box{
+  width:100% !important;
+  max-width:620px !important;
+  margin:0 auto !important;
+  background:#ffffff !important;
+  padding:30px !important;
+  border-radius:18px !important;
+  box-shadow:0 25px 60px rgba(0,0,0,.35) !important;
 }
 
 /* =========================
-TÍTULO
+TÍTULO PRINCIPAL
 ========================= */
-.enquete-box h1{
-  text-align:center;
-  color:#8b1111;
-  font-size:26px;
-  margin-bottom:8px;
-}
-
-.enquete-box p{
-  text-align:center;
-  color:#555;
-  margin-bottom:20px;
+.enquete-fpss .enquete-box h1{
+  text-align:center !important;
+  color:#8b1111 !important;
+  font-size:26px !important;
+  margin-bottom:10px !important;
+  font-weight:800 !important;
 }
 
 /* =========================
-SUBTÍTULOS
+SUBTEXTO
 ========================= */
-.enquete-box h2{
-  margin-top:22px;
-  margin-bottom:10px;
-  font-size:17px;
-  color:#8b1111;
-  border-left:4px solid #c61f1f;
-  padding-left:10px;
+.enquete-fpss .enquete-box p{
+  text-align:center !important;
+  color:#555 !important;
+  margin-bottom:20px !important;
+}
+
+/* =========================
+SEÇÕES
+========================= */
+.enquete-fpss .enquete-box h2{
+  margin-top:22px !important;
+  margin-bottom:10px !important;
+  font-size:18px !important;
+  color:#8b1111 !important;
+  border-left:5px solid #c61f1f !important;
+  padding-left:10px !important;
+  font-weight:700 !important;
 }
 
 /* =========================
 LABELS
 ========================= */
-.enquete-box label{
-  display:block;
-  margin-top:12px;
-  margin-bottom:6px;
-  font-weight:bold;
-  font-size:14px;
-  color:#333;
+.enquete-fpss .enquete-box label{
+  display:block !important;
+  margin-top:12px !important;
+  margin-bottom:6px !important;
+  font-weight:700 !important;
+  font-size:14px !important;
+  color:#333 !important;
 }
 
 /* =========================
-INPUTS
+INPUTS PADRÃO FPSS
 ========================= */
-.enquete-box input,
-.enquete-box select,
-.enquete-box textarea{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-size:15px;
-  outline:none;
-  transition:.2s;
-  background:#fff;
+.enquete-fpss .enquete-box input,
+.enquete-fpss .enquete-box select,
+.enquete-fpss .enquete-box textarea{
+  width:100% !important;
+  padding:12px !important;
+  border-radius:10px !important;
+  border:1px solid #ddd !important;
+  font-size:15px !important;
+  outline:none !important;
+  background:#fff !important;
+  transition:0.2s !important;
 }
 
-.enquete-box input:focus,
-.enquete-box select:focus,
-.enquete-box textarea:focus{
-  border-color:#c61f1f;
-  box-shadow:0 0 6px rgba(198,31,31,.25);
+/* FOCO (VERMELHO FPSS FORTE) */
+.enquete-fpss .enquete-box input:focus,
+.enquete-fpss .enquete-box select:focus,
+.enquete-fpss .enquete-box textarea:focus{
+  border:2px solid #8b1111 !important;
+  box-shadow:0 0 8px rgba(139,17,17,.35) !important;
 }
 
 /* =========================
 TEXTAREA
 ========================= */
-.enquete-box textarea{
-  min-height:90px;
-  resize:vertical;
+.enquete-fpss .enquete-box textarea{
+  min-height:90px !important;
+  resize:vertical !important;
 }
 
 /* =========================
-BOTÃO
+BOTÃO FPSS (FORTE CONVERSÃO)
 ========================= */
-.enquete-box button{
-  width:100%;
-  margin-top:22px;
-  padding:15px;
-  border:none;
-  border-radius:12px;
-  background:#1fae42;
-  color:#fff;
-  font-size:18px;
-  font-weight:bold;
-  cursor:pointer;
-  transition:.25s;
+.enquete-fpss .enquete-box button{
+  width:100% !important;
+  margin-top:22px !important;
+  padding:15px !important;
+  border:none !important;
+  border-radius:12px !important;
+  background:linear-gradient(135deg,#1fae42,#179238) !important;
+  color:#fff !important;
+  font-size:18px !important;
+  font-weight:800 !important;
+  cursor:pointer !important;
+  transition:0.25s !important;
 }
 
-.enquete-box button:hover{
-  transform:scale(1.02);
-  background:#169238;
+/* hover */
+.enquete-fpss .enquete-box button:hover{
+  transform:scale(1.02) !important;
 }
 
 /* =========================
 MENSAGEM
 ========================= */
 #msg{
-  margin-top:15px;
-  text-align:center;
-  font-weight:bold;
+  margin-top:15px !important;
+  text-align:center !important;
+  font-weight:bold !important;
 }
 
 /* =========================
@@ -139,13 +138,12 @@ RESPONSIVO
 ========================= */
 @media (max-width:480px){
 
-  .enquete-box{
-    padding:20px;
-    border-radius:14px;
+  .enquete-fpss .enquete-box{
+    padding:20px !important;
   }
 
-  .enquete-box h1{
-    font-size:22px;
+  .enquete-fpss .enquete-box h1{
+    font-size:22px !important;
   }
 
 }
