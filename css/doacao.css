@@ -51,9 +51,15 @@
   opacity:.8;
 }
 
+.doacao-cta{
+  padding:60px 20px;
+  background:linear-gradient(135deg,#0f5132,#198754);
+  text-align:center;
+  color:#fff;
+}
 
-/* 🔥 AQUI ESTÁ O SEGREDO */
-.doacao-cta .wrap{
+/* 🔥 CONTAINER CORRETO */
+.doacao-container{
   max-width:600px;
   margin:0 auto;
 }
