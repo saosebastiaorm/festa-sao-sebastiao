@@ -11,22 +11,21 @@
 </head>
 <body>
 
-<section class="doacao-fpss">
+<section class="container">
 
   <div class="box">
 
-    <h1>🙏 Apoie a Festa do Padroeiro</h1>
+    <h1>🙏 Apoie a Festa</h1>
 
     <p>
-      Sua ajuda faz toda diferença. Você pode contribuir com dinheiro,
-      gado, brindes ou serviços.
+      Sua ajuda faz a festa acontecer. Doe qualquer valor ou contribuição.
     </p>
 
     <form id="formDoacao">
 
       <input type="text" name="nome" placeholder="Nome completo" required>
 
-      <input type="tel" name="whatsapp" id="whatsapp" placeholder="WhatsApp" required>
+      <input type="tel" name="whatsapp" placeholder="WhatsApp" required>
 
       <select name="tipo" required>
         <option value="">Tipo de doação</option>
@@ -36,21 +35,22 @@
         <option value="SERVICO">🛠 Serviço</option>
       </select>
 
-      <input type="number" name="valor" placeholder="Valor (R$) - opcional">
+      <input type="number" name="valor" placeholder="Valor (R$)">
 
-      <button type="submit">💚 DOAR AGORA</button>
+      <button type="submit">💚 GERAR PIX</button>
 
     </form>
 
-    <div id="pixArea" class="hidden">
+    <!-- PIX -->
+    <div id="pixBox" class="hidden">
 
-      <h3>📲 Faça o pagamento via PIX</h3>
+      <h3>📲 Pague com PIX</h3>
 
       <textarea id="pixCode" readonly></textarea>
 
       <button onclick="copiarPix()">📋 Copiar PIX</button>
 
-      <img id="qrPix" />
+      <img id="qrPix">
 
     </div>
 
