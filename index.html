@@ -10,8 +10,12 @@
 <meta name="description"
 content="24 de Janeiro de 2027. Churrasco R$60, Cartela R$20 e R$25 mil em prêmios. Garanta já sua participação.">
 
+<!-- CSS BASE -->
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
+
+<!-- CSS VIP (MOVIDO PARA O HEAD) -->
+<link rel="stylesheet" href="css/vip.css">
 
 </head>
 
@@ -134,7 +138,6 @@ Garanta já sua cartela e churrasco antecipado.
 
 <div class="grid-2">
 
-<!-- CHURRASCO -->
 <div class="venda-box">
 
 <h3>🍖 Churrasco Oficial FPSS</h3>
@@ -155,7 +158,6 @@ class="btn red full">
 
 </div>
 
-<!-- CARTELA -->
 <div class="venda-box">
 
 <h3>🎟 Cartela Premiada</h3>
@@ -182,63 +184,7 @@ class="btn green full">
 
 </section>
 
-<!-- PROGRAMAÇÃO -->
-<section class="card">
-
-<div class="wrap">
-
-<h2 class="section-title">📅 Programação Oficial</h2>
-
-<ul class="info-list">
-<li>🕙 10h - Santa Missa</li>
-<li>🕚 11h - Almoço Churrasco + Show Ao Vivo</li>
-<li>🕒 15h - Sorteio do 4º Prêmio</li>
-<li>🕔 17h - Show de Prêmios</li>
-</ul>
-
-</div>
-
-</section>
-
-<!-- PREMIAÇÃO -->
-<section class="card" id="premiacao">
-
-<div class="wrap">
-
-<h2 class="section-title">💰 Premiação Oficial - R$ 25 MIL</h2>
-
-<div class="premios-grid">
-
-<div class="premio-card ouro">
-<h3>🥇 1º Prêmio</h3>
-<p>R$ 10.000 Computadorizado</p>
-<p>R$ 2.000 Presencial</p>
-</div>
-
-<div class="premio-card prata">
-<h3>🥈 2º Prêmio</h3>
-<p>R$ 5.000 Computadorizado</p>
-<p>R$ 2.000 Presencial</p>
-</div>
-
-<div class="premio-card bronze">
-<h3>🥉 3º Prêmio</h3>
-<p>R$ 3.000 Computadorizado</p>
-<p>R$ 1.000 Presencial</p>
-</div>
-
-<div class="premio-card destaque2">
-<h3>🎉 4º Prêmio</h3>
-<p>R$ 2.000 Durante o almoço</p>
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-<!-- ENQUETE FPSS (CORRIGIDA) -->
+<!-- ENQUETE -->
 <section class="card center" id="enquete">
 
 <div class="wrap">
@@ -246,13 +192,7 @@ class="btn green full">
 <h2 class="section-title">🔥 Enquete Oficial FPSS</h2>
 
 <p class="mt-10">
-Participe da enquete oficial da Festa do Padroeiro São Sebastião e concorra a uma camiseta exclusiva.
-</p>
-
-<div class="enquete-box">
-
-<p class="enquete-texto">
-Clique abaixo para participar:
+Participe da enquete oficial da Festa e concorra a uma camiseta exclusiva.
 </p>
 
 <a href="enquete.html" class="btn red full">
@@ -261,76 +201,37 @@ Clique abaixo para participar:
 
 </div>
 
-</div>
-
-</section>
-
-<!-- CTA FINAL -->
-<section class="card center">
-
-<div class="wrap">
-
-<h2 class="section-title">🎟 Garanta Sua Chance Agora</h2>
-
-<a href="https://wa.me/5569981102306"
-target="_blank"
-class="btn green">
-Comprar Agora no WhatsApp
-</a>
-
-</div>
-
-</section>
-
-<!-- SHOW -->
-<section class="card center">
-
-<div class="wrap">
-
-<h2 class="section-title">🎵 Show Ao Vivo</h2>
-
-<p class="mt-10">
-Cuyabano & Douradense
-</p>
-
-</div>
-
 </section>
 
 <!-- VIP -->
 <section class="vip-fpss">
-  <div class="vip-box">
 
-    <h2>🔥 ENTRE PARA O GRUPO VIP DA FESTA</h2>
+<div class="vip-box">
 
-    <p>
-      Receba em primeira mão novidades da Festa do Padroeiro São Sebastião,
-      cartelas, churrasco, sorteios e avisos especiais.
-    </p>
+<h2>🔥 ENTRE PARA O GRUPO VIP DA FESTA</h2>
 
-    <form id="formVIP">
+<p>
+Receba novidades, cartelas e avisos em primeira mão.
+</p>
 
-      <input type="text" name="nome" placeholder="Seu nome" required>
+<form id="formVIP">
 
-      <input type="tel" name="whatsapp" placeholder="Seu WhatsApp" required>
+<input type="text" name="nome" placeholder="Seu nome" required>
+<input type="tel" name="whatsapp" placeholder="Seu WhatsApp" required>
+<input type="text" name="cidade" placeholder="Cidade" required>
+<input type="text" name="bairro" placeholder="Bairro" required>
 
-      <input type="text" name="cidade" placeholder="Cidade" required>
+<button type="submit">
+QUERO ENTRAR AGORA 🚀
+</button>
 
-      <input type="text" name="bairro" placeholder="Bairro" required>
+</form>
 
-      <button type="submit">
-        QUERO ENTRAR AGORA 🚀
-      </button>
+<div id="msgVIP"></div>
 
-    </form>
+</div>
 
-    <div id="msgVIP"></div>
-
-  </div>
 </section>
-
-<link rel="stylesheet" href="css/vip.css">
-<script src="js/vip.js"></script>
 
 <!-- CONTATO -->
 <section class="card center">
@@ -370,18 +271,25 @@ const distancia = dataEvento - agora;
 
 if(distancia < 0) return;
 
-const dias = Math.floor(distancia / (1000*60*60*24));
-const horas = Math.floor((distancia % (1000*60*60*24)) / (1000*60*60));
-const minutos = Math.floor((distancia % (1000*60*60)) / (1000*60));
+document.getElementById("dias").innerText =
+Math.floor(distancia / (1000*60*60*24));
 
-document.getElementById("dias").innerText = dias;
-document.getElementById("horas").innerText = horas;
-document.getElementById("minutos").innerText = minutos;
+document.getElementById("horas").innerText =
+Math.floor((distancia % (1000*60*60*24)) / (1000*60*60));
+
+document.getElementById("minutos").innerText =
+Math.floor((distancia % (1000*60*60)) / (1000*60));
 }
 
 setInterval(atualizarContador,1000);
 atualizarContador();
 </script>
+
+<!-- SCRIPTS (ORDEM CORRIGIDA) -->
+<script src="js/main.js"></script>
+<script src="js/countdown.js"></script>
+<script src="js/lightbox.js"></script>
+<script src="js/vip.js"></script>
 
 </body>
 </html>
