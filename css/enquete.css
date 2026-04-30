@@ -1,90 +1,151 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+/* =========================
+RESET LOCAL (EVITA CONFLITO COM STYLE.CSS)
+========================= */
+.enquete-fpss *{
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
+}
 
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* =========================
+FUNDO
+========================= */
+.enquete-fpss{
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:40px 15px;
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+}
 
-<title>Enquete FPSS 2027</title>
+/* =========================
+CAIXA CENTRAL (ANTI-ESTICAMENTO)
+========================= */
+.enquete-box{
+  width:100%;
+  max-width:620px; /* 🔥 trava largura */
+  background:#fff;
+  padding:28px;
+  border-radius:18px;
+  box-shadow:0 25px 60px rgba(0,0,0,.3);
+  overflow:hidden;
+}
 
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/enquete.css">
+/* =========================
+TÍTULO
+========================= */
+.enquete-box h1{
+  text-align:center;
+  color:#8b1111;
+  font-size:26px;
+  margin-bottom:8px;
+}
 
-</head>
+.enquete-box p{
+  text-align:center;
+  color:#555;
+  margin-bottom:20px;
+}
 
-<body>
+/* =========================
+SUBTÍTULOS
+========================= */
+.enquete-box h2{
+  margin-top:22px;
+  margin-bottom:10px;
+  font-size:17px;
+  color:#8b1111;
+  border-left:4px solid #c61f1f;
+  padding-left:10px;
+}
 
-<section class="enquete-fpss">
+/* =========================
+LABELS
+========================= */
+.enquete-box label{
+  display:block;
+  margin-top:12px;
+  margin-bottom:6px;
+  font-weight:bold;
+  font-size:14px;
+  color:#333;
+}
 
-<div class="enquete-box">
+/* =========================
+INPUTS
+========================= */
+.enquete-box input,
+.enquete-box select,
+.enquete-box textarea{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:15px;
+  outline:none;
+  transition:.2s;
+  background:#fff;
+}
 
-<h1>🔥 Enquete Oficial FPSS</h1>
+.enquete-box input:focus,
+.enquete-box select:focus,
+.enquete-box textarea:focus{
+  border-color:#c61f1f;
+  box-shadow:0 0 6px rgba(198,31,31,.25);
+}
 
-<p>Participe e concorra a uma camiseta exclusiva da Festa.</p>
+/* =========================
+TEXTAREA
+========================= */
+.enquete-box textarea{
+  min-height:90px;
+  resize:vertical;
+}
 
-<form id="formEnquete">
+/* =========================
+BOTÃO
+========================= */
+.enquete-box button{
+  width:100%;
+  margin-top:22px;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  background:#1fae42;
+  color:#fff;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.25s;
+}
 
-<input type="hidden" name="origem" value="ENQUETE">
+.enquete-box button:hover{
+  transform:scale(1.02);
+  background:#169238;
+}
 
-<h2>📌 Dados pessoais</h2>
+/* =========================
+MENSAGEM
+========================= */
+#msg{
+  margin-top:15px;
+  text-align:center;
+  font-weight:bold;
+}
 
-<label>Nome</label>
-<input type="text" name="nome" required>
+/* =========================
+RESPONSIVO
+========================= */
+@media (max-width:480px){
 
-<label>Sobrenome</label>
-<input type="text" name="sobrenome" required>
+  .enquete-box{
+    padding:20px;
+    border-radius:14px;
+  }
 
-<label>WhatsApp</label>
-<input type="tel" id="whatsapp" name="whatsapp" required>
+  .enquete-box h1{
+    font-size:22px;
+  }
 
-<label>Data de nascimento</label>
-<input type="date" name="nascimento" required>
-
-<label>CEP</label>
-<input type="text" id="cep" name="cep" required>
-
-<label>Cidade</label>
-<input type="text" id="cidade" name="cidade" required>
-
-<label>Bairro</label>
-<input type="text" id="bairro" name="bairro" required>
-
-<label>Rua</label>
-<input type="text" id="rua" name="rua" required>
-
-<h2>📊 Experiência</h2>
-
-<label>Já participou da festa?</label>
-<select name="participou" required>
-  <option value="">Selecione</option>
-  <option>Sim</option>
-  <option>Não</option>
-</select>
-
-<label>Já comprou cartela?</label>
-<select name="cartela" required>
-  <option value="">Selecione</option>
-  <option>Sim</option>
-  <option>Não</option>
-</select>
-
-<label>O que foi bom?</label>
-<textarea name="bom"></textarea>
-
-<label>O que melhorar?</label>
-<textarea name="melhorar"></textarea>
-
-<button type="submit">🚀 ENVIAR E CONCORRER</button>
-
-<div id="msg"></div>
-
-</form>
-
-</div>
-
-</section>
-
-<script src="js/enquete.js"></script>
-
-</body>
-</html>
+}
