@@ -33,4 +33,4 @@ export default async function handler(req, res) {
   } catch (error) {
     return res.status(400).json({ erro: error.message });
   }
-} 
+} // teste 2
