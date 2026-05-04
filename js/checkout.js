@@ -13,7 +13,8 @@ document.getElementById('formCheckout').onsubmit = async function(e) {
         cpf: formData.get('cpf'),
         quantidade: formData.get('quantidade'),
         horario_retirada: formData.get('horario_retirada'),
-        valor_total: document.getElementById('valorTotal').innerText.replace('R$ ', ''),
+        // No js/checkout.js, mude temporariamente para:
+        valor_total: "60.00", //valor_total: document.getElementById('valorTotal').innerText.replace('R$ ', ''),
         status: 'pendente'
     };
 
