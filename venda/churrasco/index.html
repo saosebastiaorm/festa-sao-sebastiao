@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finalizar Compra - 6ª FPSS</title>
-    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/layout.css">
+    <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="../../css/style.css">
+
     <style>
         .checkout-box { max-width: 500px; margin: 30px auto; padding: 25px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-top: 5px solid #e63946; }
         .urgencia-venda { background: #fff3f3; color: #d62828; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 20px; border: 1px dashed #d62828; }
@@ -16,7 +21,6 @@
         .total-destaque { font-size: 1.4rem; color: #1b4332; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
         .aviso-retirada { background: #e9f5ff; color: #0077b6; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-top: 10px; }
         .btn-finalizar { width: 100%; padding: 18px; background: #228b22; color: #fff; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-finalizar:hover { background: #1a6b1a; transform: scale(1.02); }
     </style>
 </head>
 <body style="background-color: #f4f4f4;">
@@ -27,7 +31,7 @@
         </div>
 
         <h2 style="text-align: center; margin-bottom: 5px;">🍖 Seu Churrasco Oficial</h2>
-        <p style="text-align: center; color: #666; margin-bottom: 25px;">Preencha os dados para gerar o seu PIX</p>
+        <p style="text-align: center; color: #666; margin-bottom: 25px;">6ª Festa do Padroeiro São Sebastião</p>
 
         <form id="formCheckout">
             <div class="form-row">
@@ -42,7 +46,7 @@
             </div>
 
             <div class="campo">
-                <label>CPF (para segurança na retirada):</label>
+                <label>CPF (Necessário para retirada):</label>
                 <input type="text" name="cpf" id="cpf" placeholder="000.000.000-00" required inputmode="numeric" maxlength="14" oninput="mascaraCPF(this)">
             </div>
 
@@ -63,7 +67,7 @@
             </div>
 
             <div class="aviso-retirada">
-                ℹ️ <strong>Atenção:</strong> A retirada deve ser feita exclusivamente no dia do evento, entre as <strong>10:00 e 15:00 hs</strong>.
+                ℹ️ A retirada será no dia <strong>24/01/2027</strong> entre as <strong>10:00 e 15:00 hs</strong>.
             </div>
 
             <div class="resumo-venda">
@@ -71,7 +75,6 @@
                     <span>TOTAL:</span>
                     <span id="valorTotal">R$ 60,00</span>
                 </div>
-                <small style="color: #666;">Valor unitário: R$ 60,00</small>
             </div>
 
             <button type="submit" class="btn-finalizar">GERAR PIX AGORA 🚀</button>
@@ -96,12 +99,6 @@
             }
             i.value = v;
         }
-
-        document.getElementById('formCheckout').onsubmit = function(e) {
-            e.preventDefault();
-            // Próximo passo: integrar com a sua API do Supabase/Sicredi
-            alert('Dados validados! Vamos agora gerar o seu Pix no Sicredi.');
-        };
     </script>
 </body>
 </html>
