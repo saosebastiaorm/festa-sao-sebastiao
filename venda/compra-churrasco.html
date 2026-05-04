@@ -83,29 +83,25 @@
         </form>
     </div>
 
-    <script>
-        const PRECO_UNITARIO = 60;
+    <script src="../js/checkout.js"></script>
+<script>
+    const PRECO_UNITARIO = 60;
 
-        function calcularTotal() {
-            const qtd = document.getElementById('qtd').value;
-            const total = qtd * PRECO_UNITARIO;
-            document.getElementById('valorTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    function calcularTotal() {
+        const qtd = document.getElementById('qtd').value;
+        const total = qtd * PRECO_UNITARIO;
+        document.getElementById('valorTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+
+    function mascaraCPF(i) {
+        let v = i.value.replace(/\D/g, "");
+        if (v.length <= 11) {
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         }
-
-        function mascaraCPF(i) {
-            let v = i.value.replace(/\D/g, "");
-            if (v.length <= 11) {
-                v = v.replace(/(\d{3})(\d)/, "$1.$2");
-                v = v.replace(/(\d{3})(\d)/, "$1.$2");
-                v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-            }
-            i.value = v;
-        }
-
-        document.getElementById('formCheckout').onsubmit = function(e) {
-            e.preventDefault();
-            alert('Excelente! Dados validados. O próximo passo é integrar o Pix do Sicredi.');
-        };
-    </script>
+        i.value = v;
+    }
+</script>
 </body>
 </html>
