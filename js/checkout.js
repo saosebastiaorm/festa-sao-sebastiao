@@ -1,8 +1,7 @@
 document.getElementById('formCheckout').onsubmit = async function(e) {
     e.preventDefault();
-    
     const btn = e.target.querySelector('button');
-    btn.innerText = "Processando... ⏳";
+    btn.innerText = "Salvando no Banco... ⏳";
     btn.disabled = true;
 
     const formData = new FormData(e.target);
@@ -16,21 +15,22 @@ document.getElementById('formCheckout').onsubmit = async function(e) {
     };
 
     try {
-        const resposta = await fetch('/api/registrar-venda', {
+        const res = await fetch('/api/registrar-venda', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dados)
         });
 
-        const resultado = await resposta.json();
+        const resultado = await res.json();
 
-        if (resposta.ok) {
-            alert('✅ SUCESSO! O Marcos Belgamazzi agora tem uma venda no banco!');
+        if (res.ok) {
+            alert('✅ SUCESSO! A venda apareceu no Supabase.');
         } else {
+            console.error('Detalhe do erro:', resultado);
             alert('❌ Erro na API: ' + JSON.stringify(resultado.erro));
         }
-    } catch (erro) {
-        alert('🌐 Erro de conexão: ' + erro.message);
+    } catch (err) {
+        alert('🌐 Erro de conexão com o servidor.');
     } finally {
         btn.innerText = "GERAR PIX AGORA 🚀";
         btn.disabled = false;
