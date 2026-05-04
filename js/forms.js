@@ -153,3 +153,61 @@ this.value = v;
 }
 
 })();
+
+/* =========================
+   GERAR PIX (BACKEND)
+========================= */
+window.gerarPix = async function(){
+
+const nome = campoNome ? campoNome.value.trim() : "";
+const telefone = campoTelefone ? campoTelefone.value.trim() : "";
+
+let qtd = campoQtd ? parseInt(campoQtd.value) : 1;
+
+if(isNaN(qtd) || qtd < 1){
+qtd = 1;
+}
+
+/* VALIDAÇÕES */
+if(nome === ""){
+alert("Informe seu nome.");
+if(campoNome) campoNome.focus();
+return;
+}
+
+if(telefone === ""){
+alert("Informe seu telefone.");
+if(campoTelefone) campoTelefone.focus();
+return;
+}
+
+/* CHAMA BACKEND */
+try{
+
+const res = await fetch("http://localhost:3000/criar-pix", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+nome,
+telefone,
+quantidade: qtd
+})
+});
+
+const data = await res.json();
+
+/* RESULTADO */
+alert(
+"PIX GERADO!\n\n" +
+"Valor: " + moeda(data.valor) + "\n" +
+"TXID: " + data.txid
+);
+
+}catch(e){
+console.error(e);
+alert("Erro ao gerar Pix. Verifique se o servidor está rodando.");
+}
+
+};
