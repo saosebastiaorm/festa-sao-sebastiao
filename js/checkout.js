@@ -1,21 +1,21 @@
 document.getElementById('formCheckout').onsubmit = async function(e) {
     e.preventDefault();
+
     const btn = e.target.querySelector('button');
-    btn.innerText = "Salvando no Banco... ⏳";
+    btn.innerText = "Gerando PIX... ⏳";
     btn.disabled = true;
 
     const formData = new FormData(e.target);
+
     const dados = {
-        nome: formData.get('nome'),
-        sobrenome: formData.get('sobrenome'),
-        cpf: formData.get('cpf'),
-        quantidade: formData.get('quantidade'),
-        horario_retirada: formData.get('horario_retirada'),
-        valor_total: document.getElementById('valorTotal').innerText.replace('R$ ', '')
+        nome: formData.get('nome') + " " + formData.get('sobrenome'),
+        telefone: "não informado", // depois podemos melhorar
+        quantidade: parseInt(formData.get('quantidade'))
     };
 
     try {
-        const res = await fetch('/api/registrar-venda', {
+
+        const res = await fetch('http://localhost:3000/criar-pix', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dados)
@@ -24,11 +24,18 @@ document.getElementById('formCheckout').onsubmit = async function(e) {
         const resultado = await res.json();
 
         if (res.ok) {
-            alert('✅ SUCESSO! A venda apareceu no Supabase.');
+
+            alert(
+                "✅ PIX GERADO!\n\n" +
+                "Valor: R$ " + resultado.valor + "\n" +
+                "TXID: " + resultado.txid
+            );
+
         } else {
-            console.error('Detalhe do erro:', resultado);
-            alert('❌ Erro na API: ' + JSON.stringify(resultado.erro));
+            console.error('Erro:', resultado);
+            alert('❌ Erro ao gerar Pix');
         }
+
     } catch (err) {
         alert('🌐 Erro de conexão com o servidor.');
     } finally {
