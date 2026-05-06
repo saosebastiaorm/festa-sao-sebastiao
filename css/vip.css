@@ -1,0 +1,110 @@
+/* ================================
+FPSS VIP - VISUAL PROFISSIONAL
+=============================== */
+
+.vip-fpss{
+  padding:70px 20px;
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+  display:flex;
+  justify-content:center;
+}
+
+/* CAIXA PRINCIPAL */
+.vip-box{
+  max-width:620px;
+  width:100%;
+  background:#ffffff;
+  padding:40px 30px;
+  border-radius:22px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  text-align:center;
+}
+
+/* TÍTULO */
+.vip-box h2{
+  font-size:30px;
+  color:#8b1111;
+  margin-bottom:10px;
+  line-height:1.2;
+}
+
+/* TEXTO */
+.vip-box p{
+  color:#666;
+  font-size:16px;
+  margin-bottom:25px;
+  line-height:1.5;
+}
+
+/* ================================
+INPUTS (ESTILO PREMIUM)
+=============================== */
+.vip-box input{
+  width:100%;
+  padding:16px 14px;
+  margin-bottom:14px;
+  border:2px solid #eee;
+  border-radius:14px;
+  font-size:15px;
+  background:#f9f9f9;
+  transition:.25s;
+  outline:none;
+}
+
+/* FOCO */
+.vip-box input:focus{
+  border-color:#8b1111;
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(139,17,17,.10);
+}
+
+/* PLACEHOLDER */
+.vip-box input::placeholder{
+  color:#999;
+}
+
+/* ================================
+BOTÃO
+=============================== */
+.vip-box button{
+  width:100%;
+  padding:18px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#1fae42,#158c34);
+  color:#fff;
+  font-size:17px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.25s;
+  margin-top:10px;
+  box-shadow:0 10px 25px rgba(31,174,66,.25);
+}
+
+/* HOVER */
+.vip-box button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 15px 30px rgba(31,174,66,.35);
+}
+
+/* MENSAGEM */
+#msgVIP{
+  margin-top:18px;
+  font-weight:bold;
+  font-size:15px;
+}
+
+/* ================================
+RESPONSIVO
+=============================== */
+@media(max-width:600px){
+
+  .vip-box{
+    padding:28px 20px;
+  }
+
+  .vip-box h2{
+    font-size:24px;
+  }
+
+}

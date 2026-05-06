@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Doação FPSS</title>
+
+<style>
+
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
+}
+
+/* FUNDO */
+body{
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+}
+
+/* CENTRALIZA */
+.container{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+/* CAIXA */
+.box{
+  width:100%;
+  max-width:500px;
+  background:#fff;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.3);
+}
+
+/* TITULO */
+h1{
+  text-align:center;
+  color:#8b1111;
+  margin-bottom:10px;
+}
+
+p{
+  text-align:center;
+  margin-bottom:20px;
+  color:#555;
+}
+
+/* LABEL */
+label{
+  display:block;
+  margin-bottom:5px;
+  font-size:14px;
+  font-weight:bold;
+  color:#333;
+}
+
+/* CAMPOS */
+input, select, textarea{
+  width:100%;
+  padding:14px;
+  margin-bottom:15px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:15px;
+}
+
+/* BOTAO */
+button{
+  width:100%;
+  padding:16px;
+  background:#1fae42;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.3s;
+}
+
+button:hover{
+  transform:scale(1.03);
+}
+
+/* MSG */
+#msg{
+  margin-top:15px;
+  text-align:center;
+  font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="box">
+
+<h1>🙏 Apoie a Festa</h1>
+
+<p>Ajude com qualquer tipo de doação</p>
+
+<form id="formDoacao">
+
+<label>Nome</label>
+<input type="text" name="nome" required>
+
+<label>WhatsApp</label>
+<input type="tel" name="whatsapp" required>
+  
+<label>Cidade</label>
+<input type="text" name="cidade" required>
+
+<label>Tipo de Doação</label>
+
+<select name="tipo_doacao" required>
+  <option value="">Selecione</option>
+  <option>Dinheiro</option>
+  <option>Gado</option>
+  <option>Brindes</option>
+  <option>Serviço</option>
+  <option>Alimentos</option>
+  <option>Bebidas</option>
+  <option>Equipamentos</option>
+  <option>Mão de obra</option>
+  <option>Patrocínio</option>
+  <option>Outros</option>
+</select>
+
+<label>Descrição</label>
+<textarea name="descricao_doacao"></textarea>
+
+<label>Valor (se for dinheiro)</label>
+<input type="number" name="valor_doacao">
+
+  <!-- CAMPO DINÂMICO -->
+<div id="campoComprovante" style="display:none;">
+
+  <label>Anexar comprovante</label>
+  <input type="file" id="comprovante" accept="image/*,.pdf">
+
+</div>
+
+<button type="submit">QUERO AJUDAR 🙏</button>
+
+</form>
+
+
+</form>
+
+<div id="msg"></div>
+
+</div>
+
+</div>
+
+<script src="../js/doacao.js"></script>
+  
+</body>
+</html>

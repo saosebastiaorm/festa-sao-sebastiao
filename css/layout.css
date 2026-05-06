@@ -1,0 +1,21 @@
+.section{
+  padding:60px 20px;
+}
+
+.section-center{
+  text-align:center;
+}
+
+.section-white{
+  background:#fff;
+}
+
+.section-green{
+  background:linear-gradient(135deg,#0f5132,#198754);
+  color:#fff;
+}
+
+.section-red{
+  background:linear-gradient(135deg,#8b1111,#c61f1f);
+  color:#fff;
+}

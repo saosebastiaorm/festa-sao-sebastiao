@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - 6ª FPSS</title>
+    
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        .checkout-box { max-width: 500px; margin: 30px auto; padding: 25px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-top: 5px solid #e63946; }
+        .urgencia-venda { background: #fff3f3; color: #d62828; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 20px; border: 1px dashed #d62828; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .campo { margin-bottom: 15px; }
+        .campo label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        .campo input, .campo select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+        .resumo-venda { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .total-destaque { font-size: 1.4rem; color: #1b4332; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+        .aviso-retirada { background: #e9f5ff; color: #0077b6; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-top: 10px; line-height: 1.4; }
+        .btn-finalizar { width: 100%; padding: 18px; background: #228b22; color: #fff; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-finalizar:hover { background: #1a6b1a; transform: scale(1.02); }
+    </style>
+</head>
+<body style="background-color: #f4f4f4;">
+
+    <div class="checkout-box">
+        <div class="urgencia-venda">
+            ⚡ RESTAM POUCAS UNIDADES! GARANTA O SEU AGORA.
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 5px;">🍖 Seu Churrasco Oficial</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 25px;">6ª Festa do Padroeiro São Sebastião</p>
+
+        <form id="formCheckout">
+            <div class="form-row">
+                <div class="campo">
+                    <label>Nome:</label>
+                    <input type="text" name="nome" placeholder="Ex: Marcos" required>
+                </div>
+                <div class="campo">
+                    <label>Sobrenome:</label>
+                    <input type="text" name="sobrenome" placeholder="Ex: Silva" required>
+                </div>
+            </div>
+
+            <div class="campo">
+                <label>CPF (para segurança na retirada):</label>
+                <input type="text" name="cpf" id="cpf" placeholder="000.000.000-00" required inputmode="numeric" maxlength="14" oninput="mascaraCPF(this)">
+            </div>
+
+            <div class="form-row">
+                <div class="campo">
+                    <label>Quantidade:</label>
+                    <input type="number" id="qtd" name="quantidade" value="1" min="1" max="10" oninput="calcularTotal()">
+                </div>
+                <div class="campo">
+                    <label>Previsão de Retirada:</label>
+                    <select name="horario_retirada" required>
+                        <option value="11:00">11:00 hs</option>
+                        <option value="12:00">12:00 hs</option>
+                        <option value="13:00">13:00 hs</option>
+                        <option value="14:00">14:00 hs</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="aviso-retirada">
+                ℹ️ <strong>Atenção:</strong> A retirada deve ser feita no dia <strong>24 de Janeiro de 2027</strong>, exclusivamente entre as <strong>10:00 e 15:00 hs</strong>.
+            </div>
+
+            <div class="resumo-venda">
+                <div class="total-destaque">
+                    <span>TOTAL:</span>
+                    <span id="valorTotal">R$ 60,00</span>
+                </div>
+                <small style="color: #666;">Valor unitário fixado: R$ 60,00</small>
+            </div>
+
+            <button type="submit" class="btn-finalizar">GERAR PIX AGORA 🚀</button>
+        </form>
+    </div>
+
+    <script src="../js/checkout.js"></script>
+<script>
+    const PRECO_UNITARIO = 60;
+
+    function calcularTotal() {
+        const qtd = document.getElementById('qtd').value;
+        const total = qtd * PRECO_UNITARIO;
+        document.getElementById('valorTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+
+    function mascaraCPF(i) {
+        let v = i.value.replace(/\D/g, "");
+        if (v.length <= 11) {
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        }
+        i.value = v;
+    }
+</script>
+</body>
+</html>
