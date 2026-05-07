@@ -1,0 +1,354 @@
+/* =====================================================
+FPSS 2027 • STYLE.CSS MASTER DEFINITIVO
+Conversão Máxima + Visual Popular Profissional
+===================================================== */
+
+/* RESET */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+html{
+scroll-behavior:smooth;
+font-size:16px;
+}
+
+body{
+font-family:Arial, Helvetica, sans-serif;
+background:#f7f3eb;
+color:#111;
+line-height:1.55;
+overflow-x:hidden;
+}
+
+/* CONTAINER */
+.wrap{
+width:100%;
+max-width:1280px;
+margin:auto;
+padding:20px;
+}
+
+/* LINKS */
+a{
+text-decoration:none;
+color:inherit;
+}
+
+/* TOPO URGÊNCIA */
+.barra-urgencia{
+background:#facc15;
+color:#111;
+text-align:center;
+padding:11px 14px;
+font-weight:800;
+font-size:14px;
+position:sticky;
+top:0;
+z-index:999;
+box-shadow:0 3px 10px rgba(0,0,0,.08);
+}
+
+/* HERO */
+.hero{
+background:linear-gradient(135deg,#7f1d1d,#b91c1c,#dc2626);
+color:#fff;
+padding:60px 20px;
+border-radius:0 0 28px 28px;
+box-shadow:0 14px 30px rgba(0,0,0,.18);
+}
+
+.hero-grid{
+display:grid;
+grid-template-columns:1.15fr .85fr;
+gap:28px;
+align-items:center;
+}
+
+.badge-topo{
+display:inline-block;
+background:rgba(255,255,255,.18);
+padding:8px 14px;
+border-radius:30px;
+font-size:13px;
+font-weight:800;
+margin-bottom:16px;
+animation:pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge{
+0%{transform:scale(1);}
+50%{transform:scale(1.03);}
+100%{transform:scale(1);}
+}
+
+.hero h1{
+font-size:54px;
+line-height:1.05;
+font-weight:900;
+margin-bottom:14px;
+}
+
+.subhero{
+font-size:22px;
+font-weight:700;
+max-width:620px;
+line-height:1.45;
+}
+
+.cta-group{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+margin-top:22px;
+}
+
+.mini-info{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+.mini-info span{
+background:rgba(255,255,255,.12);
+padding:8px 12px;
+border-radius:12px;
+font-size:13px;
+font-weight:700;
+}
+
+/* BOTÕES */
+.btn{
+display:inline-block;
+padding:15px 22px;
+border-radius:14px;
+font-weight:800;
+cursor:pointer;
+border:none;
+transition:.25s;
+text-align:center;
+box-shadow:0 10px 18px rgba(0,0,0,.12);
+}
+
+.btn:hover{
+transform:translateY(-3px);
+}
+
+.red{
+background:#dc2626;
+color:#fff;
+}
+
+.green{
+background:#16a34a;
+color:#fff;
+}
+
+.full{
+width:100%;
+}
+
+/* PRICE CARDS */
+.hero-side{
+display:grid;
+gap:16px;
+}
+
+.price-card{
+background:#fff;
+color:#111;
+padding:22px;
+border-radius:22px;
+text-align:center;
+box-shadow:0 14px 28px rgba(0,0,0,.14);
+}
+
+.price-card h3{
+font-size:22px;
+margin-bottom:10px;
+}
+
+.price-card .valor{
+font-size:42px;
+font-weight:900;
+color:#b91c1c;
+line-height:1;
+}
+
+.price-card p{
+margin-top:8px;
+font-weight:700;
+font-size:14px;
+}
+
+.price-card.destaque{
+border:3px solid #facc15;
+transform:scale(1.03);
+}
+
+/* CARDS */
+.card{
+background:#fff;
+padding:28px;
+border-radius:24px;
+box-shadow:0 10px 26px rgba(0,0,0,.08);
+margin:24px auto 0;
+max-width:1280px;
+}
+
+.section-title{
+font-size:32px;
+color:#7f1d1d;
+margin-bottom:16px;
+line-height:1.2;
+font-weight:900;
+}
+
+/* GRID */
+.grid-2{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:22px;
+}
+
+/* VENDA BOX */
+.venda-box{
+background:#fafafa;
+padding:24px;
+border-radius:22px;
+border:1px solid #ececec;
+}
+
+.venda-box h3{
+font-size:24px;
+margin-bottom:10px;
+color:#111;
+}
+
+/* LISTA */
+.info-list{
+list-style:none;
+margin-top:12px;
+}
+
+.info-list li{
+padding:10px 0;
+border-bottom:1px solid #ececec;
+font-size:16px;
+font-weight:600;
+}
+
+/* PRICE */
+.price-box{
+margin-top:18px;
+background:#16a34a;
+color:#fff;
+padding:16px;
+border-radius:14px;
+font-size:28px;
+font-weight:900;
+text-align:center;
+}
+
+/* PREMIAÇÃO */
+.premios-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:18px;
+margin-top:18px;
+}
+
+.premio-card{
+background:#fff;
+padding:24px;
+border-radius:22px;
+text-align:center;
+box-shadow:0 10px 24px rgba(0,0,0,.08);
+}
+
+.premio-card h3{
+font-size:22px;
+margin-bottom:12px;
+font-weight:900;
+}
+
+.premio-card p{
+font-size:17px;
+margin-top:6px;
+font-weight:700;
+}
+
+.ouro{border-top:6px solid #facc15;}
+.prata{border-top:6px solid #cbd5e1;}
+.bronze{border-top:6px solid #fb923c;}
+.destaque2{border-top:6px solid #16a34a;}
+
+/* CONTADOR */
+.contador-grid{
+display:flex;
+justify-content:center;
+gap:14px;
+flex-wrap:wrap;
+margin-top:18px;
+}
+
+.tempo-box{
+background:#7f1d1d;
+color:#fff;
+padding:18px;
+min-width:92px;
+border-radius:18px;
+font-weight:900;
+}
+
+.tempo-box span{
+display:block;
+font-size:34px;
+line-height:1;
+}
+
+.tempo-box small{
+font-size:12px;
+opacity:.92;
+}
+
+/* GALERIA */
+.gallery{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:16px;
+margin-top:16px;
+}
+
+.gallery img{
+width:100%;
+aspect-ratio:4/3;
+object-fit:contain;
+background:#fff;
+padding:12px;
+border-radius:18px;
+box-shadow:0 8px 18px rgba(0,0,0,.08);
+transition:.25s;
+}
+
+.gallery img:hover{
+transform:translateY(-4px);
+}
+
+/* FOOTER */
+footer{
+text-align:center;
+padding:34px 20px;
+font-size:15px;
+font-weight:800;
+color:#7f1d1d;
+}
+
+/* UTILIDADES */
+.center{text-align:center;}
+.mt-10{margin-top:10px;}
+.mt-20{margin-top:20px;}
+.hidden{display:none;}
