@@ -52,7 +52,7 @@ app.use(cors({
 /* =====================================================
    PREFLIGHT GLOBAL
 ===================================================== */
-app.options("*", cors());
+app.options(/.*/, cors());
 
 app.use(express.json());
 
