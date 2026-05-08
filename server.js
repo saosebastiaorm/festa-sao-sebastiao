@@ -9,11 +9,6 @@ const app = express();
 
 /* =====================================================
    CORS MASTER
-   LIBERA:
-   - Vercel
-   - Localhost
-   - file:// (origin null)
-   - testes locais
 ===================================================== */
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -27,12 +22,6 @@ const allowedOrigins = [
 app.use(cors({
   origin: function(origin, callback){
 
-    /* =================================================
-       PERMITE:
-       - file:// (origin null)
-       - Postman
-       - requests sem origin
-    ================================================= */
     if(!origin){
       return callback(null, true);
     }
@@ -49,16 +38,18 @@ app.use(cors({
   credentials: true
 }));
 
-/* =====================================================
-   PREFLIGHT GLOBAL
-===================================================== */
 app.options(/.*/, cors());
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 /* =====================================================
    SUPABASE
 ===================================================== */
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+  console.error("ERRO: Credenciais Supabase ausentes.");
+  process.exit(1);
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
@@ -73,9 +64,9 @@ if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
 }
 
 const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN.trim(),
   options: {
-    timeout: 5000
+    timeout: 10000
   }
 });
 
@@ -87,8 +78,8 @@ const payment = new Payment(client);
 app.get("/", (req, res) => {
   res.json({
     status: "online",
-    sistema: "FPSS Mercado Pago + Supabase + Webhook",
-    ambiente: process.env.NODE_ENV
+    sistema: "FPSS PRODUÇÃO PROFISSIONAL",
+    ambiente: process.env.NODE_ENV || "development"
   });
 });
 
@@ -96,6 +87,7 @@ app.get("/", (req, res) => {
    CRIAR PIX + SALVAR PEDIDO
 ===================================================== */
 app.post("/criar-pix", async (req, res) => {
+
   try {
 
     const {
@@ -117,7 +109,7 @@ app.post("/criar-pix", async (req, res) => {
       });
     }
 
-    const cpfLimpo = cpf.replace(/\D/g, "");
+    const cpfLimpo = String(cpf).replace(/\D/g, "");
 
     if (cpfLimpo.length !== 11) {
       return res.status(400).json({
@@ -128,7 +120,7 @@ app.post("/criar-pix", async (req, res) => {
 
     const qtd = Number(quantidade);
 
-    if (isNaN(qtd) || qtd <= 0) {
+    if (!qtd || qtd <= 0) {
       return res.status(400).json({
         sucesso: false,
         erro: "Quantidade inválida."
@@ -139,12 +131,12 @@ app.post("/criar-pix", async (req, res) => {
        VALORES
     ========================= */
     const valorUnitario = 60;
-    const total = qtd * valorUnitario;
+    const total = Number((qtd * valorUnitario).toFixed(2));
 
     /* =========================
-       CRIAR PAGAMENTO PIX
+       PAGAMENTO PIX
     ========================= */
-    const result = await payment.create({
+    const pagamentoCriado = await payment.create({
       body: {
         transaction_amount: total,
         description: `Churrasco FPSS - ${nome} ${sobrenome}`,
@@ -162,7 +154,7 @@ app.post("/criar-pix", async (req, res) => {
 
         metadata: {
           projeto: "FPSS",
-          telefone,
+          telefone: telefone || "",
           quantidade: qtd,
           horario_retirada: horario_retirada || "Não informado"
         }
@@ -174,13 +166,32 @@ app.post("/criar-pix", async (req, res) => {
     });
 
     /* =========================
+       VALIDAÇÃO RESPOSTA MP
+    ========================= */
+    if (
+      !pagamentoCriado ||
+      !pagamentoCriado.id
+    ) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Mercado Pago não retornou pagamento válido."
+      });
+    }
+
+    const qrCode =
+      pagamentoCriado.point_of_interaction?.transaction_data?.qr_code || null;
+
+    const qrCodeBase64 =
+      pagamentoCriado.point_of_interaction?.transaction_data?.qr_code_base64 || null;
+
+    /* =========================
        SALVAR PEDIDO
     ========================= */
     const { data: pedidoSalvo, error: erroPedido } = await supabase
       .from("pedidos")
       .insert([
         {
-          order_id: String(result.id),
+          order_id: String(pagamentoCriado.id),
           nome,
           sobrenome,
           cpf: cpfLimpo,
@@ -188,11 +199,13 @@ app.post("/criar-pix", async (req, res) => {
           valor_total: total,
           valor_unitario: valorUnitario,
           quantidade: qtd,
-          horario_retirada,
-          status: result.status ? result.status.toUpperCase() : "PENDENTE",
-          txid: String(result.id),
-          pix_copia_cola: result.point_of_interaction?.transaction_data?.qr_code || null,
-          qr_code: result.point_of_interaction?.transaction_data?.qr_code_base64 || null
+          horario_retirada: horario_retirada || null,
+          status: pagamentoCriado.status
+            ? String(pagamentoCriado.status).toUpperCase()
+            : "PENDING",
+          txid: String(pagamentoCriado.id),
+          pix_copia_cola: qrCode,
+          qr_code: qrCodeBase64
         }
       ])
       .select()
@@ -200,87 +213,87 @@ app.post("/criar-pix", async (req, res) => {
 
     if (erroPedido) {
       console.error("ERRO SUPABASE PEDIDO:", erroPedido);
-    } else {
 
-      /* =========================
-         SALVAR ITEM PEDIDO
-      ========================= */
-      const { error: erroItem } = await supabase
-        .from("itens_pedido")
-        .insert([
-          {
-            pedido_id: pedidoSalvo.id,
-            produto_nome: "Churrasco",
-            categoria: "CHURRASCO",
-            quantidade: qtd,
-            valor_unitario: valorUnitario,
-            valor_total_item: total,
-            horario_retirada
-          }
-        ]);
-
-      if (erroItem) {
-        console.error("ERRO SUPABASE ITEM:", erroItem);
-      }
-
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao salvar pedido no banco."
+      });
     }
 
     /* =========================
-       RESPOSTA
+       ITEM PEDIDO
+    ========================= */
+    const { error: erroItem } = await supabase
+      .from("itens_pedido")
+      .insert([
+        {
+          pedido_id: pedidoSalvo.id,
+          produto_nome: "Churrasco",
+          categoria: "CHURRASCO",
+          quantidade: qtd,
+          valor_unitario: valorUnitario,
+          valor_total_item: total,
+          horario_retirada: horario_retirada || null
+        }
+      ]);
+
+    if (erroItem) {
+      console.error("ERRO SUPABASE ITEM:", erroItem);
+    }
+
+    /* =========================
+       RESPOSTA FRONTEND
     ========================= */
     return res.status(200).json({
       sucesso: true,
-      payment_id: result.id,
-      status: result.status,
+      payment_id: pagamentoCriado.id,
+      status: pagamentoCriado.status || "pending",
       total,
-      qr_code: result.point_of_interaction?.transaction_data?.qr_code || null,
-      qr_code_base64: result.point_of_interaction?.transaction_data?.qr_code_base64 || null
+      qr_code: qrCode,
+      qr_code_base64: qrCodeBase64
     });
 
   } catch (error) {
 
-    console.error("ERRO MERCADO PAGO:", JSON.stringify(error, null, 2));
+    console.error("ERRO CRIAR PIX:");
+    console.error(JSON.stringify(error, null, 2));
 
     return res.status(500).json({
       sucesso: false,
-      erro: error.message || "Erro interno no pagamento.",
+      erro: error.message || "Erro interno no servidor.",
       detalhes: error.cause || null
     });
 
   }
+
 });
 
 /* =====================================================
    WEBHOOK MERCADO PAGO
 ===================================================== */
 app.post("/webhook/mercadopago", async (req, res) => {
+
   try {
 
-    console.log("WEBHOOK RECEBIDO:", JSON.stringify(req.body, null, 2));
+    console.log("WEBHOOK:", JSON.stringify(req.body, null, 2));
 
     const paymentId =
       req.body?.data?.id ||
       req.body?.resource?.split("/")?.pop();
 
     if (!paymentId) {
-      return res.status(200).send("Webhook recebido sem payment ID.");
+      return res.status(200).send("Webhook sem payment ID.");
     }
 
-    /* =========================
-       CONSULTAR PAGAMENTO REAL
-    ========================= */
     const pagamento = await payment.get({
       id: paymentId
     });
 
-    const novoStatus = pagamento.status
-      ? pagamento.status.toUpperCase()
-      : "PENDENTE";
+    const novoStatus = pagamento?.status
+      ? String(pagamento.status).toUpperCase()
+      : "PENDING";
 
-    /* =========================
-       ATUALIZAR PEDIDO
-    ========================= */
-    const { error: erroUpdate } = await supabase
+    const { error } = await supabase
       .from("pedidos")
       .update({
         status: novoStatus,
@@ -288,27 +301,27 @@ app.post("/webhook/mercadopago", async (req, res) => {
       })
       .eq("order_id", String(paymentId));
 
-    if (erroUpdate) {
-      console.error("ERRO UPDATE STATUS:", erroUpdate);
-    } else {
-      console.log(`Pedido ${paymentId} atualizado para ${novoStatus}`);
+    if (error) {
+      console.error("ERRO UPDATE:", error);
     }
 
-    return res.status(200).send("Webhook processado com sucesso.");
+    return res.status(200).send("OK");
 
   } catch (error) {
 
     console.error("ERRO WEBHOOK:", error);
 
-    return res.status(500).send("Erro no webhook.");
+    return res.status(500).send("Erro webhook.");
 
   }
+
 });
 
 /* =====================================================
    CONSULTAR PEDIDO
 ===================================================== */
 app.get("/pedido/:orderId", async (req, res) => {
+
   try {
 
     const { orderId } = req.params;
@@ -339,6 +352,7 @@ app.get("/pedido/:orderId", async (req, res) => {
     });
 
   }
+
 });
 
 /* =====================================================
