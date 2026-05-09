@@ -37,29 +37,30 @@ document.getElementById("formCheckout").onsubmit = async function (e) {
         const resultado = await res.json();
 
         console.log("PIX:", resultado);
-localStorage.setItem("pixData", JSON.stringify({
-    payment_id: resultado.payment_id,
-    codigo_pedido: resultado.codigo_pedido,
-    produto_tipo: resultado.produto_tipo,
 
-    total: resultado.total,
+        if (res.ok && resultado.sucesso) {
 
-    cpf: dados.cpf,
+            localStorage.setItem("pixData", JSON.stringify({
+                payment_id: resultado.payment_id,
+                codigo_pedido: resultado.codigo_pedido,
+                produto_tipo: resultado.produto_tipo,
 
-    qr_code: resultado.qr_code,
-    qr_code_base64: resultado.qr_code_base64,
+                total: resultado.total,
 
-    qr_code_retirada: resultado.qr_code_retirada,
-    token_retirada: resultado.token_retirada
-}));
+                cpf: dados.cpf,
+
+                qr_code: resultado.qr_code,
+                qr_code_base64: resultado.qr_code_base64,
+
+                qr_code_retirada: resultado.qr_code_retirada,
+                token_retirada: resultado.token_retirada
+            }));
 
             window.location.href = "/venda/finalizar-compra.html";
 
         } else {
 
-            console.error("Erro:", resultado);
-
-            alert("❌ Erro ao gerar PIX: " + (resultado.erro || "Erro desconhecido"));
+            alert("❌ " + (resultado.erro || "Erro ao gerar PIX"));
         }
 
     } catch (err) {
