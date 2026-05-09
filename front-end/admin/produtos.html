@@ -18,7 +18,7 @@
     }
 
     .container{
-      max-width:1200px;
+      max-width:1300px;
       margin:auto;
     }
 
@@ -77,6 +77,16 @@
       opacity:0.92;
     }
 
+    .btn-novo{
+      background:#8b1111;
+    }
+
+    .btn-editar{
+      background:#007bff;
+      padding:8px 12px;
+      font-size:13px;
+    }
+
     table{
       width:100%;
       border-collapse:collapse;
@@ -99,12 +109,6 @@
 
     tr:hover{
       background:#fafafa;
-    }
-
-    .acoes button{
-      padding:8px 12px;
-      font-size:13px;
-      margin-right:5px;
     }
 
     .topo{
@@ -147,10 +151,7 @@
 
   <div class="topo">
     <h1>🛒 FPSS Admin - Produtos</h1>
-
-    <button onclick="novoProduto()">
-      ➕ Novo Produto
-    </button>
+    <button class="btn-novo" onclick="novoProduto()">➕ Novo Produto</button>
   </div>
 
   <div class="card">
@@ -161,22 +162,22 @@
 
       <div>
         <label>Código</label>
-        <input type="text" id="codigo" placeholder="Ex: CHU">
+        <input type="text" id="codigo">
       </div>
 
       <div>
         <label>Nome</label>
-        <input type="text" id="nome" placeholder="Ex: Churrasco">
+        <input type="text" id="nome">
       </div>
 
       <div>
         <label>Preço</label>
-        <input type="number" id="preco" step="0.01" placeholder="0.00">
+        <input type="number" id="preco" step="0.01">
       </div>
 
       <div>
         <label>Estoque</label>
-        <input type="number" id="estoque" placeholder="0">
+        <input type="number" id="estoque">
       </div>
 
       <div>
@@ -190,20 +191,20 @@
 
       <div>
         <label>Ordem</label>
-        <input type="number" id="ordem" placeholder="1">
+        <input type="number" id="ordem">
       </div>
 
       <div>
-        <label>Ativo</label>
+        <label>Status</label>
         <select id="ativo">
-          <option value="true">Sim</option>
-          <option value="false">Não</option>
+          <option value="true">Ativo</option>
+          <option value="false">Inativo</option>
         </select>
       </div>
 
       <div>
         <label>Imagem URL</label>
-        <input type="text" id="imagem" placeholder="Opcional">
+        <input type="text" id="imagem">
       </div>
 
     </div>
@@ -214,9 +215,7 @@
     </div>
 
     <div style="margin-top:20px;">
-      <button onclick="salvarProduto()">
-        💾 SALVAR PRODUTO
-      </button>
+      <button onclick="salvarProduto()">💾 SALVAR PRODUTO</button>
     </div>
 
   </div>
@@ -230,13 +229,14 @@
         <th>Estoque</th>
         <th>Tipo</th>
         <th>Status</th>
+        <th>Ordem</th>
         <th>Ações</th>
       </tr>
     </thead>
 
     <tbody id="tabelaProdutos">
       <tr>
-        <td colspan="7">Carregando produtos...</td>
+        <td colspan="8">Carregando...</td>
       </tr>
     </tbody>
   </table>
@@ -246,21 +246,17 @@
 <script>
 const API = "https://fpss-backend.onrender.com";
 
-/* =========================================
-   CARREGAR PRODUTOS
-========================================= */
-async function carregarProdutos() {
+async function carregarProdutos(){
 
-  try {
+  try{
 
     const res = await fetch(`${API}/admin/produtos`);
-
     const data = await res.json();
 
     const tabela = document.getElementById("tabelaProdutos");
 
-    if (!data.sucesso || !data.produtos.length) {
-      tabela.innerHTML = `<tr><td colspan="7">Nenhum produto encontrado.</td></tr>`;
+    if(!data.sucesso || !data.produtos.length){
+      tabela.innerHTML = `<tr><td colspan="8">Nenhum produto encontrado.</td></tr>`;
       return;
     }
 
@@ -276,25 +272,22 @@ async function carregarProdutos() {
             ${produto.ativo ? "Ativo" : "Inativo"}
           </span>
         </td>
-        <td class="acoes">
-          <button onclick='editarProduto(${JSON.stringify(produto)})'>
+        <td>${produto.ordem}</td>
+        <td>
+          <button class="btn-editar" onclick='editarProduto(${JSON.stringify(produto)})'>
             ✏️ Editar
           </button>
         </td>
       </tr>
     `).join("");
 
-  } catch (e) {
-
+  } catch {
     document.getElementById("tabelaProdutos").innerHTML =
-      `<tr><td colspan="7">Erro ao carregar produtos.</td></tr>`;
+      `<tr><td colspan="8">Erro ao carregar.</td></tr>`;
   }
 }
 
-/* =========================================
-   EDITAR
-========================================= */
-function editarProduto(produto) {
+function editarProduto(produto){
 
   document.getElementById("produtoId").value = produto.id || "";
   document.getElementById("codigo").value = produto.codigo || "";
@@ -307,16 +300,10 @@ function editarProduto(produto) {
   document.getElementById("imagem").value = produto.imagem || "";
   document.getElementById("descricao").value = produto.descricao || "";
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* =========================================
-   NOVO
-========================================= */
-function novoProduto() {
+function novoProduto(){
 
   document.getElementById("produtoId").value = "";
   document.getElementById("codigo").value = "";
@@ -330,13 +317,10 @@ function novoProduto() {
   document.getElementById("descricao").value = "";
 }
 
-/* =========================================
-   SALVAR
-========================================= */
-async function salvarProduto() {
+async function salvarProduto(){
 
   const produto = {
-    codigo: document.getElementById("codigo").value.trim(),
+    codigo: document.getElementById("codigo").value.trim().toUpperCase(),
     nome: document.getElementById("nome").value.trim(),
     preco: Number(document.getElementById("preco").value),
     estoque: Number(document.getElementById("estoque").value),
@@ -347,43 +331,38 @@ async function salvarProduto() {
     descricao: document.getElementById("descricao").value.trim()
   };
 
-  if (!produto.codigo || !produto.nome) {
-    alert("Código e nome são obrigatórios.");
+  if(!produto.codigo || !produto.nome){
+    alert("❌ Código e nome são obrigatórios.");
     return;
   }
 
-  try {
+  try{
 
-    const res = await fetch(`${API}/admin/produtos`, {
+    const res = await fetch(`${API}/admin/produtos`,{
       method:"POST",
       headers:{
         "Content-Type":"application/json"
       },
-      body: JSON.stringify(produto)
+      body:JSON.stringify(produto)
     });
 
     const data = await res.json();
 
-    if (!data.sucesso) {
-      alert("Erro: " + (data.erro || "Falha ao salvar."));
+    if(!data.sucesso){
+      alert("❌ " + (data.erro || "Erro ao salvar."));
       return;
     }
 
     alert("✅ Produto salvo com sucesso!");
 
     novoProduto();
-
     carregarProdutos();
 
-  } catch (e) {
-
-    alert("❌ Erro ao conectar com backend.");
+  } catch {
+    alert("❌ Erro de conexão.");
   }
 }
 
-/* =========================================
-   START
-========================================= */
 carregarProdutos();
 </script>
 
