@@ -808,6 +808,7 @@ app.get("/admin/produtos", async (req, res) => {
    ADMIN PRODUTOS - CRIAR / ATUALIZAR
 ===================================================== */
 app.post("/admin/produtos", async (req, res) => {
+  console.log("BODY RECEBIDO ADMIN PRODUTOS:", req.body);
   try {
 
     const {
@@ -830,7 +831,17 @@ app.post("/admin/produtos", async (req, res) => {
     }
 
     const codigoNormalizado = String(codigo).trim().toUpperCase();
-
+	console.log("TIPOS:", {
+  codigo,
+  nome,
+  descricao,
+  preco,
+  ativo,
+  estoque,
+  tipo,
+  imagem,
+  ordem
+});
     const produtoData = {
       codigo: codigoNormalizado,
       nome: String(nome).trim(),
@@ -899,15 +910,17 @@ const produtoExistente =
         .select();
     }
 
-    if (resultado.error) {
+console.log("RESULTADO SUPABASE:", resultado);
 
-      console.error("ERRO SALVAR PRODUTO:", resultado.error);
+if (!resultado || resultado.error) {
 
-      return res.status(500).json({
-        sucesso: false,
-        erro: resultado.error.message || "Erro ao salvar produto."
-      });
-    }
+  console.error("ERRO SALVAR PRODUTO:", resultado?.error || resultado);
+
+  return res.status(500).json({
+    sucesso: false,
+    erro: resultado?.error?.message || "Erro ao salvar produto."
+  });
+}
 
     return res.json({
       sucesso: true,
