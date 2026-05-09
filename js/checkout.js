@@ -1,77 +1,103 @@
-document.getElementById("formCheckout").onsubmit = async function (e) {
-    e.preventDefault();
+document.getElementById("formCheckout").onsubmit = async function(e) {
+  e.preventDefault();
 
-    const btn = e.target.querySelector("button");
-    btn.innerText = "Gerando PIX... ⏳";
-    btn.disabled = true;
+  const btn = e.target.querySelector("button");
 
-    const formData = new FormData(e.target);
+  btn.innerText = "Gerando PIX... ⏳";
+  btn.disabled = true;
 
-    const dados = {
-        nome: formData.get("nome")?.trim(),
-        sobrenome: formData.get("sobrenome")?.trim(),
-        cpf: formData.get("cpf")?.trim(),
-        telefone: formData.get("telefone")?.trim() || "não informado",
-        email: formData.get("email")?.trim() || null,
-        quantidade: parseInt(formData.get("quantidade")),
-        horario_retirada: formData.get("horario_retirada")
+  const formData = new FormData(e.target);
+
+  const dados = {
+    nome: formData.get("nome")?.trim(),
+    sobrenome: formData.get("sobrenome")?.trim(),
+    cpf: formData.get("cpf")?.replace(/\D/g, ""),
+    telefone: formData.get("telefone")?.replace(/\D/g, ""),
+    email: formData.get("email")?.trim(),
+    quantidade: parseInt(formData.get("quantidade")) || 1,
+    horario_retirada: formData.get("horario_retirada")
+  };
+
+  /* =========================================
+     VALIDAÇÃO
+  ========================================= */
+  if (
+    !dados.nome ||
+    !dados.sobrenome ||
+    !dados.cpf ||
+    dados.cpf.length !== 11 ||
+    !dados.quantidade
+  ) {
+
+    alert("❌ Preencha corretamente nome, sobrenome, CPF e quantidade.");
+
+    btn.innerText = "GERAR PIX AGORA 🚀";
+    btn.disabled = false;
+
+    return;
+  }
+
+  try {
+
+    const res = await fetch("https://fpss-backend.onrender.com/criar-pix", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(dados)
+    });
+
+    const resultado = await res.json();
+
+    console.log("PIX:", resultado);
+
+    if (!res.ok || !resultado.sucesso) {
+
+      alert("❌ " + (resultado.erro || "Erro ao gerar PIX"));
+
+      btn.innerText = "GERAR PIX AGORA 🚀";
+      btn.disabled = false;
+
+      return;
+    }
+
+    /* =========================================
+       SALVAR DADOS COMPLETOS
+    ========================================= */
+    const pixData = {
+      ...resultado,
+
+      nome: dados.nome,
+      sobrenome: dados.sobrenome,
+      cpf: dados.cpf,
+      telefone: dados.telefone,
+      email: dados.email,
+      quantidade: dados.quantidade,
+      horario_retirada: dados.horario_retirada,
+
+      total:
+        resultado.total ||
+        resultado.valor ||
+        resultado.valor_total ||
+        0
     };
 
-    if (!dados.nome || !dados.cpf || !dados.quantidade || dados.quantidade < 1) {
-        alert("❌ Preencha corretamente os campos obrigatórios.");
-        btn.innerText = "GERAR PIX AGORA 🚀";
-        btn.disabled = false;
-        return;
-    }
+    localStorage.setItem(
+      "pixData",
+      JSON.stringify(pixData)
+    );
 
-    try {
+    window.location.href = "/venda/finalizar-compra.html";
 
-        const res = await fetch("https://fpss-backend.onrender.com/criar-pix", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(dados)
-        });
+  } catch (err) {
 
-        const resultado = await res.json();
+    console.error("Erro conexão:", err);
 
-        console.log("PIX:", resultado);
+    alert("🌐 Erro de conexão com o servidor.");
 
-        if (res.ok && resultado.sucesso) {
+  } finally {
 
-            localStorage.setItem("pixData", JSON.stringify({
-                payment_id: resultado.payment_id,
-                codigo_pedido: resultado.codigo_pedido,
-                produto_tipo: resultado.produto_tipo,
-
-                total: resultado.total,
-
-                cpf: dados.cpf,
-
-                qr_code: resultado.qr_code,
-                qr_code_base64: resultado.qr_code_base64,
-
-                qr_code_retirada: resultado.qr_code_retirada,
-                token_retirada: resultado.token_retirada
-            }));
-
-            window.location.href = "/venda/finalizar-compra.html";
-
-        } else {
-
-            alert("❌ " + (resultado.erro || "Erro ao gerar PIX"));
-        }
-
-    } catch (err) {
-
-        console.error("Erro conexão:", err);
-
-        alert("🌐 Erro de conexão com o servidor.");
-
-    } finally {
-
-        btn.innerText = "GERAR PIX AGORA 🚀";
-        btn.disabled = false;
-    }
+    btn.innerText = "GERAR PIX AGORA 🚀";
+    btn.disabled = false;
+  }
 };
