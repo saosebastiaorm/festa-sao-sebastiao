@@ -358,9 +358,10 @@ async function salvarProduto(){
     novoProduto();
     carregarProdutos();
 
-  } catch {
-    alert("❌ Erro de conexão.");
-  }
+} catch (e) {
+  console.error("ERRO PRODUTO:", e);
+  alert("❌ Erro de conexão. Veja Console (F12).");
+}
 }
 
 carregarProdutos();
