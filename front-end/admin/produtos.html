@@ -348,20 +348,33 @@ async function salvarProduto(){
 
   try{
 
-    const res = await fetch(`${API}/admin/produtos`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify(produto)
-    });
+const res = await fetch("https://fpss-backend.onrender.com/admin/produtos", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(produto)
+});
 
-    const data = await res.json();
+const texto = await res.text();
+console.log("POST STATUS:", res.status);
+console.log("RESPOSTA BRUTA:", texto);
 
-    if(!data.sucesso){
-      alert("❌ " + (data.erro || "Erro ao salvar."));
-      return;
-    }
+let data;
+
+try {
+  data = JSON.parse(texto);
+} catch {
+  alert("❌ O backend retornou HTML/erro inesperado. Veja Console.");
+  return;
+}
+
+if (!res.ok || !data.sucesso) {
+  alert("❌ " + (data.erro || "Erro ao salvar."));
+  return;
+}
+
+
 
     alert("✅ Produto salvo com sucesso!");
 
