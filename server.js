@@ -705,3 +705,66 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
 });
+
+
+
+app.get("/retirada/teste/:codigoPedido", async (req, res) => {
+  try {
+    const { codigoPedido } = req.params;
+
+    const { data: pedido, error: pedidoError } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("codigo_pedido", codigoPedido)
+      .single();
+
+    if (pedidoError || !pedido) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Pedido não encontrado."
+      });
+    }
+
+    if (pedido.status_pagamento !== "pago") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Pagamento ainda não confirmado."
+      });
+    }
+
+    if (pedido.status_retirada === "retirado") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Pedido já retirado."
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .update({
+        status_retirada: "retirado",
+        data_retirada: new Date()
+      })
+      .eq("codigo_pedido", codigoPedido)
+      .select();
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao confirmar retirada."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Retirada confirmada com sucesso.",
+      pedido: data
+    });
+
+  } catch (erro) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno."
+    });
+  }
+});
