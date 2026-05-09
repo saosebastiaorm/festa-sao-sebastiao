@@ -208,7 +208,7 @@ if (!dados) {
 
     <h3>📱 PIX Copia e Cola:</h3>
 
-    <textarea id="pixCode" readonly>${dados.qr_code || ""}</textarea>
+    <textarea id="pixCode" readonly>${dados.qr_code || dados.pix_copia_cola || ""}</textarea>
 
     <button onclick="copiarPix()" style="margin-bottom:10px;">
       📋 COPIAR CÓDIGO PIX
@@ -244,13 +244,30 @@ if (!dados) {
       Isso evita duplicidade e garante segurança na entrega.
     </div>
   `;
+const codigoPixPagamento = dados.qr_code || dados.pix_copia_cola || "";
 
-  if (dados.qr_code && document.getElementById("qrcodePagamento")) {
-    new QRCode(document.getElementById("qrcodePagamento"), {
-      text: dados.qr_code,
-      width: 220,
-      height: 220
-    });
+if (codigoPixPagamento && document.getElementById("qrcodePagamento")) {
+
+  document.getElementById("qrcodePagamento").innerHTML = "";
+
+  new QRCode(document.getElementById("qrcodePagamento"), {
+    text: codigoPixPagamento,
+    width: 220,
+    height: 220,
+    correctLevel: QRCode.CorrectLevel.H
+  });
+} else {
+
+  document.getElementById("qrcodePagamento").innerHTML =
+    "<p style='color:red;'>QR Code de pagamento indisponível.</p>";
+}
+
+} else {
+
+  document.getElementById("qrcodePagamento").innerHTML =
+    "<p style='color:red;'>QR Code de pagamento indisponível.</p>";
+}
+  
   }
 
   if (dados.qr_code_retirada && document.getElementById("qrcodeRetirada")) {
