@@ -168,6 +168,23 @@
 <script>
 const dados = JSON.parse(localStorage.getItem("pixData"));
 
+/* =========================================
+   MÁSCARA CPF
+========================================= */
+function mascararCPF(cpf) {
+
+  if (!cpf) return "CPF não informado";
+
+  cpf = String(cpf).replace(/\D/g, "");
+
+  if (cpf.length !== 11) return cpf;
+
+  return cpf.replace(
+    /(\d{3})(\d{3})(\d{3})(\d{2})/,
+    "$1.$2.$3-$4"
+  );
+}
+
 if (!dados) {
 
   document.body.innerHTML = "<h2 style='color:white'>❌ Nenhum pedido encontrado.</h2>";
@@ -218,7 +235,7 @@ if (!dados) {
     <div class="box">
       <span class="titulo">📦 Código alternativo para retirada:</span>
       ${dados.codigo_pedido || "Não disponível"}<br>
-      CPF informado na compra
+      CPF: ${mascararCPF(dados.cpf)}
     </div>
 
     <div class="alerta">
@@ -285,7 +302,7 @@ async function verificarPagamento() {
   try {
 
     const res = await fetch(
-      `http://localhost:3000/verificar-pagamento/${dados.payment_id}`
+      `https://fpss-backend.onrender.com/verificar-pagamento/${dados.payment_id}`
     );
 
     const resultado = await res.json();
@@ -366,6 +383,11 @@ function imprimirComprovante() {
         <div class="box">
           <div class="titulo">Pedido:</div>
           ${dados.codigo_pedido || "Não disponível"}
+        </div>
+
+        <div class="box">
+          <div class="titulo">CPF:</div>
+          ${mascararCPF(dados.cpf)}
         </div>
 
         <div class="box">
