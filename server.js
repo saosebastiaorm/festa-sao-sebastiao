@@ -268,19 +268,10 @@ app.post("/criar-pix", async (req, res) => {
 
     const codigoPedido = `FPSS-${anoEvento}-${produtoTipo}-${String(numeroSequencial).padStart(6, "0")}`;
 
-    /* =====================================================
-       TOKEN + QR RETIRADA
+   /* =====================================================
+   MERCADO PAGO
     ===================================================== */
-    const tokenRetirada = Math.random()
-      .toString(36)
-      .substring(2, 10)
-      .toUpperCase();
 
-    const qrCodeRetirada = `${codigoPedido}|${cpfLimpo}|${tokenRetirada}`;
-
-    /* =====================================================
-       MERCADO PAGO
-    ===================================================== */
     const paymentData = {
       body: {
         transaction_amount: total,
@@ -300,76 +291,80 @@ app.post("/criar-pix", async (req, res) => {
 
     const pagamento = await payment.create(paymentData);
 
-    /* =====================================================
-       SALVAR PEDIDO
-    ===================================================== */
-    const pedidoData = {
-      nome,
-      sobrenome: sobrenome || "",
-      cpf: cpfLimpo,
-      telefone: telefoneLimpo || "nao informado",
-      email: email || null,
+   /* =====================================================
+   SALVAR PEDIDO
+===================================================== */
+const pedidoData = {
+  nome,
+  sobrenome: sobrenome || "",
+  cpf: cpfLimpo,
+  telefone: telefoneLimpo || "nao informado",
+  email: email || null,
 
-      produto_tipo: produtoTipo,
-      codigo_pedido: codigoPedido,
+  produto_tipo: produtoTipo,
+  codigo_pedido: codigoPedido,
 
-      quantidade: quantidadeNumerica,
-      horario_retirada: horario_retirada || null,
+  quantidade: quantidadeNumerica,
+  horario_retirada: horario_retirada || null,
 
-      valor_total: total,
+  valor_total: total,
 
-      payment_id: pagamento.id,
+  payment_id: pagamento.id,
 
-      status_pagamento: "pendente",
-      status_retirada: "nao_retirado",
+  status_pagamento: "pendente",
+  status_retirada: "nao_retirado",
 
-      qr_code_retirada: qrCodeRetirada,
-      token_retirada: tokenRetirada,
+  /* IMPORTANTE:
+     QR/TOKEN DE RETIRADA NÃO DEVEM SER LIBERADOS AINDA.
+     SERÃO GERADOS SOMENTE APÓS CONFIRMAÇÃO DO PAGAMENTO. */
+  qr_code_retirada: null,
+  token_retirada: null,
 
-      status: "pendente"
-    };
+  status: "pendente"
+};
 
-    const { data: pedidoSalvo, error: supabaseError } = await supabase
-      .from("pedidos")
-      .insert([pedidoData])
-      .select();
+const { data: pedidoSalvo, error: supabaseError } = await supabase
+  .from("pedidos")
+  .insert([pedidoData])
+  .select();
 
-    if (supabaseError) {
-      console.error("Erro Supabase:", supabaseError);
+if (supabaseError) {
+  console.error("Erro Supabase:", supabaseError);
 
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Erro ao salvar pedido."
-      });
-    }
+  return res.status(500).json({
+    sucesso: false,
+    erro: "Erro ao salvar pedido."
+  });
+}
 
-    return res.status(200).json({
-      sucesso: true,
-      mensagem: "PIX gerado com sucesso.",
+return res.status(200).json({
+  sucesso: true,
+  mensagem: "PIX gerado com sucesso.",
 
-      payment_id: pagamento.id,
-      codigo_pedido: codigoPedido,
-      produto_tipo: produtoTipo,
+  payment_id: pagamento.id,
+  codigo_pedido: codigoPedido,
+  produto_tipo: produtoTipo,
 
-      total,
+  total,
 
-      qr_code: pagamento.point_of_interaction?.transaction_data?.qr_code || null,
-      qr_code_base64: pagamento.point_of_interaction?.transaction_data?.qr_code_base64 || null,
+  qr_code:
+    pagamento.point_of_interaction?.transaction_data?.qr_code || null,
 
-      qr_code_retirada: qrCodeRetirada,
-      token_retirada: tokenRetirada,
+  qr_code_base64:
+    pagamento.point_of_interaction?.transaction_data?.qr_code_base64 || null,
 
-      pedido: pedidoSalvo || null
-    });
+  /* NÃO ENVIAR RETIRADA ANTES DO PAGAMENTO */
+  pedido: pedidoSalvo || null
+});
 
-  } catch (erro) {
-    console.error("ERRO AO GERAR PIX:", erro);
+} catch (erro) {
+  console.error("ERRO AO GERAR PIX:", erro);
 
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno ao gerar PIX."
-    });
-  }
+  return res.status(500).json({
+    sucesso: false,
+    erro: "Erro interno ao gerar PIX."
+  });
+}
 });
 
 /* =====================================================
@@ -386,6 +381,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
     if (!paymentId) {
       return res.sendStatus(200);
     }
+    let novoStatus = "pendente";
 
     const pagamento = await payment.get({
       id: paymentId
@@ -395,8 +391,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    let novoStatus = "pendente";
-
+  
     if (pagamento.status === "approved") {
       novoStatus = "pago";
     }
@@ -426,39 +421,101 @@ app.post("/webhook/mercadopago", async (req, res) => {
 ===================================================== */
 app.get("/verificar-pagamento/:paymentId", async (req, res) => {
   try {
+
     const { paymentId } = req.params;
 
     const pagamento = await payment.get({ id: paymentId });
 
-    if (!pagamento || !pagamento.status) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Pagamento não encontrado."
+    const statusPagamento = pagamento.status;
+
+    /* =========================================
+       PAGAMENTO APROVADO
+    ========================================= */
+    if (statusPagamento === "approved") {
+
+      const { data: pedido, error: pedidoError } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("payment_id", paymentId)
+        .single();
+
+      if (pedidoError || !pedido) {
+        return res.status(404).json({
+          sucesso: false,
+          erro: "Pedido não encontrado."
+        });
+      }
+
+      let tokenRetirada = pedido.token_retirada;
+      let qrCodeRetirada = pedido.qr_code_retirada;
+
+      /* GERAR RETIRADA SE NÃO EXISTIR */
+      if (!tokenRetirada || !qrCodeRetirada) {
+
+        tokenRetirada =
+          `RET-${pedido.codigo_pedido}-${Date.now()}`
+            .replace(/\s/g, "");
+
+        qrCodeRetirada =
+          `${pedido.codigo_pedido}|${pedido.cpf}|${tokenRetirada}`;
+
+        const { error: updateError } = await supabase
+          .from("pedidos")
+          .update({
+            status_pagamento: "pago",
+            status: "pago",
+            data_pagamento: new Date(),
+            token_retirada: tokenRetirada,
+            qr_code_retirada: qrCodeRetirada
+          })
+          .eq("payment_id", paymentId);
+
+        if (updateError) {
+          console.error("Erro ao atualizar retirada:", updateError);
+        }
+
+      } else {
+
+        await supabase
+          .from("pedidos")
+          .update({
+            status_pagamento: "pago",
+            status: "pago",
+            data_pagamento: new Date()
+          })
+          .eq("payment_id", paymentId);
+      }
+
+      return res.json({
+        sucesso: true,
+        payment_id: paymentId,
+        status: statusPagamento,
+        status_interno: "pago",
+
+        token_retirada: tokenRetirada,
+        qr_code_retirada: qrCodeRetirada
       });
     }
 
-    let novoStatus = "pendente";
-
-    if (pagamento.status === "approved") {
-      novoStatus = "pago";
-    }
-
+    /* =========================================
+       QUALQUER STATUS NÃO APROVADO
+    ========================================= */
     await supabase
       .from("pedidos")
       .update({
-        status_pagamento: novoStatus,
-        data_pagamento: novoStatus === "pago" ? new Date() : null
+        status_pagamento: "pendente"
       })
       .eq("payment_id", paymentId);
 
     return res.json({
       sucesso: true,
       payment_id: paymentId,
-      status_original: pagamento.status,
-      status_interno: novoStatus
+      status: statusPagamento,
+      status_interno: "pendente"
     });
 
   } catch (erro) {
+
     console.error("Erro verificar pagamento:", erro);
 
     return res.status(500).json({
@@ -467,6 +524,8 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
     });
   }
 });
+
+
 
 /* =====================================================
    CONSULTAR POR PAYMENT ID

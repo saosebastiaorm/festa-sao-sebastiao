@@ -326,15 +326,23 @@ async function verificarPagamento(){
 
     const statusBox = document.getElementById("statusPagamento");
 
-    if(resultado.sucesso && resultado.status_interno === "pago"){
+if(resultado.sucesso && resultado.status_interno === "pago"){
 
-      statusBox.innerHTML = "✅ Pagamento aprovado! Retirada liberada.";
-      statusBox.style.background = "#d4edda";
-      statusBox.style.color = "#155724";
+  dados.token_retirada =
+    resultado.token_retirada || dados.token_retirada;
 
-      renderPago();
+  dados.qr_code_retirada =
+    resultado.qr_code_retirada || dados.qr_code_retirada;
 
-    } else {
+  localStorage.setItem("pixData", JSON.stringify(dados));
+
+  statusBox.innerHTML = "✅ Pagamento aprovado! Retirada liberada.";
+  statusBox.style.background = "#d4edda";
+  statusBox.style.color = "#155724";
+
+  renderPago();
+
+} else {
 
       statusBox.innerHTML = "⏳ Aguardando confirmação do pagamento...";
       statusBox.style.background = "#fff3cd";
