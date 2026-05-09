@@ -561,15 +561,6 @@ app.get("/pedido/cpf/:cpf", async (req, res) => {
   }
 });
 
-    /* =====================================================
-       BLOQUEIO SEM PAGAMENTO
-    ===================================================== */
-    if (pedido.status_pagamento !== "pago") {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Pagamento ainda não confirmado."
-      });
-    }
 
 /* =====================================================
    CONFIRMAR RETIRADA
@@ -591,7 +582,12 @@ app.post("/retirada/:codigoPedido", async (req, res) => {
         erro: "Pedido não encontrado."
       });
     }
-
+if (pedido.status_pagamento !== "pago") {
+  return res.status(400).json({
+    sucesso: false,
+    erro: "Pagamento ainda não confirmado."
+  });
+}
     if (pedido.status_retirada === "retirado") {
       return res.status(400).json({
         sucesso: false,
@@ -630,14 +626,6 @@ app.post("/retirada/:codigoPedido", async (req, res) => {
   }
 });
 
-/* ==========================================
-   START SERVER
-========================================== */
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
-});
 
 /* =====================================================
    DASHBOARD ADMIN
@@ -740,4 +728,13 @@ app.get("/admin/pedidos", async (req, res) => {
       erro: "Erro interno."
     });
   }
+});
+
+/* ==========================================
+   START SERVER
+========================================== */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
 });
