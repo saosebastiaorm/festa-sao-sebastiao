@@ -204,7 +204,39 @@
 
       <div>
         <label>Imagem URL</label>
-        <input type="text" id="imagem">
+        <div class="form-group">
+  <label>Imagem do Produto</label>
+
+  <input
+    type="text"
+    id="imagem"
+    placeholder="URL da imagem será preenchida automaticamente"
+    readonly
+  >
+
+  <input
+    type="file"
+    id="imagemArquivo"
+    accept="image/*"
+  >
+
+  <input
+    type="text"
+    id="nomeArquivo"
+    placeholder="Nome do arquivo (ex: churrasco-oficial)"
+  >
+
+  <button
+    type="button"
+    class="btn green full"
+    onclick="uploadImagemProduto()"
+  >
+    📤 Enviar Imagem
+  </button>
+
+  <small id="statusUploadImagem"></small>
+</div>
+
       </div>
 
     </div>
@@ -224,6 +256,7 @@
     <thead>
       <tr>
         <th>Código</th>
+	<th>Imagem</th>
         <th>Nome</th>
         <th>Preço</th>
         <th>Estoque</th>
@@ -236,7 +269,7 @@
 
     <tbody id="tabelaProdutos">
       <tr>
-        <td colspan="8">Carregando...</td>
+        <td colspan="9">Carregando...</td>
       </tr>
     </tbody>
   </table>
@@ -266,14 +299,23 @@ try {
     const tabela = document.getElementById("tabelaProdutos");
 
     if(!data.sucesso || !data.produtos.length){
-      tabela.innerHTML = `<tr><td colspan="8">Nenhum produto encontrado.</td></tr>`;
+      tabela.innerHTML = `<tr><td colspan="9">Nenhum produto encontrado.</td></tr>`;
       return;
     }
 
     tabela.innerHTML = data.produtos.map(produto => `
       <tr>
-        <td>${produto.codigo}</td>
-        <td>${produto.nome}</td>
+     	<td>${produto.codigo}</td>
+
+  		<td>
+    		<img
+      src="${produto.imagem || 'https://via.placeholder.com/60x60?text=Sem+Imagem'}"
+      alt="${produto.nome}"
+      style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid #ccc;"
+    >
+  </td>
+
+  <td>${produto.nome}</td>
         <td>R$ ${Number(produto.preco).toFixed(2).replace(".", ",")}</td>
         <td>${produto.estoque}</td>
         <td>${produto.tipo}</td>
@@ -293,7 +335,7 @@ try {
 
   } catch {
     document.getElementById("tabelaProdutos").innerHTML =
-      `<tr><td colspan="8">Erro ao carregar.</td></tr>`;
+      `<tr><td colspan="9">Erro ao carregar.</td></tr>`;
   }
 }
 
@@ -325,7 +367,66 @@ function novoProduto(){
   document.getElementById("ativo").value = "true";
   document.getElementById("imagem").value = "";
   document.getElementById("descricao").value = "";
+  document.getElementById("imagemArquivo").value = "";
+  document.getElementById("nomeArquivo").value = "";
+  document.getElementById("statusUploadImagem").innerText = "";
+
+
 }
+
+
+
+async function uploadImagemProduto() {
+
+  const arquivoInput = document.getElementById("imagemArquivo");
+  const nomeArquivo = document.getElementById("nomeArquivo").value.trim();
+  const status = document.getElementById("statusUploadImagem");
+
+  if (!arquivoInput.files.length) {
+    alert("❌ Selecione uma imagem.");
+    return;
+  }
+
+  const arquivo = arquivoInput.files[0];
+
+  const formData = new FormData();
+  formData.append("imagem", arquivo);
+  formData.append("nomeArquivo", nomeArquivo || `produto-${Date.now()}`);
+
+  status.innerText = "Enviando imagem...";
+
+  try {
+
+    const res = await fetch(`${API}/admin/upload-imagem`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.sucesso) {
+      alert("❌ " + (data.erro || "Erro upload."));
+      status.innerText = "";
+      return;
+    }
+
+    document.getElementById("imagem").value = data.imagem_url;
+
+    status.innerText = "✅ Imagem enviada com sucesso!";
+
+    alert("✅ Upload concluído!");
+
+  } catch (erro) {
+
+    console.error("ERRO UPLOAD:", erro);
+
+    status.innerText = "";
+
+    alert("❌ Erro ao enviar imagem.");
+  }
+}
+
+
 
 async function salvarProduto(){
 
