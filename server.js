@@ -847,27 +847,35 @@ app.post("/admin/produtos", async (req, res) => {
     /* =========================================
        BUSCA PRODUTO EXISTENTE
     ========================================= */
-    const { data: existente, error: buscaErro } = await supabase
-      .from("produtos")
-      .select("id")
-      .eq("codigo", codigoNormalizado)
-      .maybeSingle();
+const { data: existente, error: buscaErro } = await supabase
+  .from("produtos")
+  .select("id")
+  .eq("codigo", codigoNormalizado)
+  .limit(1);
 
-    if (buscaErro) {
-      console.error("ERRO BUSCA PRODUTO:", buscaErro);
 
-      return res.status(500).json({
-        sucesso: false,
-        erro: buscaErro.message || "Erro ao verificar produto."
-      });
-    }
+if (buscaErro) {
+  console.error("ERRO BUSCA PRODUTO:", buscaErro);
+
+  return res.status(500).json({
+    sucesso: false,
+    erro: buscaErro.message || "Erro ao verificar produto."
+  });
+}
+
+const produtoExistente =
+  existente && existente.length > 0
+    ? existente[0]
+    : null;
+
+
 
     let resultado;
 
     /* =========================================
        UPDATE
     ========================================= */
-    if (existente) {
+    if (produtoExistente) {
 
       resultado = await supabase
         .from("produtos")
@@ -909,13 +917,13 @@ app.post("/admin/produtos", async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO ADMIN PRODUTOS:", erro);
+  console.error("ERRO INTERNO ADMIN PRODUTOS DETALHADO:", erro);
 
-    return res.status(500).json({
-      sucesso: false,
-      erro: erro.message || "Erro interno ao salvar produto."
-    });
-  }
+  return res.status(500).json({
+    sucesso: false,
+    erro: erro.message || JSON.stringify(erro)
+  });
+}
 });
 
     
