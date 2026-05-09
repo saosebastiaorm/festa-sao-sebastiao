@@ -6,11 +6,24 @@ require("dotenv").config();
 const { MercadoPagoConfig, Payment } = require("mercadopago");
 const { createClient } = require("@supabase/supabase-js");
 
+const multer = require("multer");
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  }
+});
+
+
 const app = express();
 
 /* =====================================================
    CORS MASTER
 ===================================================== */
+
+
+
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.LOCAL_URL,
@@ -21,18 +34,31 @@ const allowedOrigins = [
   "http://localhost:5501",
   "http://127.0.0.1:5501",
   "null",
-  "https://festa-sao-sebastiao.vercel.app"
+  "https://festa-sao-sebastiao.vercel.app",
+  "https://fpss-backend.onrender.com"
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-  console.log("ORIGIN RECEBIDA:", origin);
-  return callback(null, true);
-},
+    console.log("ORIGIN RECEBIDA:", origin);
+
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Origem não permitida pelo CORS"));
+  },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+app.options(/.*/, cors());
+
+
+
 
 app.options(/.*/, cors());
 
@@ -942,18 +968,69 @@ if (!resultado || resultado.error) {
 }
 });
 
-    
+   
 
 
-/* ==========================================
-   START SERVER
-========================================== */
-const PORT = process.env.PORT || 3000;
+/* =====================================================
+   ADMIN UPLOAD IMAGEM PRODUTO
+===================================================== */
+app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
+  try {
 
-app.listen(PORT, () => {
-  console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
+    if (!req.file) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Nenhuma imagem enviada."
+      });
+    }
+
+    const nomeArquivo =
+      (req.body.nomeArquivo || `produto-${Date.now()}`)
+        .replace(/[^a-zA-Z0-9-_]/g, "_");
+
+    const extensao =
+      req.file.originalname.split(".").pop().toLowerCase();
+
+    const caminhoArquivo = `${nomeArquivo}.${extensao}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("produtos")
+      .upload(caminhoArquivo, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error("ERRO UPLOAD:", uploadError);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: uploadError.message
+      });
+    }
+
+    const { data } = supabase.storage
+      .from("produtos")
+      .getPublicUrl(caminhoArquivo);
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Imagem enviada com sucesso.",
+      imagem_url: data.publicUrl,
+      arquivo: caminhoArquivo
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO UPLOAD:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: erro.message || "Erro interno upload."
+    });
+  }
 });
-
+ 
 
 
 app.get("/retirada/teste/:codigoPedido", async (req, res) => {
@@ -1015,4 +1092,16 @@ app.get("/retirada/teste/:codigoPedido", async (req, res) => {
       erro: "Erro interno."
     });
   }
+});
+
+
+
+
+/* ==========================================
+   START SERVER
+========================================== */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
 });
