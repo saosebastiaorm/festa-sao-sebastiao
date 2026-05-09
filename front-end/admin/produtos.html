@@ -251,7 +251,17 @@ async function carregarProdutos(){
   try{
 
     const res = await fetch(`${API}/admin/produtos`);
-    const data = await res.json();
+    const texto = await res.text();
+console.log("RESPOSTA BRUTA:", texto);
+
+let data;
+
+try {
+  data = JSON.parse(texto);
+} catch {
+  alert("❌ Backend retornou HTML/erro. Veja Console.");
+  return;
+}
 
     const tabela = document.getElementById("tabelaProdutos");
 
