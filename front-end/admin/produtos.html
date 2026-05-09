@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPSS Admin - Produtos</title>
+
+  <style>
+    *{
+      box-sizing:border-box;
+      font-family:Arial,sans-serif;
+    }
+
+    body{
+      margin:0;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    h1{
+      text-align:center;
+      color:#8b1111;
+      margin-bottom:25px;
+    }
+
+    .card{
+      background:#fff;
+      padding:20px;
+      border-radius:14px;
+      box-shadow:0 4px 15px rgba(0,0,0,0.08);
+      margin-bottom:25px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:15px;
+    }
+
+    label{
+      font-weight:bold;
+      display:block;
+      margin-bottom:5px;
+    }
+
+    input,
+    textarea,
+    select{
+      width:100%;
+      padding:10px;
+      border:1px solid #ccc;
+      border-radius:8px;
+    }
+
+    textarea{
+      resize:vertical;
+      min-height:80px;
+    }
+
+    button{
+      background:#228b22;
+      color:white;
+      border:none;
+      padding:14px 22px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:bold;
+      font-size:16px;
+    }
+
+    button:hover{
+      opacity:0.92;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+    }
+
+    th, td{
+      padding:12px;
+      border-bottom:1px solid #ddd;
+      text-align:left;
+      font-size:14px;
+    }
+
+    th{
+      background:#8b1111;
+      color:#fff;
+    }
+
+    tr:hover{
+      background:#fafafa;
+    }
+
+    .acoes button{
+      padding:8px 12px;
+      font-size:13px;
+      margin-right:5px;
+    }
+
+    .topo{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:20px;
+    }
+
+    .status{
+      padding:6px 10px;
+      border-radius:8px;
+      font-weight:bold;
+      font-size:12px;
+    }
+
+    .ativo{
+      background:#d4edda;
+      color:#155724;
+    }
+
+    .inativo{
+      background:#f8d7da;
+      color:#721c24;
+    }
+
+    @media(max-width:768px){
+      table{
+        display:block;
+        overflow-x:auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="topo">
+    <h1>🛒 FPSS Admin - Produtos</h1>
+
+    <button onclick="novoProduto()">
+      ➕ Novo Produto
+    </button>
+  </div>
+
+  <div class="card">
+
+    <input type="hidden" id="produtoId">
+
+    <div class="grid">
+
+      <div>
+        <label>Código</label>
+        <input type="text" id="codigo" placeholder="Ex: CHU">
+      </div>
+
+      <div>
+        <label>Nome</label>
+        <input type="text" id="nome" placeholder="Ex: Churrasco">
+      </div>
+
+      <div>
+        <label>Preço</label>
+        <input type="number" id="preco" step="0.01" placeholder="0.00">
+      </div>
+
+      <div>
+        <label>Estoque</label>
+        <input type="number" id="estoque" placeholder="0">
+      </div>
+
+      <div>
+        <label>Tipo</label>
+        <select id="tipo">
+          <option value="produto">Produto</option>
+          <option value="doacao">Doação</option>
+          <option value="ingresso">Ingresso</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Ordem</label>
+        <input type="number" id="ordem" placeholder="1">
+      </div>
+
+      <div>
+        <label>Ativo</label>
+        <select id="ativo">
+          <option value="true">Sim</option>
+          <option value="false">Não</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Imagem URL</label>
+        <input type="text" id="imagem" placeholder="Opcional">
+      </div>
+
+    </div>
+
+    <div style="margin-top:15px;">
+      <label>Descrição</label>
+      <textarea id="descricao"></textarea>
+    </div>
+
+    <div style="margin-top:20px;">
+      <button onclick="salvarProduto()">
+        💾 SALVAR PRODUTO
+      </button>
+    </div>
+
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Preço</th>
+        <th>Estoque</th>
+        <th>Tipo</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+
+    <tbody id="tabelaProdutos">
+      <tr>
+        <td colspan="7">Carregando produtos...</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+const API = "https://fpss-backend.onrender.com";
+
+/* =========================================
+   CARREGAR PRODUTOS
+========================================= */
+async function carregarProdutos() {
+
+  try {
+
+    const res = await fetch(`${API}/admin/produtos`);
+
+    const data = await res.json();
+
+    const tabela = document.getElementById("tabelaProdutos");
+
+    if (!data.sucesso || !data.produtos.length) {
+      tabela.innerHTML = `<tr><td colspan="7">Nenhum produto encontrado.</td></tr>`;
+      return;
+    }
+
+    tabela.innerHTML = data.produtos.map(produto => `
+      <tr>
+        <td>${produto.codigo}</td>
+        <td>${produto.nome}</td>
+        <td>R$ ${Number(produto.preco).toFixed(2).replace(".", ",")}</td>
+        <td>${produto.estoque}</td>
+        <td>${produto.tipo}</td>
+        <td>
+          <span class="status ${produto.ativo ? "ativo" : "inativo"}">
+            ${produto.ativo ? "Ativo" : "Inativo"}
+          </span>
+        </td>
+        <td class="acoes">
+          <button onclick='editarProduto(${JSON.stringify(produto)})'>
+            ✏️ Editar
+          </button>
+        </td>
+      </tr>
+    `).join("");
+
+  } catch (e) {
+
+    document.getElementById("tabelaProdutos").innerHTML =
+      `<tr><td colspan="7">Erro ao carregar produtos.</td></tr>`;
+  }
+}
+
+/* =========================================
+   EDITAR
+========================================= */
+function editarProduto(produto) {
+
+  document.getElementById("produtoId").value = produto.id || "";
+  document.getElementById("codigo").value = produto.codigo || "";
+  document.getElementById("nome").value = produto.nome || "";
+  document.getElementById("preco").value = produto.preco || "";
+  document.getElementById("estoque").value = produto.estoque || "";
+  document.getElementById("tipo").value = produto.tipo || "produto";
+  document.getElementById("ordem").value = produto.ordem || "";
+  document.getElementById("ativo").value = String(produto.ativo);
+  document.getElementById("imagem").value = produto.imagem || "";
+  document.getElementById("descricao").value = produto.descricao || "";
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+/* =========================================
+   NOVO
+========================================= */
+function novoProduto() {
+
+  document.getElementById("produtoId").value = "";
+  document.getElementById("codigo").value = "";
+  document.getElementById("nome").value = "";
+  document.getElementById("preco").value = "";
+  document.getElementById("estoque").value = "";
+  document.getElementById("tipo").value = "produto";
+  document.getElementById("ordem").value = "";
+  document.getElementById("ativo").value = "true";
+  document.getElementById("imagem").value = "";
+  document.getElementById("descricao").value = "";
+}
+
+/* =========================================
+   SALVAR
+========================================= */
+async function salvarProduto() {
+
+  const produto = {
+    codigo: document.getElementById("codigo").value.trim(),
+    nome: document.getElementById("nome").value.trim(),
+    preco: Number(document.getElementById("preco").value),
+    estoque: Number(document.getElementById("estoque").value),
+    tipo: document.getElementById("tipo").value,
+    ordem: Number(document.getElementById("ordem").value),
+    ativo: document.getElementById("ativo").value === "true",
+    imagem: document.getElementById("imagem").value.trim(),
+    descricao: document.getElementById("descricao").value.trim()
+  };
+
+  if (!produto.codigo || !produto.nome) {
+    alert("Código e nome são obrigatórios.");
+    return;
+  }
+
+  try {
+
+    const res = await fetch(`${API}/admin/produtos`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify(produto)
+    });
+
+    const data = await res.json();
+
+    if (!data.sucesso) {
+      alert("Erro: " + (data.erro || "Falha ao salvar."));
+      return;
+    }
+
+    alert("✅ Produto salvo com sucesso!");
+
+    novoProduto();
+
+    carregarProdutos();
+
+  } catch (e) {
+
+    alert("❌ Erro ao conectar com backend.");
+  }
+}
+
+/* =========================================
+   START
+========================================= */
+carregarProdutos();
+</script>
+
+</body>
+</html>
