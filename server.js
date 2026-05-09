@@ -804,6 +804,9 @@ app.get("/admin/produtos", async (req, res) => {
 /* =====================================================
    ADMIN PRODUTOS - ATUALIZAR
 ===================================================== */
+/* =====================================================
+   ADMIN PRODUTOS - CRIAR / ATUALIZAR
+===================================================== */
 app.post("/admin/produtos", async (req, res) => {
   try {
 
@@ -817,13 +820,104 @@ app.post("/admin/produtos", async (req, res) => {
       tipo,
       imagem,
       ordem
-    } = req.body;
+    } = req.body || {};
 
     if (!codigo || !nome) {
       return res.status(400).json({
         sucesso: false,
         erro: "Código e nome são obrigatórios."
       });
+    }
+
+    const codigoNormalizado = String(codigo).trim().toUpperCase();
+
+    const produtoData = {
+      codigo: codigoNormalizado,
+      nome: String(nome).trim(),
+      descricao: descricao ? String(descricao).trim() : null,
+      preco: Number(preco || 0),
+      ativo: ativo === true,
+      estoque: Number(estoque || 0),
+      tipo: tipo ? String(tipo).trim() : "produto",
+      imagem: imagem ? String(imagem).trim() : null,
+      ordem: Number(ordem || 0),
+      updated_at: new Date().toISOString()
+    };
+
+    /* =========================================
+       BUSCA PRODUTO EXISTENTE
+    ========================================= */
+    const { data: existente, error: buscaErro } = await supabase
+      .from("produtos")
+      .select("id")
+      .eq("codigo", codigoNormalizado)
+      .maybeSingle();
+
+    if (buscaErro) {
+      console.error("ERRO BUSCA PRODUTO:", buscaErro);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: buscaErro.message || "Erro ao verificar produto."
+      });
+    }
+
+    let resultado;
+
+    /* =========================================
+       UPDATE
+    ========================================= */
+    if (existente) {
+
+      resultado = await supabase
+        .from("produtos")
+        .update(produtoData)
+        .eq("codigo", codigoNormalizado)
+        .select();
+
+    } else {
+
+      /* =========================================
+         INSERT
+      ========================================= */
+      resultado = await supabase
+        .from("produtos")
+        .insert([
+          {
+            ...produtoData,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select();
+    }
+
+    if (resultado.error) {
+
+      console.error("ERRO SALVAR PRODUTO:", resultado.error);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: resultado.error.message || "Erro ao salvar produto."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Produto salvo com sucesso.",
+      produto: resultado.data
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO ADMIN PRODUTOS:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: erro.message || "Erro interno ao salvar produto."
+    });
+  }
+});
+
     }
 
     const codigoNormalizado = String(codigo).toUpperCase();
