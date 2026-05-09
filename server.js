@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const { MercadoPagoConfig, Payment } = require("mercadopago");
@@ -20,10 +21,10 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(null, true);
+    return callback(new Error("Origem não permitida pelo CORS"));
   },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -37,14 +38,15 @@ app.options(/.*/, cors());
 ===================================================== */
 app.use(express.json({ limit: "10mb" }));
 
-app.use(express.static(__dirname));
+app.use("/css", express.static(path.join(__dirname, "css")));
+app.use("/js", express.static(path.join(__dirname, "js")));
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 
-app.use("/css", express.static(__dirname + "/css"));
-app.use("/js", express.static(__dirname + "/js"));
-app.use("/assets", express.static(__dirname + "/assets"));
-app.use("/venda", express.static(__dirname + "/venda"));
-app.use("/doacao", express.static(__dirname + "/doacao"));
-app.use("/enquete", express.static(__dirname + "/enquete"));
+app.use("/venda", express.static(path.join(__dirname, "venda")));
+app.use("/doacao", express.static(path.join(__dirname, "doacao")));
+app.use("/enquete", express.static(path.join(__dirname, "enquete")));
+
+app.use("/admin", express.static(path.join(__dirname, "front-end", "admin")));
 
 /* =====================================================
    SUPABASE
@@ -112,10 +114,13 @@ app.get("/api", (req, res) => {
       preco_churrasco: "/config/preco/churrasco",
       criar_pix: "/criar-pix",
       webhook_mercadopago: "/webhook/mercadopago",
+      verificar_pagamento: "/verificar-pagamento/:paymentId",
       consultar_payment_id: "/pedido/:orderId",
       buscar_codigo: "/pedido/codigo/:codigoPedido",
       buscar_cpf: "/pedido/cpf/:cpf",
-      confirmar_retirada: "/retirada/:codigoPedido"
+      confirmar_retirada: "/retirada/:codigoPedido",
+      admin_dashboard: "/admin/dashboard",
+      admin_pedidos: "/admin/pedidos"
     }
   });
 });
@@ -125,7 +130,6 @@ app.get("/api", (req, res) => {
 ===================================================== */
 app.get("/config/preco/churrasco", async (req, res) => {
   try {
-
     const { data, error } = await supabase
       .from("configuracoes")
       .select("valor")
@@ -145,7 +149,6 @@ app.get("/config/preco/churrasco", async (req, res) => {
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao carregar preço."
@@ -158,7 +161,6 @@ app.get("/config/preco/churrasco", async (req, res) => {
 ===================================================== */
 app.post("/criar-pix", async (req, res) => {
   try {
-
     const {
       nome,
       sobrenome,
@@ -186,9 +188,6 @@ app.post("/criar-pix", async (req, res) => {
       });
     }
 
-    /* =====================================================
-       BUSCAR PREÇO DINÂMICO
-    ===================================================== */
     const { data: configPreco, error: precoError } = await supabase
       .from("configuracoes")
       .select("valor")
@@ -258,9 +257,8 @@ app.post("/criar-pix", async (req, res) => {
         transaction_amount: total,
         description: `${codigoPedido} - Churrasco FPSS`,
         payment_method_id: "pix",
-
         payer: {
-          email: email || "cliente@fpps.com",
+          email: email || "cliente@fpss.com",
           first_name: nome,
           last_name: sobrenome || "",
           identification: {
@@ -280,7 +278,7 @@ app.post("/criar-pix", async (req, res) => {
       nome,
       sobrenome: sobrenome || "",
       cpf: cpfLimpo,
-      telefone: telefoneLimpo || "não informado",
+      telefone: telefoneLimpo || "nao informado",
       email: email || null,
 
       produto_tipo: produtoTipo,
@@ -316,9 +314,6 @@ app.post("/criar-pix", async (req, res) => {
       });
     }
 
-    /* =====================================================
-       RETORNO FRONTEND
-    ===================================================== */
     return res.status(200).json({
       sucesso: true,
       mensagem: "PIX gerado com sucesso.",
@@ -339,7 +334,6 @@ app.post("/criar-pix", async (req, res) => {
     });
 
   } catch (erro) {
-
     console.error("ERRO AO GERAR PIX:", erro);
 
     return res.status(500).json({
@@ -350,12 +344,10 @@ app.post("/criar-pix", async (req, res) => {
 });
 
 /* =====================================================
-/* =====================================================
    WEBHOOK MERCADO PAGO
 ===================================================== */
 app.post("/webhook/mercadopago", async (req, res) => {
   try {
-
     console.log("Webhook recebido:", req.body);
 
     const paymentId =
@@ -384,10 +376,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
       .from("pedidos")
       .update({
         status_pagamento: novoStatus,
-        data_pagamento:
-          novoStatus === "pago"
-            ? new Date()
-            : null
+        data_pagamento: novoStatus === "pago" ? new Date() : null
       })
       .eq("payment_id", paymentId);
 
@@ -398,9 +387,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
     return res.sendStatus(200);
 
   } catch (erro) {
-
     console.error("Erro webhook:", erro);
-
     return res.sendStatus(500);
   }
 });
@@ -410,7 +397,6 @@ app.post("/webhook/mercadopago", async (req, res) => {
 ===================================================== */
 app.get("/verificar-pagamento/:paymentId", async (req, res) => {
   try {
-
     const { paymentId } = req.params;
 
     const pagamento = await payment.get({ id: paymentId });
@@ -444,7 +430,6 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
     });
 
   } catch (erro) {
-
     console.error("Erro verificar pagamento:", erro);
 
     return res.status(500).json({
@@ -459,7 +444,6 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
 ===================================================== */
 app.get("/pedido/:orderId", async (req, res) => {
   try {
-
     const { orderId } = req.params;
 
     const { data, error } = await supabase
@@ -481,7 +465,6 @@ app.get("/pedido/:orderId", async (req, res) => {
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao consultar pedido."
@@ -494,7 +477,6 @@ app.get("/pedido/:orderId", async (req, res) => {
 ===================================================== */
 app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
   try {
-
     const { codigoPedido } = req.params;
 
     const { data, error } = await supabase
@@ -516,7 +498,6 @@ app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao buscar código."
@@ -529,7 +510,6 @@ app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
 ===================================================== */
 app.get("/pedido/cpf/:cpf", async (req, res) => {
   try {
-
     const cpf = limparCPF(req.params.cpf);
 
     const { data, error } = await supabase
@@ -553,7 +533,6 @@ app.get("/pedido/cpf/:cpf", async (req, res) => {
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao buscar CPF."
@@ -561,13 +540,11 @@ app.get("/pedido/cpf/:cpf", async (req, res) => {
   }
 });
 
-
 /* =====================================================
    CONFIRMAR RETIRADA
 ===================================================== */
 app.post("/retirada/:codigoPedido", async (req, res) => {
   try {
-
     const { codigoPedido } = req.params;
 
     const { data: pedido, error: pedidoError } = await supabase
@@ -582,12 +559,14 @@ app.post("/retirada/:codigoPedido", async (req, res) => {
         erro: "Pedido não encontrado."
       });
     }
-if (pedido.status_pagamento !== "pago") {
-  return res.status(400).json({
-    sucesso: false,
-    erro: "Pagamento ainda não confirmado."
-  });
-}
+
+    if (pedido.status_pagamento !== "pago") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Pagamento ainda não confirmado."
+      });
+    }
+
     if (pedido.status_retirada === "retirado") {
       return res.status(400).json({
         sucesso: false,
@@ -618,7 +597,6 @@ if (pedido.status_pagamento !== "pago") {
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro interno."
@@ -626,13 +604,11 @@ if (pedido.status_pagamento !== "pago") {
   }
 });
 
-
 /* =====================================================
    DASHBOARD ADMIN
 ===================================================== */
 app.get("/admin/dashboard", async (req, res) => {
   try {
-
     const { data: pedidos, error } = await supabase
       .from("pedidos")
       .select("*");
@@ -672,23 +648,17 @@ app.get("/admin/dashboard", async (req, res) => {
 
     return res.json({
       sucesso: true,
-
       total_pedidos: totalPedidos,
-
       total_pago: pagos.length,
       total_pendente: pendentes.length,
-
       total_retirado: retirados.length,
-
       itens_vendidos: totalItensVendidos,
       itens_retirados: totalItensRetirados,
-
       receita_total: receitaTotal,
       receita_confirmada: receitaConfirmada
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro interno dashboard."
@@ -696,13 +666,11 @@ app.get("/admin/dashboard", async (req, res) => {
   }
 });
 
-
 /* =====================================================
    LISTA ADMIN PEDIDOS
 ===================================================== */
 app.get("/admin/pedidos", async (req, res) => {
   try {
-
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
@@ -722,7 +690,6 @@ app.get("/admin/pedidos", async (req, res) => {
     });
 
   } catch (erro) {
-
     return res.status(500).json({
       sucesso: false,
       erro: "Erro interno."
