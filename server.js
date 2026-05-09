@@ -20,19 +20,11 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-  origin: function(origin, callback){
-
-    if(!origin){
-      return callback(null, true);
-    }
-
-    if(allowedOrigins.includes(origin)){
-      return callback(null, true);
-    }
-
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(null, true);
   },
-
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -40,7 +32,19 @@ app.use(cors({
 
 app.options(/.*/, cors());
 
+/* =====================================================
+   BODY + ARQUIVOS ESTÁTICOS
+===================================================== */
 app.use(express.json({ limit: "10mb" }));
+
+app.use(express.static(__dirname));
+
+app.use("/css", express.static(__dirname + "/css"));
+app.use("/js", express.static(__dirname + "/js"));
+app.use("/assets", express.static(__dirname + "/assets"));
+app.use("/venda", express.static(__dirname + "/venda"));
+app.use("/doacao", express.static(__dirname + "/doacao"));
+app.use("/enquete", express.static(__dirname + "/enquete"));
 
 /* =====================================================
    SUPABASE
@@ -73,6 +77,17 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 
 /* =====================================================
+   FUNÇÕES AUXILIARES
+===================================================== */
+function limparCPF(cpf) {
+  return String(cpf || "").replace(/\D/g, "");
+}
+
+function limparTelefone(telefone) {
+  return String(telefone || "").replace(/\D/g, "");
+}
+
+/* =====================================================
    STATUS
 ===================================================== */
 app.get("/", (req, res) => {
@@ -84,10 +99,64 @@ app.get("/", (req, res) => {
 });
 
 /* =====================================================
-   CRIAR PIX + SALVAR PEDIDO
+   API STATUS
+===================================================== */
+app.get("/api", (req, res) => {
+  res.json({
+    status: "API ONLINE",
+    sistema: "FPSS BACKEND",
+    ambiente: process.env.NODE_ENV || "development",
+    rotas: {
+      status: "/",
+      api: "/api",
+      preco_churrasco: "/config/preco/churrasco",
+      criar_pix: "/criar-pix",
+      webhook_mercadopago: "/webhook/mercadopago",
+      consultar_payment_id: "/pedido/:orderId",
+      buscar_codigo: "/pedido/codigo/:codigoPedido",
+      buscar_cpf: "/pedido/cpf/:cpf",
+      confirmar_retirada: "/retirada/:codigoPedido"
+    }
+  });
+});
+
+/* =====================================================
+   CONFIG PREÇO CHURRASCO
+===================================================== */
+app.get("/config/preco/churrasco", async (req, res) => {
+  try {
+
+    const { data, error } = await supabase
+      .from("configuracoes")
+      .select("valor")
+      .eq("chave", "CHU_PRECO")
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Preço não encontrado."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      valor: Number(data.valor)
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao carregar preço."
+    });
+  }
+});
+
+/* =====================================================
+   CRIAR PIX + REGISTRAR PEDIDO
 ===================================================== */
 app.post("/criar-pix", async (req, res) => {
-
   try {
 
     const {
@@ -96,20 +165,19 @@ app.post("/criar-pix", async (req, res) => {
       cpf,
       telefone,
       quantidade,
-      horario_retirada
+      horario_retirada,
+      email
     } = req.body;
 
-    /* =========================
-       VALIDAÇÕES
-    ========================= */
-    if (!nome || !sobrenome || !cpf || !telefone || !quantidade) {
+    if (!nome || !cpf || !quantidade) {
       return res.status(400).json({
         sucesso: false,
-        erro: "Dados obrigatórios ausentes."
+        erro: "Nome, CPF e quantidade são obrigatórios."
       });
     }
 
-    const cpfLimpo = String(cpf).replace(/\D/g, "");
+    const cpfLimpo = limparCPF(cpf);
+    const telefoneLimpo = limparTelefone(telefone);
 
     if (cpfLimpo.length !== 11) {
       return res.status(400).json({
@@ -118,210 +186,278 @@ app.post("/criar-pix", async (req, res) => {
       });
     }
 
-    const qtd = Number(quantidade);
+    /* =====================================================
+       BUSCAR PREÇO DINÂMICO
+    ===================================================== */
+    const { data: configPreco, error: precoError } = await supabase
+      .from("configuracoes")
+      .select("valor")
+      .eq("chave", "CHU_PRECO")
+      .single();
 
-    if (!qtd || qtd <= 0) {
+    if (precoError || !configPreco) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Preço do produto não configurado."
+      });
+    }
+
+    const valorUnitario = Number(configPreco.valor);
+
+    if (!valorUnitario || valorUnitario <= 0) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Preço inválido na configuração."
+      });
+    }
+
+    const quantidadeNumerica = Number(quantidade);
+
+    if (!quantidadeNumerica || quantidadeNumerica < 1) {
       return res.status(400).json({
         sucesso: false,
         erro: "Quantidade inválida."
       });
     }
 
-    /* =========================
-       VALORES
-    ========================= */
-    const valorUnitario = 60;
-    const total = Number((qtd * valorUnitario).toFixed(2));
+    const total = quantidadeNumerica * valorUnitario;
 
-    /* =========================
-       PAGAMENTO PIX
-    ========================= */
-    const pagamentoCriado = await payment.create({
+    /* =====================================================
+       GERAR CÓDIGO OFICIAL
+    ===================================================== */
+    const anoEvento = "2027";
+    const produtoTipo = "CHU";
+
+    const { data: ultimoPedido } = await supabase
+      .from("pedidos")
+      .select("id")
+      .order("id", { ascending: false })
+      .limit(1);
+
+    const numeroSequencial = ultimoPedido && ultimoPedido.length > 0
+      ? ultimoPedido[0].id + 1
+      : 1;
+
+    const codigoPedido = `FPSS-${anoEvento}-${produtoTipo}-${String(numeroSequencial).padStart(6, "0")}`;
+
+    /* =====================================================
+       TOKEN + QR RETIRADA
+    ===================================================== */
+    const tokenRetirada = Math.random()
+      .toString(36)
+      .substring(2, 10)
+      .toUpperCase();
+
+    const qrCodeRetirada = `${codigoPedido}|${cpfLimpo}|${tokenRetirada}`;
+
+    /* =====================================================
+       MERCADO PAGO
+    ===================================================== */
+    const paymentData = {
       body: {
         transaction_amount: total,
-        description: `Churrasco FPSS - ${nome} ${sobrenome}`,
+        description: `${codigoPedido} - Churrasco FPSS`,
         payment_method_id: "pix",
 
         payer: {
-          email: `cliente.fpss.${Date.now()}@gmail.com`,
+          email: email || "cliente@fpps.com",
           first_name: nome,
-          last_name: sobrenome,
+          last_name: sobrenome || "",
           identification: {
             type: "CPF",
             number: cpfLimpo
           }
-        },
-
-        metadata: {
-          projeto: "FPSS",
-          telefone: telefone || "",
-          quantidade: qtd,
-          horario_retirada: horario_retirada || "Não informado"
         }
-      },
-
-      requestOptions: {
-        idempotencyKey: `fpss-${Date.now()}-${cpfLimpo}`
       }
-    });
+    };
 
-    /* =========================
-       VALIDAÇÃO RESPOSTA MP
-    ========================= */
-    if (
-      !pagamentoCriado ||
-      !pagamentoCriado.id
-    ) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Mercado Pago não retornou pagamento válido."
-      });
-    }
+    const pagamento = await payment.create(paymentData);
 
-    const qrCode =
-      pagamentoCriado.point_of_interaction?.transaction_data?.qr_code || null;
-
-    const qrCodeBase64 =
-      pagamentoCriado.point_of_interaction?.transaction_data?.qr_code_base64 || null;
-
-    /* =========================
+    /* =====================================================
        SALVAR PEDIDO
-    ========================= */
-    const { data: pedidoSalvo, error: erroPedido } = await supabase
-      .from("pedidos")
-      .insert([
-        {
-          order_id: String(pagamentoCriado.id),
-          nome,
-          sobrenome,
-          cpf: cpfLimpo,
-          telefone,
-          valor_total: total,
-          valor_unitario: valorUnitario,
-          quantidade: qtd,
-          horario_retirada: horario_retirada || null,
-          status: pagamentoCriado.status
-            ? String(pagamentoCriado.status).toUpperCase()
-            : "PENDING",
-          txid: String(pagamentoCriado.id),
-          pix_copia_cola: qrCode,
-          qr_code: qrCodeBase64
-        }
-      ])
-      .select()
-      .single();
+    ===================================================== */
+    const pedidoData = {
+      nome,
+      sobrenome: sobrenome || "",
+      cpf: cpfLimpo,
+      telefone: telefoneLimpo || "não informado",
+      email: email || null,
 
-    if (erroPedido) {
-      console.error("ERRO SUPABASE PEDIDO:", erroPedido);
+      produto_tipo: produtoTipo,
+      codigo_pedido: codigoPedido,
+
+      quantidade: quantidadeNumerica,
+      horario_retirada: horario_retirada || null,
+
+      valor_total: total,
+
+      payment_id: pagamento.id,
+
+      status_pagamento: "pendente",
+      status_retirada: "nao_retirado",
+
+      qr_code_retirada: qrCodeRetirada,
+      token_retirada: tokenRetirada,
+
+      status: "pendente"
+    };
+
+    const { data: pedidoSalvo, error: supabaseError } = await supabase
+      .from("pedidos")
+      .insert([pedidoData])
+      .select();
+
+    if (supabaseError) {
+      console.error("Erro Supabase:", supabaseError);
 
       return res.status(500).json({
         sucesso: false,
-        erro: "Erro ao salvar pedido no banco."
+        erro: "Erro ao salvar pedido."
       });
     }
 
-    /* =========================
-       ITEM PEDIDO
-    ========================= */
-    const { error: erroItem } = await supabase
-      .from("itens_pedido")
-      .insert([
-        {
-          pedido_id: pedidoSalvo.id,
-          produto_nome: "Churrasco",
-          categoria: "CHURRASCO",
-          quantidade: qtd,
-          valor_unitario: valorUnitario,
-          valor_total_item: total,
-          horario_retirada: horario_retirada || null
-        }
-      ]);
-
-    if (erroItem) {
-      console.error("ERRO SUPABASE ITEM:", erroItem);
-    }
-
-    /* =========================
-       RESPOSTA FRONTEND
-    ========================= */
+    /* =====================================================
+       RETORNO FRONTEND
+    ===================================================== */
     return res.status(200).json({
       sucesso: true,
-      payment_id: pagamentoCriado.id,
-      status: pagamentoCriado.status || "pending",
+      mensagem: "PIX gerado com sucesso.",
+
+      payment_id: pagamento.id,
+      codigo_pedido: codigoPedido,
+      produto_tipo: produtoTipo,
+
       total,
-      qr_code: qrCode,
-      qr_code_base64: qrCodeBase64
+
+      qr_code: pagamento.point_of_interaction?.transaction_data?.qr_code || null,
+      qr_code_base64: pagamento.point_of_interaction?.transaction_data?.qr_code_base64 || null,
+
+      qr_code_retirada: qrCodeRetirada,
+      token_retirada: tokenRetirada,
+
+      pedido: pedidoSalvo || null
     });
 
-  } catch (error) {
+  } catch (erro) {
 
-    console.error("ERRO CRIAR PIX:");
-    console.error(JSON.stringify(error, null, 2));
+    console.error("ERRO AO GERAR PIX:", erro);
 
     return res.status(500).json({
       sucesso: false,
-      erro: error.message || "Erro interno no servidor.",
-      detalhes: error.cause || null
+      erro: "Erro interno ao gerar PIX."
     });
-
   }
-
 });
 
+/* =====================================================
 /* =====================================================
    WEBHOOK MERCADO PAGO
 ===================================================== */
 app.post("/webhook/mercadopago", async (req, res) => {
-
   try {
 
-    console.log("WEBHOOK:", JSON.stringify(req.body, null, 2));
+    console.log("Webhook recebido:", req.body);
 
     const paymentId =
       req.body?.data?.id ||
       req.body?.resource?.split("/")?.pop();
 
     if (!paymentId) {
-      return res.status(200).send("Webhook sem payment ID.");
+      return res.sendStatus(200);
     }
 
     const pagamento = await payment.get({
       id: paymentId
     });
 
-    const novoStatus = pagamento?.status
-      ? String(pagamento.status).toUpperCase()
-      : "PENDING";
-
-    const { error } = await supabase
-      .from("pedidos")
-      .update({
-        status: novoStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq("order_id", String(paymentId));
-
-    if (error) {
-      console.error("ERRO UPDATE:", error);
+    if (!pagamento || !pagamento.status) {
+      return res.sendStatus(200);
     }
 
-    return res.status(200).send("OK");
+    let novoStatus = "pendente";
 
-  } catch (error) {
+    if (pagamento.status === "approved") {
+      novoStatus = "pago";
+    }
 
-    console.error("ERRO WEBHOOK:", error);
+    await supabase
+      .from("pedidos")
+      .update({
+        status_pagamento: novoStatus,
+        data_pagamento:
+          novoStatus === "pago"
+            ? new Date()
+            : null
+      })
+      .eq("payment_id", paymentId);
 
-    return res.status(500).send("Erro webhook.");
+    console.log(
+      `Pagamento ${paymentId} atualizado para ${novoStatus}`
+    );
 
+    return res.sendStatus(200);
+
+  } catch (erro) {
+
+    console.error("Erro webhook:", erro);
+
+    return res.sendStatus(500);
   }
-
 });
 
 /* =====================================================
-   CONSULTAR PEDIDO
+   VERIFICAR PAGAMENTO MERCADO PAGO
+===================================================== */
+app.get("/verificar-pagamento/:paymentId", async (req, res) => {
+  try {
+
+    const { paymentId } = req.params;
+
+    const pagamento = await payment.get({ id: paymentId });
+
+    if (!pagamento || !pagamento.status) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Pagamento não encontrado."
+      });
+    }
+
+    let novoStatus = "pendente";
+
+    if (pagamento.status === "approved") {
+      novoStatus = "pago";
+    }
+
+    await supabase
+      .from("pedidos")
+      .update({
+        status_pagamento: novoStatus,
+        data_pagamento: novoStatus === "pago" ? new Date() : null
+      })
+      .eq("payment_id", paymentId);
+
+    return res.json({
+      sucesso: true,
+      payment_id: paymentId,
+      status_original: pagamento.status,
+      status_interno: novoStatus
+    });
+
+  } catch (erro) {
+
+    console.error("Erro verificar pagamento:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao verificar pagamento."
+    });
+  }
+});
+
+/* =====================================================
+   CONSULTAR POR PAYMENT ID
 ===================================================== */
 app.get("/pedido/:orderId", async (req, res) => {
-
   try {
 
     const { orderId } = req.params;
@@ -329,7 +465,7 @@ app.get("/pedido/:orderId", async (req, res) => {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .eq("order_id", orderId)
+      .eq("payment_id", orderId)
       .single();
 
     if (error || !data) {
@@ -339,27 +475,269 @@ app.get("/pedido/:orderId", async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    return res.json({
       sucesso: true,
       pedido: data
     });
 
-  } catch (error) {
+  } catch (erro) {
 
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao consultar pedido."
     });
-
   }
-
 });
 
 /* =====================================================
-   SERVIDOR
+   CONSULTAR POR CÓDIGO OFICIAL
 ===================================================== */
+app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
+  try {
+
+    const { codigoPedido } = req.params;
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("codigo_pedido", codigoPedido)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Código não encontrado."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      pedido: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao buscar código."
+    });
+  }
+});
+
+/* =====================================================
+   CONSULTAR POR CPF
+===================================================== */
+app.get("/pedido/cpf/:cpf", async (req, res) => {
+  try {
+
+    const cpf = limparCPF(req.params.cpf);
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("cpf", cpf)
+      .order("id", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "CPF não encontrado."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      pedido: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao buscar CPF."
+    });
+  }
+});
+
+    /* =====================================================
+       BLOQUEIO SEM PAGAMENTO
+    ===================================================== */
+    if (pedido.status_pagamento !== "pago") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Pagamento ainda não confirmado."
+      });
+    }
+
+/* =====================================================
+   CONFIRMAR RETIRADA
+===================================================== */
+app.post("/retirada/:codigoPedido", async (req, res) => {
+  try {
+
+    const { codigoPedido } = req.params;
+
+    const { data: pedido, error: pedidoError } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("codigo_pedido", codigoPedido)
+      .single();
+
+    if (pedidoError || !pedido) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Pedido não encontrado."
+      });
+    }
+
+    if (pedido.status_retirada === "retirado") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Pedido já retirado."
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .update({
+        status_retirada: "retirado",
+        data_retirada: new Date()
+      })
+      .eq("codigo_pedido", codigoPedido)
+      .select();
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao confirmar retirada."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Retirada confirmada com sucesso.",
+      pedido: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno."
+    });
+  }
+});
+
+/* ==========================================
+   START SERVER
+========================================== */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
+});
+
+/* =====================================================
+   DASHBOARD ADMIN
+===================================================== */
+app.get("/admin/dashboard", async (req, res) => {
+  try {
+
+    const { data: pedidos, error } = await supabase
+      .from("pedidos")
+      .select("*");
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao carregar dashboard."
+      });
+    }
+
+    const totalPedidos = pedidos.length;
+
+    const pagos = pedidos.filter(p => p.status_pagamento === "pago");
+    const pendentes = pedidos.filter(p => p.status_pagamento !== "pago");
+    const retirados = pedidos.filter(p => p.status_retirada === "retirado");
+
+    const receitaTotal = pedidos.reduce(
+      (acc, p) => acc + Number(p.valor_total || 0),
+      0
+    );
+
+    const receitaConfirmada = pagos.reduce(
+      (acc, p) => acc + Number(p.valor_total || 0),
+      0
+    );
+
+    const totalItensVendidos = pedidos.reduce(
+      (acc, p) => acc + Number(p.quantidade || 0),
+      0
+    );
+
+    const totalItensRetirados = retirados.reduce(
+      (acc, p) => acc + Number(p.quantidade || 0),
+      0
+    );
+
+    return res.json({
+      sucesso: true,
+
+      total_pedidos: totalPedidos,
+
+      total_pago: pagos.length,
+      total_pendente: pendentes.length,
+
+      total_retirado: retirados.length,
+
+      itens_vendidos: totalItensVendidos,
+      itens_retirados: totalItensRetirados,
+
+      receita_total: receitaTotal,
+      receita_confirmada: receitaConfirmada
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno dashboard."
+    });
+  }
+});
+
+
+/* =====================================================
+   LISTA ADMIN PEDIDOS
+===================================================== */
+app.get("/admin/pedidos", async (req, res) => {
+  try {
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao carregar pedidos."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      total: data.length,
+      pedidos: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno."
+    });
+  }
 });

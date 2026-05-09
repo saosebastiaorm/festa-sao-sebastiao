@@ -8,37 +8,49 @@ document.getElementById('formCheckout').onsubmit = async function(e) {
     const formData = new FormData(e.target);
 
     const dados = {
-        nome: formData.get('nome') + " " + formData.get('sobrenome'),
-        telefone: "não informado", // depois podemos melhorar
-        quantidade: parseInt(formData.get('quantidade'))
+        nome: formData.get('nome'),
+        sobrenome: formData.get('sobrenome'),
+        cpf: formData.get('cpf'),
+        telefone: "não informado",
+        quantidade: parseInt(formData.get('quantidade')),
+        horario_retirada: formData.get('horario_retirada')
     };
 
     try {
 
         const res = await fetch('http://localhost:3000/criar-pix', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(dados)
         });
 
         const resultado = await res.json();
 
-        if (res.ok) {
+        console.log("PIX:", resultado);
 
-            alert(
-                "✅ PIX GERADO!\n\n" +
-                "Valor: R$ " + resultado.valor + "\n" +
-                "TXID: " + resultado.txid
-            );
+        if (res.ok && resultado.sucesso) {
+
+            localStorage.setItem("pixData", JSON.stringify(resultado));
+
+            window.location.href = "/venda/finalizar-compra.html";
 
         } else {
-            console.error('Erro:', resultado);
-            alert('❌ Erro ao gerar Pix');
+
+            console.error("Erro:", resultado);
+
+            alert("❌ Erro ao gerar PIX: " + (resultado.erro || "Erro desconhecido"));
         }
 
     } catch (err) {
-        alert('🌐 Erro de conexão com o servidor.');
+
+        console.error("Erro conexão:", err);
+
+        alert("🌐 Erro de conexão com o servidor.");
+
     } finally {
+
         btn.innerText = "GERAR PIX AGORA 🚀";
         btn.disabled = false;
     }

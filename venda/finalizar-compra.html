@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagamento PIX - 6ª FPSS</title>
+
+  <style>
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      font-family:Arial, sans-serif;
+      background:linear-gradient(135deg,#8b1111,#ff1f1f);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .container{
+      background:#fff;
+      max-width:750px;
+      width:100%;
+      border-radius:18px;
+      padding:30px;
+      box-shadow:0 15px 40px rgba(0,0,0,0.3);
+      text-align:center;
+      border-top:6px solid #8b1111;
+    }
+
+    h1{
+      color:#8b1111;
+      margin-bottom:10px;
+    }
+
+    .sub{
+      color:#555;
+      margin-bottom:25px;
+    }
+
+    .valor{
+      font-size:42px;
+      font-weight:bold;
+      color:#1d7f2a;
+      margin:15px 0;
+    }
+
+    .box{
+      background:#f5f5f5;
+      padding:15px;
+      border-radius:12px;
+      margin:15px 0;
+      text-align:left;
+      word-break:break-word;
+    }
+
+    .titulo{
+      font-weight:bold;
+      display:block;
+      margin-bottom:6px;
+      color:#222;
+    }
+
+    textarea{
+      width:100%;
+      height:140px;
+      padding:12px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      resize:none;
+      font-size:14px;
+      word-break:break-all;
+    }
+
+    button{
+      width:100%;
+      background:linear-gradient(135deg,#1d7f2a,#28a745);
+      color:#fff;
+      border:none;
+      padding:18px;
+      font-size:18px;
+      font-weight:bold;
+      border-radius:12px;
+      cursor:pointer;
+      margin-top:12px;
+    }
+
+    button:hover{
+      opacity:0.95;
+    }
+
+    .btn-comprovante{
+      background:linear-gradient(135deg,#8b1111,#c1121f);
+    }
+
+    .qr-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:20px;
+      margin-top:25px;
+    }
+
+    .qr-card{
+      background:#fafafa;
+      border-radius:12px;
+      padding:15px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+      text-align:center;
+    }
+
+    .qr-box{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      margin-top:10px;
+      min-height:220px;
+    }
+
+    .alerta{
+      margin-top:25px;
+      background:#fff3cd;
+      color:#856404;
+      padding:15px;
+      border-radius:10px;
+      line-height:1.5;
+      font-size:14px;
+    }
+
+    @media(max-width:768px){
+      .container{
+        padding:20px;
+      }
+
+      .valor{
+        font-size:34px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>✅ Pedido Gerado com Sucesso!</h1>
+  <p class="sub">6ª Festa do Padroeiro São Sebastião</p>
+
+  <div id="statusPagamento" style="
+    margin-bottom:20px;
+    padding:15px;
+    border-radius:10px;
+    background:#fff3cd;
+    color:#856404;
+    font-weight:bold;
+  ">
+    ⏳ Aguardando confirmação do pagamento...
+  </div>
+
+  <div id="pixArea"></div>
+
+</div>
+
+<script src="../js/qrcode.min.js"></script>
+
+<script>
+const dados = JSON.parse(localStorage.getItem("pixData"));
+
+if (!dados) {
+
+  document.body.innerHTML = "<h2 style='color:white'>❌ Nenhum pedido encontrado.</h2>";
+
+} else {
+
+  const valorTotal = Number(dados.total || 0);
+
+  document.getElementById("pixArea").innerHTML = `
+    <div class="valor">R$ ${valorTotal.toFixed(2).replace(".", ",")}</div>
+
+    <div class="box">
+      <span class="titulo">🎟️ Código Oficial do Pedido:</span>
+      ${dados.codigo_pedido || "Não disponível"}
+    </div>
+
+    <div class="box">
+      <span class="titulo">🔐 Token de Segurança:</span>
+      ${dados.token_retirada || "Não disponível"}
+    </div>
+
+    <h3>📱 PIX Copia e Cola:</h3>
+
+    <textarea id="pixCode" readonly>${dados.qr_code || ""}</textarea>
+
+    <button onclick="copiarPix()" style="margin-bottom:10px;">
+      📋 COPIAR CÓDIGO PIX
+    </button>
+
+    <button onclick="imprimirComprovante()" class="btn-comprovante">
+      🧾 BAIXAR / IMPRIMIR COMPROVANTE
+    </button>
+
+    <div class="qr-grid">
+
+      <div class="qr-card">
+        <h3>💳 QR Code Pagamento</h3>
+        <div id="qrcodePagamento" class="qr-box"></div>
+      </div>
+
+      <div class="qr-card">
+        <h3>🍖 QR Code Retirada</h3>
+        <div id="qrcodeRetirada" class="qr-box"></div>
+      </div>
+
+    </div>
+
+    <div class="box">
+      <span class="titulo">📦 Código alternativo para retirada:</span>
+      ${dados.codigo_pedido || "Não disponível"}<br>
+      CPF informado na compra
+    </div>
+
+    <div class="alerta">
+      ⚠️ IMPORTANTE:<br><br>
+      Após o pagamento ser confirmado, apresente o QR Code de retirada OU seu código oficial + CPF.<br><br>
+      Isso evita duplicidade e garante segurança na entrega.
+    </div>
+  `;
+
+  if (dados.qr_code && document.getElementById("qrcodePagamento")) {
+    new QRCode(document.getElementById("qrcodePagamento"), {
+      text: dados.qr_code,
+      width: 220,
+      height: 220
+    });
+  }
+
+  if (dados.qr_code_retirada && document.getElementById("qrcodeRetirada")) {
+    new QRCode(document.getElementById("qrcodeRetirada"), {
+      text: dados.qr_code_retirada,
+      width: 220,
+      height: 220
+    });
+  }
+}
+
+/* =========================================
+   COPIAR PIX
+========================================= */
+async function copiarPix() {
+
+  const pix = document.getElementById("pixCode");
+
+  if (!pix) return;
+
+  try {
+
+    if (navigator.clipboard && window.isSecureContext) {
+
+      await navigator.clipboard.writeText(pix.value);
+
+    } else {
+
+      pix.select();
+      pix.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+    }
+
+    alert("✅ Código PIX copiado!");
+
+  } catch {
+
+    alert("❌ Não foi possível copiar.");
+  }
+}
+
+/* =========================================
+   VERIFICAR STATUS PAGAMENTO
+========================================= */
+async function verificarPagamento() {
+
+  if (!dados || !dados.payment_id) return;
+
+  try {
+
+    const res = await fetch(
+      `http://localhost:3000/verificar-pagamento/${dados.payment_id}`
+    );
+
+    const resultado = await res.json();
+
+    const statusBox = document.getElementById("statusPagamento");
+
+    if (!statusBox) return;
+
+    if (resultado.sucesso && resultado.status_interno === "pago") {
+
+      statusBox.innerHTML = "✅ Pagamento aprovado! Retirada liberada.";
+      statusBox.style.background = "#d4edda";
+      statusBox.style.color = "#155724";
+
+    } else {
+
+      statusBox.innerHTML = "⏳ Aguardando confirmação do pagamento...";
+      statusBox.style.background = "#fff3cd";
+      statusBox.style.color = "#856404";
+    }
+
+  } catch (e) {
+
+    console.log("Erro ao verificar pagamento.");
+  }
+}
+
+/* =========================================
+   IMPRIMIR / BAIXAR COMPROVANTE
+========================================= */
+function imprimirComprovante() {
+
+  if (!dados) return;
+
+  const valorTotal = Number(dados.total || 0);
+
+  const conteudo = `
+    <html>
+      <head>
+        <title>Comprovante FPSS</title>
+        <style>
+          body{
+            font-family:Arial,sans-serif;
+            padding:30px;
+            color:#000;
+          }
+
+          h1{
+            color:#8b1111;
+            text-align:center;
+          }
+
+          .box{
+            border:1px solid #ccc;
+            padding:15px;
+            margin:15px 0;
+            border-radius:8px;
+          }
+
+          .titulo{
+            font-weight:bold;
+            margin-bottom:5px;
+          }
+
+          .alerta{
+            margin-top:25px;
+            padding:15px;
+            background:#fff3cd;
+            border-radius:8px;
+          }
+        </style>
+      </head>
+
+      <body>
+
+        <h1>🎟️ Comprovante Oficial FPSS 2027</h1>
+
+        <div class="box">
+          <div class="titulo">Pedido:</div>
+          ${dados.codigo_pedido || "Não disponível"}
+        </div>
+
+        <div class="box">
+          <div class="titulo">Valor:</div>
+          R$ ${valorTotal.toFixed(2).replace(".", ",")}
+        </div>
+
+        <div class="box">
+          <div class="titulo">Token:</div>
+          ${dados.token_retirada || "Não disponível"}
+        </div>
+
+        <div class="box">
+          <div class="titulo">PIX Copia e Cola:</div>
+          ${dados.qr_code || ""}
+        </div>
+
+        <div class="alerta">
+          Apresente este comprovante ou o QR Code de retirada junto com CPF no momento da entrega.
+        </div>
+
+      </body>
+    </html>
+  `;
+
+  const janela = window.open("", "_blank");
+
+  if (!janela) {
+    alert("❌ Libere pop-ups para imprimir o comprovante.");
+    return;
+  }
+
+  janela.document.open();
+  janela.document.write(conteudo);
+  janela.document.close();
+
+  janela.onload = function() {
+    janela.focus();
+    janela.print();
+  };
+}
+
+/* =========================================
+   AUTO CHECK
+========================================= */
+verificarPagamento();
+setInterval(verificarPagamento, 15000);
+</script>
+
+</body>
+</html>
