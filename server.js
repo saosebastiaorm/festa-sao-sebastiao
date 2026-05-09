@@ -697,6 +697,196 @@ app.get("/admin/pedidos", async (req, res) => {
   }
 });
 
+
+
+/* =====================================================
+   PRODUTOS - LISTAR TODOS ATIVOS
+===================================================== */
+app.get("/produtos", async (req, res) => {
+  try {
+
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("*")
+      .eq("ativo", true)
+      .order("ordem", { ascending: true });
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao carregar produtos."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      total: data.length,
+      produtos: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao listar produtos."
+    });
+  }
+});
+
+/* =====================================================
+   PRODUTO - BUSCAR POR CÓDIGO
+===================================================== */
+app.get("/produto/:codigo", async (req, res) => {
+  try {
+
+    const codigo = String(req.params.codigo || "").toUpperCase();
+
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("*")
+      .eq("codigo", codigo)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Produto não encontrado."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      produto: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao buscar produto."
+    });
+  }
+});
+
+/* =====================================================
+   ADMIN PRODUTOS - LISTAR TODOS
+===================================================== */
+app.get("/admin/produtos", async (req, res) => {
+  try {
+
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("*")
+      .order("ordem", { ascending: true });
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao carregar painel de produtos."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      total: data.length,
+      produtos: data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno admin produtos."
+    });
+  }
+});
+
+/* =====================================================
+   ADMIN PRODUTOS - ATUALIZAR
+===================================================== */
+app.post("/admin/produtos", async (req, res) => {
+  try {
+
+    const {
+      codigo,
+      nome,
+      descricao,
+      preco,
+      ativo,
+      estoque,
+      tipo,
+      imagem,
+      ordem
+    } = req.body;
+
+    if (!codigo || !nome) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Código e nome são obrigatórios."
+      });
+    }
+
+    const codigoNormalizado = String(codigo).toUpperCase();
+
+    const produtoData = {
+      codigo: codigoNormalizado,
+      nome,
+      descricao: descricao || null,
+      preco: Number(preco || 0),
+      ativo: ativo !== false,
+      estoque: Number(estoque || 0),
+      tipo: tipo || "produto",
+      imagem: imagem || null,
+      ordem: Number(ordem || 0),
+      updated_at: new Date()
+    };
+
+    const { data: existente } = await supabase
+      .from("produtos")
+      .select("id")
+      .eq("codigo", codigoNormalizado)
+      .single();
+
+    let resultado;
+
+    if (existente) {
+
+      resultado = await supabase
+        .from("produtos")
+        .update(produtoData)
+        .eq("codigo", codigoNormalizado)
+        .select();
+
+    } else {
+
+      resultado = await supabase
+        .from("produtos")
+        .insert([produtoData])
+        .select();
+    }
+
+    if (resultado.error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao salvar produto."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Produto salvo com sucesso.",
+      produto: resultado.data
+    });
+
+  } catch (erro) {
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao salvar produto."
+    });
+  }
+});
+
 /* ==========================================
    START SERVER
 ========================================== */
