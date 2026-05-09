@@ -918,68 +918,8 @@ app.post("/admin/produtos", async (req, res) => {
   }
 });
 
-    }
+    
 
-    const codigoNormalizado = String(codigo).toUpperCase();
-
-    const produtoData = {
-      codigo: codigoNormalizado,
-      nome,
-      descricao: descricao || null,
-      preco: Number(preco || 0),
-      ativo: ativo !== false,
-      estoque: Number(estoque || 0),
-      tipo: tipo || "produto",
-      imagem: imagem || null,
-      ordem: Number(ordem || 0),
-      updated_at: new Date()
-    };
-
-    const { data: existente } = await supabase
-      .from("produtos")
-      .select("id")
-      .eq("codigo", codigoNormalizado)
-      .single();
-
-    let resultado;
-
-    if (existente) {
-
-      resultado = await supabase
-        .from("produtos")
-        .update(produtoData)
-        .eq("codigo", codigoNormalizado)
-        .select();
-
-    } else {
-
-      resultado = await supabase
-        .from("produtos")
-        .insert([produtoData])
-        .select();
-    }
-
-    if (resultado.error) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Erro ao salvar produto."
-      });
-    }
-
-    return res.json({
-      sucesso: true,
-      mensagem: "Produto salvo com sucesso.",
-      produto: resultado.data
-    });
-
-  } catch (erro) {
-
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno ao salvar produto."
-    });
-  }
-});
 
 /* ==========================================
    START SERVER
