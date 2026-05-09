@@ -14,19 +14,18 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
-
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/vip.css">
   <link rel="stylesheet" href="css/doacao.css">
   <link rel="stylesheet" href="css/mobile.css">
-
+  <link rel="stylesheet" href="css/conversao-master.css">
 </head>
 
 <body>
 
   <!-- BARRA -->
   <div class="barra-urgencia">
-    🔥 Evento Oficial FPSS • Cartelas e churrascos limitados
+    🔥 EVENTO OFICIAL FPSS • CHURRASCOS E CARTELAS LIMITADOS • GARANTA JÁ
   </div>
 
   <!-- HERO -->
@@ -46,8 +45,10 @@
           </p>
 
           <div class="cta-group">
-            <a href="#comprar" class="btn red">🍖 Comprar Churrasco</a>
-            <a href="#comprar" class="btn green">🎟 Comprar Cartela</a>
+            <a href="./venda/compra-churrasco.html" class="btn red">🍖 Comprar Churrasco</a>
+            <a target="_blank"
+              href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS"
+              class="btn green">🎟 Comprar Cartela</a>
           </div>
 
           <div class="mini-info">
@@ -94,84 +95,51 @@
   </section>
 
   <!-- COMPRA -->
-  <section class="card" id="comprar">
-    <div class="wrap">
-
-      <h2 class="section-title">🔥 Garanta Agora Seu Pedido</h2>
-
-      <div class="grid-2">
-
-        <div class="venda-box">
-          <h3>🍖 Churrasco Oficial FPSS</h3>
-
-          <ul class="info-list">
-            <li>✔ Produto tradicional</li>
-            <li>✔ Retirada no evento</li>
-            <li>✔ Compra antecipada</li>
-          </ul>
-
-          <div class="price-box">R$ 60,00</div>
-
-          <a target="_blank"
-            href="./venda/compra-churrasco.html">
-            📲 Comprar Churrasco
-          </a>
-        </div>
-
-        <div class="venda-box">
-          <h3>🎟 Cartela Premiada</h3>
-
-          <ul class="info-list">
-            <li>✔ Apenas R$ 20</li>
-            <li>✔ Concorra a 25 Mil Reais em dinheiro</li>
-            <li>✔ 13 chances</li>
-            <li>✔ Sorteio oficial</li>
-          </ul>
-
-          <div class="price-box">R$ 20,00</div>
-
-          <a target="_blank"
-            href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS"
-            class="btn green full">
-            📲 Comprar Cartela
-          </a>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- DOAÇÃO -->
-<section class="doacao-cta">
-
+  
+<!-- PRODUTOS DINÂMICOS -->
+<section class="card" id="comprar">
   <div class="wrap">
 
-    <div class="doacao-box-main">
+    <h2 class="section-title">🔥 Garanta Agora Seu Pedido</h2>
 
-      <h2>🙏 Ajude a manter essa tradição viva</h2>
-
-      <p>
-        Sua contribuição ajuda na organização da festa, premiações e estrutura.
-      </p>
-
-      <div class="doacao-valores">
-        <span>💚 R$10</span>
-        <span>💚 R$20</span>
-        <span>💚 R$50</span>
-      </div>
-
-      <a href="doacao/doacao.html" class="btn-doar">
-        💚 FAZER DOAÇÃO AGORA
-      </a>
-
-      <small>🔒 Doação via PIX • Rápido e seguro</small>
-
+    <div class="grid-2" id="produtosContainer">
+      <p>Carregando produtos...</p>
     </div>
 
   </div>
-
 </section>
+
+
+  <!-- DOAÇÃO -->
+  <section class="doacao-cta">
+
+    <div class="wrap">
+
+      <div class="doacao-box-main">
+
+        <h2>🙏 Ajude a manter essa tradição viva</h2>
+
+        <p>
+          Sua contribuição ajuda na organização da festa, premiações e estrutura.
+        </p>
+
+        <div class="doacao-valores">
+          <span>💚 R$10</span>
+          <span>💚 R$20</span>
+          <span>💚 R$50</span>
+        </div>
+
+        <a href="doacao/doacao.html" class="btn-doar">
+          💚 FAZER DOAÇÃO AGORA
+        </a>
+
+        <small>🔒 Doação via PIX • Rápido e seguro</small>
+
+      </div>
+
+    </div>
+
+  </section>
 
   <!-- ENQUETE -->
   <section class="card center" id="enquete">
@@ -180,7 +148,7 @@
       <h2 class="section-title">🔥 Enquete Oficial FPSS</h2>
 
       <p class="mt-10">
-        Participe e concorra a uma <bold> camiseta Oficial da 6ª FPSS. </bold>
+        Participe e concorra a uma <strong>camiseta Oficial da 6ª FPSS.</strong>
       </p>
 
       <a href="/enquete/enquete.html" class="btn red full">
@@ -227,16 +195,22 @@
     </div>
   </section>
 
-  <!-- BOTÃO -->
+  <!-- BOTÃO FLUTUANTE -->
   <a href="https://wa.me/5569981102306"
     target="_blank"
     class="whatsapp-fixo">
     📲 Comprar Agora
   </a>
 
+  <!-- FOOTER -->
   <footer>
     6ª Festa do Padroeiro São Sebastião • FPSS 2027
   </footer>
+
+  <!-- ADMIN -->
+  <div class="admin-footer">
+    <a href="admin/login.html">🔐 Área Administrativa</a>
+  </div>
 
   <!-- CONTADOR -->
   <script>
@@ -261,8 +235,88 @@
     setInterval(atualizarContador, 1000);
     atualizarContador();
   </script>
+<script>
+async function carregarProdutosHome() {
+  try {
+    const res = await fetch("https://fpss-backend.onrender.com/produtos");
+    const data = await res.json();
 
-  <!-- JS -->
+    const container = document.getElementById("produtosContainer");
+
+    if (!data.sucesso || !data.produtos || data.produtos.length === 0) {
+      container.innerHTML = "<p>Nenhum produto disponível no momento.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+
+    data.produtos.forEach(produto => {
+     let link = "https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20" + encodeURIComponent(produto.nome);
+     let botao = "📲 Comprar Agora";
+
+      if (produto.codigo === "CHU") {
+        link = "./venda/compra-churrasco.html";
+        botao = "🍖 Comprar Churrasco";
+      } else if (produto.codigo === "CAR") {
+        link = "https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS";
+        botao = "🎟 Comprar Cartela";
+      } else if (produto.codigo === "DOE") {
+        link = "./doacao/doacao.html";
+        botao = "💚 Fazer Doação";
+      }
+
+
+const card = `
+  <div class="venda-box">
+
+    <img
+      src="${produto.imagem || 'https://via.placeholder.com/500x300?text=Produto+FPSS'}"
+      alt="${produto.nome}"
+      style="
+        width:100%;
+        height:230px;
+        object-fit:cover;
+        border-radius:14px;
+        margin-bottom:15px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.12);
+      "
+    >
+
+    <h3>${produto.nome}</h3>
+
+    <ul class="info-list">
+      <li>✔ ${produto.descricao || "Produto oficial FPSS"}</li>
+      <li>✔ Estoque disponível: ${produto.estoque}</li>
+    </ul>
+
+    <div class="price-box">
+      R$ ${Number(produto.preco).toFixed(2).replace(".", ",")}
+    </div>
+
+    <a href="${link}" class="btn green full" target="_blank">
+      ${botao}
+    </a>
+
+  </div>
+`;
+
+
+
+
+
+      container.innerHTML += card;
+    });
+
+  } catch (erro) {
+    document.getElementById("produtosContainer").innerHTML =
+      "<p>Erro ao carregar produtos.</p>";
+
+    console.error("Erro produtos home:", erro);
+  }
+}
+
+carregarProdutosHome();
+</script>
   <script src="js/main.js"></script>
   <script src="js/countdown.js"></script>
   <script src="js/lightbox.js"></script>
