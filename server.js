@@ -75,7 +75,7 @@ app.use("/venda", express.static(path.join(__dirname, "venda")));
 app.use("/doacao", express.static(path.join(__dirname, "doacao")));
 app.use("/enquete", express.static(path.join(__dirname, "enquete")));
 
-app.use("/admin", express.static(path.join(__dirname, "front-end", "admin")));
+//app.use("/admin", express.static(path.join(__dirname, "front-end", "admin")));
 
 /* =====================================================
    SUPABASE
