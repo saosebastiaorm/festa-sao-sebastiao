@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPSS Admin Central</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:linear-gradient(135deg,#8b1111,#c1121f);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .painel{
+      background:white;
+      max-width:900px;
+      width:100%;
+      padding:30px;
+      border-radius:20px;
+      box-shadow:0 15px 40px rgba(0,0,0,0.3);
+      text-align:center;
+    }
+
+    h1{
+      color:#8b1111;
+      margin-bottom:10px;
+    }
+
+    .sub{
+      color:#666;
+      margin-bottom:30px;
+      font-weight:bold;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
+    }
+
+    .card{
+      display:block;
+      text-decoration:none;
+      padding:30px 20px;
+      border-radius:16px;
+      color:white;
+      font-size:22px;
+      font-weight:bold;
+      transition:0.3s;
+      box-shadow:0 8px 18px rgba(0,0,0,0.15);
+    }
+
+    .card:hover{
+      transform:translateY(-5px) scale(1.02);
+    }
+
+    .produtos{
+      background:linear-gradient(135deg,#1d7f2a,#28a745);
+    }
+
+    .retirada{
+      background:linear-gradient(135deg,#8b1111,#c1121f);
+    }
+
+    .pedidos{
+      background:linear-gradient(135deg,#005f73,#0a9396);
+    }
+
+    .dashboard{
+      background:linear-gradient(135deg,#6a4c93,#8e44ad);
+    }
+
+    @media(max-width:768px){
+      .card{
+        font-size:18px;
+        padding:22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="painel">
+
+  <h1>⚙️ FPSS ADMIN CENTRAL</h1>
+  <div class="sub">
+    6ª Festa do Padroeiro São Sebastião • Painel Operacional
+  </div>
+
+  <div class="grid">
+
+    <a href="produtos.html" class="card produtos">
+      📦 PRODUTOS
+    </a>
+
+    <a href="admin-retirada.html" class="card retirada">
+      🍖 RETIRADA
+    </a>
+
+    <a href="#" class="card pedidos">
+      📋 PEDIDOS
+    </a>
+
+    <a href="#" class="card dashboard">
+      📊 DASHBOARD
+    </a>
+
+  </div>
+
+</div>
+
+<div class="card">
+  <div class="icone">🍖</div>
+  <h2>Retirada</h2>
+  <p>Validação e entrega oficial.</p>
+  <a href="/admin/retirada.html" class="btn">Abrir Retirada</a>
+</div>
+
+<div class="card">
+  <div class="icone">📷</div>
+  <h2>Leitor QR</h2>
+  <p>Scanner oficial de retirada.</p>
+  <a href="/admin/leitor.html" class="btn">Abrir Leitor</a>
+</div>
+
+</body>
+</html>

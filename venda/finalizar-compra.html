@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pagamento PIX - 6ª FPSS</title>
+  <title>Comprovante Oficial 6ª FPSS - Festa do Padroeiro São Sebastião</title>
 
   <style>
     *{box-sizing:border-box;}
@@ -185,9 +185,12 @@ const dados = JSON.parse(localStorage.getItem("pixData"));
 
 function mascararCPF(cpf){
   if(!cpf) return "CPF não informado";
+
   cpf = String(cpf).replace(/\D/g,"");
+
   if(cpf.length !== 11) return cpf;
-  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4");
+
+  return `***.${cpf.slice(3,6)}.***-**`;
 }
 
 function valorPedido(){
@@ -218,7 +221,17 @@ function renderPendente(){
   const codigoPix = dados.qr_code || dados.pix_copia_cola || "";
 
   document.getElementById("conteudo").innerHTML = `
-    <div class="valor">R$ ${valorPedido().toFixed(2).replace(".", ",")}</div>
+   <div style="
+  font-size:38px;
+  font-weight:900;
+  color:#1b4332;
+  background:#e9f5ff;
+  padding:10px;
+  border-radius:10px;
+  margin:15px 0;
+">
+  💰 R$ ${valorPedido().toFixed(2).replace(".", ",")}
+</div>
 
     <div class="box">
       <span class="titulo">🎟️ Código Oficial do Pedido:</span>
@@ -261,46 +274,97 @@ function renderPendente(){
 function renderPago(){
 
   document.getElementById("conteudo").innerHTML = `
-    <div class="valor">R$ ${valorPedido().toFixed(2).replace(".", ",")}</div>
+    <div style="border:3px solid #8b1111;border-radius:18px;padding:20px;background:#fffaf8;">
 
-    <div class="box">
-      <span class="titulo">🎟️ Código Oficial do Pedido:</span>
-      ${dados.codigo_pedido}
-    </div>
-
-    <div class="box">
-      <span class="titulo">🔐 Token de Segurança:</span>
-      ${dados.token_retirada}
-    </div>
-
-    <div class="box">
-      <span class="titulo">📦 Código alternativo:</span>
-      ${dados.codigo_pedido}<br>
-      CPF: ${mascararCPF(dados.cpf)}
-    </div>
-
-    <button class="btn-comprovante no-print" onclick="window.print()">
-      🧾 IMPRIMIR COMPROVANTE OFICIAL
-    </button>
-
-    <div class="qr-grid">
-      <div class="qr-card">
-        <h3>🍖 QR Code Retirada</h3>
-        <div id="qrcodeRetirada" class="qr-box"></div>
+      <div style="text-align:center;border-bottom:2px dashed #c1121f;padding-bottom:15px;margin-bottom:20px;">
+        <h2 style="margin:0;color:#8b1111;">🍖 6ª Festa do Padroeiro São Sebastião</h2>
+        <p style="margin:8px 0 0;color:#555;font-weight:bold;">
+          📅 24 de Janeiro de 2027 • 🎟️ Comprovante Oficial FPSS
+        </p>
       </div>
-    </div>
 
-    <div class="alerta">
-      ✅ Pagamento aprovado.<br>
-      Apresente este comprovante + CPF para retirada.
+      <div style="
+        background:#d4edda;
+        color:#155724;
+        font-size:22px;
+        font-weight:900;
+        padding:14px;
+        border-radius:12px;
+        margin-bottom:20px;
+        text-align:center;
+      ">
+        ✅ PAGAMENTO CONFIRMADO
+      </div>
+
+      <div class="valor">R$ ${valorPedido().toFixed(2).replace(".", ",")}</div>
+
+      <div class="box">
+        <span class="titulo">🎟️ Código Oficial do Pedido:</span>
+        ${dados.codigo_pedido}
+      </div>
+
+      <div class="box">
+        <span class="titulo">👤 CPF para validação:</span>
+        ${mascararCPF(dados.cpf)}
+      </div>
+
+      <div class="box">
+        <span class="titulo">🔐 Token Oficial de Retirada:</span>
+        <span style="
+          display:block;
+          font-size:24px;
+          font-weight:900;
+          color:#8b1111;
+          margin-top:8px;
+          text-align:center;
+          letter-spacing:1px;
+        ">
+          ${dados.token_retirada}
+        </span>
+      </div>
+
+      <div class="box">
+        <span class="titulo">⏰ Retirada:</span>
+        24/01/2027 • Apresente este comprovante entre 10h e 15h
+      </div>
+
+      <button class="btn-comprovante no-print" onclick="window.print()">
+        🧾 IMPRIMIR / SALVAR PDF
+      </button>
+
+      <div class="qr-grid">
+        <div class="qr-card" style="border:2px solid #8b1111;">
+          <h3 style="margin-bottom:10px;">🍖 QR Code Oficial de Retirada</h3>
+          <div id="qrcodeRetirada" class="qr-box"></div>
+        </div>
+      </div>
+
+      <div class="alerta" style="background:#e9f5ff;color:#003049;">
+        ✅ Documento oficial de retirada aprovado.<br><br>
+        📌 Apresente:
+        <strong>QR Code + CPF</strong><br>
+        🔒 Não compartilhe seu token com terceiros.
+      </div>
+
+      <div style="
+        margin-top:20px;
+        padding-top:15px;
+        border-top:1px dashed #999;
+        text-align:center;
+        font-size:12px;
+        color:#666;
+      ">
+        FPSS 2027 • Sistema Oficial de Vendas e Retirada
+      </div>
+
     </div>
   `;
 
   if(dados.qr_code_retirada){
     new QRCode(document.getElementById("qrcodeRetirada"),{
       text:dados.qr_code_retirada,
-      width:220,
-      height:220,
+      width:240,
+      height:240,
       correctLevel:QRCode.CorrectLevel.H
     });
   }

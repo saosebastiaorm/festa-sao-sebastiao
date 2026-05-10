@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Retirada - FPSS 2027</title>
+
+  <style>
+    *{box-sizing:border-box;}
+
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:linear-gradient(135deg,#8b1111,#c1121f);
+      padding:20px;
+    }
+
+    .container{
+      max-width:900px;
+      margin:auto;
+      background:#fff;
+      border-radius:18px;
+      padding:25px;
+      box-shadow:0 15px 40px rgba(0,0,0,0.25);
+    }
+
+    h1{
+      text-align:center;
+      color:#8b1111;
+      margin-bottom:8px;
+    }
+
+    .sub{
+      text-align:center;
+      color:#666;
+      margin-bottom:25px;
+      font-weight:bold;
+    }
+
+    .busca-box{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      margin-bottom:20px;
+    }
+
+    input{
+      padding:18px;
+      font-size:20px;
+      border:2px solid #ccc;
+      border-radius:12px;
+      width:100%;
+      text-transform:uppercase;
+    }
+
+    button{
+      border:none;
+      padding:18px 22px;
+      font-size:18px;
+      font-weight:bold;
+      border-radius:12px;
+      cursor:pointer;
+      color:white;
+    }
+
+    .btn-buscar{
+      background:#1d7f2a;
+    }
+
+    .btn-confirmar{
+      background:#8b1111;
+      width:100%;
+      margin-top:20px;
+    }
+
+    .resultado{
+      margin-top:25px;
+      padding:20px;
+      border-radius:14px;
+      background:#f8f9fa;
+      border-left:6px solid #8b1111;
+      display:none;
+    }
+
+    .linha{
+      margin:10px 0;
+      font-size:18px;
+    }
+
+    .status{
+      font-size:24px;
+      font-weight:900;
+      text-align:center;
+      padding:14px;
+      border-radius:10px;
+      margin-bottom:15px;
+    }
+
+    .ok{
+      background:#d4edda;
+      color:#155724;
+    }
+
+    .alerta{
+      background:#fff3cd;
+      color:#856404;
+    }
+
+    .erro{
+      background:#f8d7da;
+      color:#721c24;
+    }
+
+    .msg{
+      margin-top:15px;
+      padding:14px;
+      border-radius:10px;
+      text-align:center;
+      font-weight:bold;
+      display:none;
+    }
+
+    @media(max-width:768px){
+      .busca-box{
+        grid-template-columns:1fr;
+      }
+
+      input,button{
+        font-size:18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>🍖 ADMIN RETIRADA FPSS 2027</h1>
+  <div class="sub">
+    Validação oficial de pedidos • Festa do Padroeiro São Sebastião
+  </div>
+
+  <div class="busca-box">
+    <input
+      type="text"
+      id="codigoPedido"
+      placeholder="Digite código do pedido (FPSS-2027-CHU-000001)"
+    >
+
+    <button class="btn-buscar" onclick="buscarPedido()">
+      BUSCAR PEDIDO
+    </button>
+  </div>
+
+  <div id="mensagem" class="msg"></div>
+
+  <div id="resultado" class="resultado"></div>
+
+</div>
+
+<script>
+let pedidoAtual = null;
+
+/* =========================================
+   CPF MÁSCARA
+========================================= */
+function mascararCPF(cpf){
+  if(!cpf) return "Não informado";
+  cpf = String(cpf).replace(/\D/g,"");
+  if(cpf.length !== 11) return cpf;
+  return cpf.replace(/(\d{3})\d{3}(\d{3})(\d{2})/, "$1.***.$2-$3");
+}
+
+/* =========================================
+   MENSAGEM
+========================================= */
+function mostrarMensagem(texto,tipo="ok"){
+  const box = document.getElementById("mensagem");
+  box.style.display = "block";
+  box.className = `msg ${tipo}`;
+  box.innerHTML = texto;
+}
+
+/* =========================================
+   BUSCAR PEDIDO
+========================================= */
+async function buscarPedido(){
+
+  const codigo = document
+    .getElementById("codigoPedido")
+    .value
+    .trim()
+    .toUpperCase();
+
+  if(!codigo){
+    mostrarMensagem("❌ Digite um código válido.","erro");
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      `https://fpss-backend.onrender.com/pedido/codigo/${codigo}`
+    );
+
+    const data = await res.json();
+
+    if(!data.sucesso || !data.pedido){
+      mostrarMensagem("❌ Pedido não encontrado.","erro");
+      document.getElementById("resultado").style.display = "none";
+      return;
+    }
+
+    pedidoAtual = data.pedido;
+
+    let statusClass = "ok";
+    let statusTexto = "✅ LIBERADO PARA RETIRADA";
+
+    if(pedidoAtual.status_pagamento !== "pago"){
+      statusClass = "alerta";
+      statusTexto = "⏳ PAGAMENTO NÃO CONFIRMADO";
+    }
+
+    if(pedidoAtual.status_retirada === "retirado"){
+      statusClass = "erro";
+      statusTexto = "❌ PEDIDO JÁ RETIRADO";
+    }
+
+    document.getElementById("resultado").style.display = "block";
+
+    document.getElementById("resultado").innerHTML = `
+      <div class="status ${statusClass}">
+        ${statusTexto}
+      </div>
+
+      <div class="linha"><strong>🎟 Pedido:</strong> ${pedidoAtual.codigo_pedido}</div>
+      <div class="linha"><strong>👤 Nome:</strong> ${pedidoAtual.nome} ${pedidoAtual.sobrenome || ""}</div>
+      <div class="linha"><strong>🔐 CPF:</strong> ${mascararCPF(pedidoAtual.cpf)}</div>
+      <div class="linha"><strong>🍖 Quantidade:</strong> ${pedidoAtual.quantidade}</div>
+      <div class="linha"><strong>💰 Valor:</strong> R$ ${Number(pedidoAtual.valor_total).toFixed(2).replace(".",",")}</div>
+      <div class="linha"><strong>⏰ Horário:</strong> ${pedidoAtual.horario_retirada || "Não informado"}</div>
+      <div class="linha"><strong>📦 Status retirada:</strong> ${pedidoAtual.status_retirada}</div>
+
+      ${
+        pedidoAtual.status_pagamento === "pago" &&
+        pedidoAtual.status_retirada !== "retirado"
+          ? `
+            <button class="btn-confirmar" onclick="confirmarRetirada()">
+              ✅ CONFIRMAR RETIRADA AGORA
+            </button>
+          `
+          : ""
+      }
+    `;
+
+    mostrarMensagem("✅ Pedido localizado com sucesso.");
+
+  } catch(err){
+
+    mostrarMensagem("🌐 Erro de conexão com servidor.","erro");
+  }
+}
+
+/* =========================================
+   CONFIRMAR RETIRADA
+========================================= */
+async function confirmarRetirada(){
+
+  if(!pedidoAtual || !pedidoAtual.codigo_pedido){
+    mostrarMensagem("❌ Pedido inválido.","erro");
+    return;
+  }
+
+  if(!confirm("Confirmar retirada deste pedido?")){
+    return;
+  }
+
+  try{
+
+    const res = await fetch(
+      `https://fpss-backend.onrender.com/retirada/${pedidoAtual.codigo_pedido}`,
+      {
+        method:"POST"
+      }
+    );
+
+    const data = await res.json();
+
+    if(data.sucesso){
+      mostrarMensagem("✅ RETIRADA CONFIRMADA COM SUCESSO.");
+      buscarPedido();
+    } else {
+      mostrarMensagem(`❌ ${data.erro || "Erro ao confirmar retirada."}`,"erro");
+    }
+
+  } catch(err){
+
+    mostrarMensagem("🌐 Erro de conexão.","erro");
+  }
+}
+
+/* =========================================
+   ENTER
+========================================= */
+document
+  .getElementById("codigoPedido")
+  .addEventListener("keypress", function(e){
+    if(e.key === "Enter"){
+      buscarPedido();
+    }
+  });
+</script>
+
+</body>
+</html>
