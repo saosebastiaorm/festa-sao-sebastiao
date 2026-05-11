@@ -67,13 +67,13 @@ app.options(/.*/, cors());
 ===================================================== */
 app.use(express.json({ limit: "10mb" }));
 
-app.use("/css", express.static(path.join(__dirname, "css")));
-app.use("/js", express.static(path.join(__dirname, "js")));
-app.use("/assets", express.static(path.join(__dirname, "assets")));
+// app.use("/css", express.static(path.join(__dirname, "css")));
+// app.use("/js", express.static(path.join(__dirname, "js")));
+// app.use("/assets", express.static(path.join(__dirname, "assets")));
 
-app.use("/venda", express.static(path.join(__dirname, "venda")));
-app.use("/doacao", express.static(path.join(__dirname, "doacao")));
-app.use("/enquete", express.static(path.join(__dirname, "enquete")));
+// app.use("/venda", express.static(path.join(__dirname, "venda")));
+// app.use("/doacao", express.static(path.join(__dirname, "doacao")));
+// app.use("/enquete", express.static(path.join(__dirname, "enquete")));
 
 //app.use("/admin", express.static(path.join(__dirname, "front-end", "admin")));
 
@@ -598,17 +598,16 @@ app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
 ===================================================== */
 app.get("/pedido/cpf/:cpf", async (req, res) => {
   try {
+
     const cpf = limparCPF(req.params.cpf);
 
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
       .eq("cpf", cpf)
-      .order("id", { ascending: false })
-      .limit(1)
-      .single();
+      .order("id", { ascending: false });
 
-    if (error || !data) {
+    if (error || !data || !data.length) {
       return res.status(404).json({
         sucesso: false,
         erro: "CPF não encontrado."
@@ -617,10 +616,12 @@ app.get("/pedido/cpf/:cpf", async (req, res) => {
 
     return res.json({
       sucesso: true,
-      pedido: data
+      pedidos: data,
+      total: data.length
     });
 
   } catch (erro) {
+
     return res.status(500).json({
       sucesso: false,
       erro: "Erro ao buscar CPF."
