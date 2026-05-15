@@ -149,7 +149,8 @@ app.get("/api", (req, res) => {
       buscar_cpf: "/pedido/cpf/:cpf",
       confirmar_retirada: "/retirada/:codigoPedido",
       admin_dashboard: "/admin/dashboard",
-      admin_pedidos: "/admin/pedidos"
+      admin_pedidos: "/admin/pedidos",
+      cliente_login: "/cliente-login"
     }
   });
 });
