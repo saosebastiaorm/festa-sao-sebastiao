@@ -1154,7 +1154,67 @@ app.get("/retirada/teste/:codigoPedido", async (req, res) => {
   }
 });
 
+/* =====================================================
+   CENTRAL DO CLIENTE - LOGIN REAL
+===================================================== */
+app.post("/cliente-login", async (req, res) => {
+  try {
 
+    const { cpf, telefone } = req.body;
+
+    if (!cpf || !telefone) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "CPF e telefone são obrigatórios."
+      });
+    }
+
+    const cpfLimpo = limparCPF(cpf);
+    const telefoneLimpo = limparTelefone(telefone);
+
+    if (cpfLimpo.length !== 11) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "CPF inválido."
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("cpf", cpfLimpo)
+      .eq("telefone", telefoneLimpo)
+      .order("id", { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Cliente não encontrado."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      cliente: {
+        nome: `${data[0].nome || ""} ${data[0].sobrenome || ""}`.trim(),
+        cpf: data[0].cpf,
+        telefone: data[0].telefone,
+        total_pedidos: data.length,
+        pedidos: data
+      }
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO CLIENTE LOGIN:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno no login."
+    });
+
+  }
+});
 
 
 /* ==========================================

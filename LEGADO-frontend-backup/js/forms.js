@@ -121,7 +121,7 @@ const msg =
 "📎 Após pagamento, envie o comprovante aqui no WhatsApp.";
 
 window.open(
-"https://wa.me/556981102306?text=" + msg,
+"https://wa.me/556992014424?text=" + msg,
 "_blank"
 );
 

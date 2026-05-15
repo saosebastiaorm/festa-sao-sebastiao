@@ -47,7 +47,7 @@
           <div class="cta-group">
             <a href="./venda/compra-churrasco.html" class="btn red">🍖 Comprar Churrasco</a>
             <a target="_blank"
-              href="https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS"
+              href="https://wa.me/5569992014424?text=Olá,%20quero%20comprar%20cartela%20FPSS"
               class="btn green">🎟 Comprar Cartela</a>
           </div>
 
@@ -187,7 +187,7 @@
       <h2 class="section-title">📲 Atendimento</h2>
 
       <a target="_blank"
-        href="https://wa.me/5569981102306"
+        href="https://wa.me/5569992014424"
         class="btn green">
         WhatsApp Oficial
       </a>
@@ -196,7 +196,7 @@
   </section>
 
   <!-- BOTÃO FLUTUANTE -->
-  <a href="https://wa.me/5569981102306"
+  <a href="https://wa.me/55699892014424"
     target="_blank"
     class="whatsapp-fixo">
     📲 Comprar Agora
@@ -251,14 +251,14 @@ async function carregarProdutosHome() {
     container.innerHTML = "";
 
     data.produtos.forEach(produto => {
-     let link = "https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20" + encodeURIComponent(produto.nome);
+     let link = "https://wa.me/5569992014424?text=Olá,%20quero%20comprar%20" + encodeURIComponent(produto.nome);
      let botao = "📲 Comprar Agora";
 
       if (produto.codigo === "CHU") {
         link = "./venda/compra-churrasco.html";
         botao = "🍖 Comprar Churrasco";
       } else if (produto.codigo === "CAR") {
-        link = "https://wa.me/5569981102306?text=Olá,%20quero%20comprar%20cartela%20FPSS";
+        link = "https://wa.me/5569992014424?text=Olá,%20quero%20comprar%20cartela%20FPSS";
         botao = "🎟 Comprar Cartela";
       } else if (produto.codigo === "DOE") {
         link = "./doacao/doacao.html";
