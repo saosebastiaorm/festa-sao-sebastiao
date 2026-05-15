@@ -1184,7 +1184,6 @@ app.post("/cliente-login", async (req, res) => {
       .from("pedidos")
       .select("*")
       .eq("cpf", cpfLimpo)
-      .eq("telefone", telefoneLimpo)
       .order("id", { ascending: false });
 
     if (error || !data || data.length === 0) {
