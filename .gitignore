@@ -12,3 +12,9 @@ yarn-error.log*
 # sistema operacional
 .DS_Store
 Thumbs.db
+
+
+node_modules/
+.env
+
+src/services/sicredi/certs/
