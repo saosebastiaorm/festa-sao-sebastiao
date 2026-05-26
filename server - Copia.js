@@ -17,11 +17,10 @@ const upload = multer({
 
 const app = express();
 
-//const vipRoutes = require("./vip.routes");
-
 /* =====================================================
    CORS MASTER
 ===================================================== */
+const vipRoutes = require(".../vip.routes");
 
 
 
@@ -67,8 +66,7 @@ app.options(/.*/, cors());
    BODY + ARQUIVOS ESTÁTICOS
 ===================================================== */
 app.use(express.json({ limit: "10mb" }));
-//app.use("/api/vip", vipRoutes);
-
+app.use("/api/vip", vipRoutes);
 
 // app.use("/css", express.static(path.join(__dirname, "css")));
 // app.use("/js", express.static(path.join(__dirname, "js")));
@@ -374,60 +372,6 @@ return res.status(200).json({
     erro: "Erro interno ao gerar PIX."
   });
 }
-});
-
-
-/* =====================================================
-   ROTA VIP INTEGRADA (SEM ERROS DE CAMINHO OU 404)
-===================================================== */
-/* =====================================================
-   ROTA VIP - CORRIGIDA E AUDITADA
-===================================================== */
-app.post("/api/vip", async (req, res) => {
-  try {
-    const { nome, whatsapp, cidade, bairro } = req.body;
-
-    if (!nome || !whatsapp || !cidade || !bairro) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Todos os campos são obrigatórios."
-      });
-    }
-
-    const payload = {
-      nome: String(nome).trim(),
-      whatsapp: String(whatsapp).trim(),
-      cidade: String(cidade).trim(),
-      bairro: String(bairro).trim(),
-      origem: "VIP"
-    };
-
-    const { data, error } = await supabase
-      .from("vip")
-      .insert([payload]);
-
-    if (error) {
-      console.error("Erro interno Supabase VIP:", error);
-
-      return res.status(500).json({
-        sucesso: false,
-        erro: error.message
-      });
-    }
-
-    return res.status(200).json({
-      sucesso: true,
-      mensagem: "Cadastro VIP realizado com sucesso!"
-    });
-
-  } catch (erro) {
-    console.error("Erro crítico na rota VIP:", erro);
-
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno no servidor."
-    });
-  }
 });
 
 /* =====================================================
@@ -1283,11 +1227,6 @@ app.post("/cliente-login", async (req, res) => {
    START SERVER
 ========================================== */
 const PORT = process.env.PORT || 3000;
-
-/* =====================================================
-   BLOCO DE ALTA SEGURANÇA - ROTA VIP DEFINITIVA
-===================================================== */
-
 
 app.listen(PORT, () => {
   console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
