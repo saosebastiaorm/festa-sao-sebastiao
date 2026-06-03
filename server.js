@@ -36,7 +36,7 @@ const allowedOrigins = [
   "http://127.0.0.1:5501",
   "null",
   "https://festa-sao-sebastiao.vercel.app",
-  "https://fpss-backend.onrender.com"
+  "https://api.festasaosebastiao.com.br"
 ].filter(Boolean);
 
 app.use(cors({

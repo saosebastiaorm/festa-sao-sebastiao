@@ -200,7 +200,7 @@ async function buscarPedido(){
   try{
 
     const res = await fetch(
-      `https://fpss-backend.onrender.com/pedido/codigo/${codigo}`
+      `https://api.festasaosebastiao.com.br/pedido/codigo/${codigo}`
     );
 
     const data = await res.json();
@@ -278,7 +278,7 @@ async function confirmarRetirada(){
   try{
 
     const res = await fetch(
-      `https://fpss-backend.onrender.com/retirada/${pedidoAtual.codigo_pedido}`,
+      `https://api.festasaosebastiao.com.br/retirada/${pedidoAtual.codigo_pedido}`,
       {
         method:"POST"
       }
