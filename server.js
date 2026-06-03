@@ -18,15 +18,16 @@ const upload = multer({
 const app = express();
 
 //const vipRoutes = require("./vip.routes");
-
 /* =====================================================
    CORS MASTER
 ===================================================== */
 
-
-
-"https://festasaosebastiao.com.br",
-"https://www.festasaosebastiao.com.br",
+const allowedOrigins = [
+  "https://festasaosebastiao.com.br",
+  "https://www.festasaosebastiao.com.br",
+  "https://festa-sao-sebastiao.vercel.app",
+  "http://localhost:5500"
+];
 
 app.use(cors({
   origin: function (origin, callback) {
