@@ -113,6 +113,47 @@ function limparTelefone(telefone) {
   return String(telefone || "").replace(/\D/g, "");
 }
 
+function validarCPF(cpf) {
+  cpf = cpf.replace(/\D/g, "");
+
+  if (cpf.length !== 11) return false;
+
+  if (/^(\d)\1+$/.test(cpf)) return false;
+
+  let soma = 0;
+
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+
+  let resto = (soma * 10) % 11;
+
+  if (resto === 10 || resto === 11) {
+    resto = 0;
+  }
+
+  if (resto !== parseInt(cpf.charAt(9))) {
+    return false;
+  }
+
+  soma = 0;
+
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+
+  resto = (soma * 10) % 11;
+
+  if (resto === 10 || resto === 11) {
+    resto = 0;
+  }
+
+  if (resto !== parseInt(cpf.charAt(10))) {
+    return false;
+  }
+
+  return true;
+}
 /* =====================================================
    STATUS
 ===================================================== */
@@ -186,71 +227,69 @@ app.get("/config/preco/churrasco", async (req, res) => {
 ===================================================== */
 app.post("/criar-pix", async (req, res) => {
   try {
-    const {
-      nome,
-      sobrenome,
-      cpf,
-      telefone,
-      quantidade,
-      horario_retirada,
-      email
-    } = req.body;
+const {
+  nome,
+  sobrenome,
+  cpf,
+  telefone,
+  quantidade,
+  horario_retirada,
+  email,
 
-    if (!nome || !cpf || !quantidade) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Nome, CPF e quantidade são obrigatórios."
-      });
-    }
+  produto_codigo
+} = req.body;
 
-    const cpfLimpo = limparCPF(cpf);
-    const telefoneLimpo = limparTelefone(telefone);
+const cpfLimpo = limparCPF(cpf);
+const telefoneLimpo = limparTelefone(telefone);
 
-    if (cpfLimpo.length !== 11) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "CPF inválido."
-      });
-    }
+if (!validarCPF(cpfLimpo)) {
+  return res.status(400).json({
+    sucesso: false,
+    erro: "CPF inválido."
+  });
+}
 
-    const { data: configPreco, error: precoError } = await supabase
-      .from("configuracoes")
-      .select("valor")
-      .eq("chave", "CHU_PRECO")
-      .single();
+/* =====================================================
+   BUSCAR PRODUTO
+===================================================== */
 
-    if (precoError || !configPreco) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Preço do produto não configurado."
-      });
-    }
+const codigoProduto =
+  String(produto_codigo || "CHU")
+    .trim()
+    .toUpperCase();
 
-    const valorUnitario = Number(configPreco.valor);
+const { data: produto, error: produtoError } =
+  await supabase
+    .from("produtos")
+    .select("*")
+    .eq("codigo", codigoProduto)
+    .single();
 
-    if (!valorUnitario || valorUnitario <= 0) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Preço inválido na configuração."
-      });
-    }
+if (produtoError || !produto) {
 
-    const quantidadeNumerica = Number(quantidade);
+  return res.status(404).json({
+    sucesso: false,
+    erro: "Produto não encontrado."
+  });
+}
 
-    if (!quantidadeNumerica || quantidadeNumerica < 1) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Quantidade inválida."
-      });
-    }
+const produtoTipo = produto.codigo;
 
-    const total = quantidadeNumerica * valorUnitario;
+const precoUnitario =
+  Number(produto.preco || 0);
+
+const quantidadeNumerica =
+  Number(quantidade || 1);
+
+const total =
+  precoUnitario * quantidadeNumerica;
+
 
     /* =====================================================
        GERAR CÓDIGO OFICIAL
     ===================================================== */
     const anoEvento = "2027";
-    const produtoTipo = "CHU";
+    
 
     const { data: ultimoPedido } = await supabase
       .from("pedidos")
@@ -271,7 +310,8 @@ app.post("/criar-pix", async (req, res) => {
     const paymentData = {
       body: {
         transaction_amount: total,
-        description: `${codigoPedido} - Churrasco FPSS`,
+        description:
+  `${codigoPedido} - ${produto.nome}`,
         payment_method_id: "pix",
         payer: {
           email: email || "cliente@fpss.com",
@@ -298,6 +338,7 @@ const pedidoData = {
   email: email || null,
 
   produto_tipo: produtoTipo,
+  
   codigo_pedido: codigoPedido,
 
   quantidade: quantidadeNumerica,
@@ -1219,15 +1260,15 @@ app.post("/cliente-login", async (req, res) => {
       });
     }
 
-    const cpfLimpo = limparCPF(cpf);
-    const telefoneLimpo = limparTelefone(telefone);
+const cpfLimpo = limparCPF(cpf);
+const telefoneLimpo = limparTelefone(telefone);
 
-    if (cpfLimpo.length !== 11) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "CPF inválido."
-      });
-    }
+if (!validarCPF(cpfLimpo)) {
+  return res.status(400).json({
+    sucesso: false,
+    erro: "CPF inválido."
+  });
+}
 
     const { data, error } = await supabase
       .from("pedidos")

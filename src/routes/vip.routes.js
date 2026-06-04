@@ -5,7 +5,7 @@ const { createClient } = require("@supabase/supabase-js");
 // Inicializa o Supabase usando as variáveis de ambiente seguras do seu servidor
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// ROTA POST: https://fpss-backend.onrender.com/api/vip
+// ROTA POST: https://api.festasaosebastiao.com.br/api/vip
 
 // Substitua o início do router.post no seu vip.routes.js por isto:
 router.post("/", async (req, res) => {
