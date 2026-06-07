@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
+console.log("SUPABASE_URL:", !!process.env.SUPABASE_URL);
+console.log("SUPABASE_KEY:", !!process.env.SUPABASE_KEY);
+console.log("MP_TOKEN:", !!process.env.MERCADOPAGO_ACCESS_TOKEN);
 
 const { MercadoPagoConfig, Payment } = require("mercadopago");
 const { createClient } = require("@supabase/supabase-js");
@@ -26,9 +29,10 @@ const allowedOrigins = [
   "https://festasaosebastiao.com.br",
   "https://www.festasaosebastiao.com.br",
   "https://festa-sao-sebastiao.vercel.app",
-  "http://localhost:5500"
-];
 
+  "http://localhost:5500",
+  "http://localhost:3000"
+];
 app.use(cors({
   origin: function (origin, callback) {
     console.log("ORIGIN RECEBIDA:", origin);
@@ -1270,12 +1274,33 @@ if (!validarCPF(cpfLimpo)) {
   });
 }
 
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("cpf", cpfLimpo)
-      .order("id", { ascending: false });
+   const { data, error } = await supabase
+  .from("pedidos")
+  .select("*")
+  .eq("cpf", cpfLimpo)
+  .eq("telefone", telefoneLimpo)
+  .order("id", { ascending: false });
+/* =====================================================
+   BUSCAR PRODUTOS
+===================================================== */
 
+const { data: produtos } = await supabase
+  .from("produtos")
+  .select("codigo,nome,imagem");
+
+const pedidosEnriquecidos = data.map(pedido => {
+
+  const produto = produtos?.find(
+    p => p.codigo === pedido.produto_tipo
+  );
+
+  return {
+    ...pedido,
+    nome_produto: produto?.nome || pedido.produto_tipo,
+    imagem_produto: produto?.imagem || null
+  };
+
+});
     if (error || !data || data.length === 0) {
       return res.status(404).json({
         sucesso: false,
@@ -1290,7 +1315,7 @@ if (!validarCPF(cpfLimpo)) {
         cpf: data[0].cpf,
         telefone: data[0].telefone,
         total_pedidos: data.length,
-        pedidos: data
+        pedidos: pedidosEnriquecidos
       }
     });
 
