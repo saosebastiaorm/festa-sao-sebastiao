@@ -28,7 +28,9 @@ const app = express();
 const allowedOrigins = [
   "https://festasaosebastiao.com.br",
   "https://www.festasaosebastiao.com.br",
+
   "https://festa-sao-sebastiao.vercel.app",
+  "https://festa-sao-sebastiao-5qrm0ce5e-saosebastiaorm.vercel.app",
 
   "http://localhost:5500",
   "http://localhost:3000"
@@ -39,9 +41,12 @@ app.use(cors({
 
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+if (
+  allowedOrigins.includes(origin) ||
+  origin.includes("vercel.app")
+) {
+  return callback(null, true);
+}
 
     return callback(new Error("Origem não permitida pelo CORS"));
   },
