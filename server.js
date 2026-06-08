@@ -360,6 +360,13 @@ const pedidoData = {
 
   payment_id: pagamento.id,
 
+
+pix_copia_cola:
+  pagamento.point_of_interaction?.transaction_data?.qr_code || null,
+
+qr_code:
+  pagamento.point_of_interaction?.transaction_data?.qr_code_base64 || null,
+
   status_pagamento: "pendente",
   status_retirada: "nao_retirado",
 
@@ -523,11 +530,18 @@ app.post("/webhook/mercadopago", async (req, res) => {
    VERIFICAR PAGAMENTO MERCADO PAGO
 ===================================================== */
 app.get("/verificar-pagamento/:paymentId", async (req, res) => {
+  
+  
   try {
 
     const { paymentId } = req.params;
 
     const pagamento = await payment.get({ id: paymentId });
+
+    console.log(
+      "PAGAMENTO MP:",
+      JSON.stringify(pagamento, null, 2)
+    );
 
     const statusPagamento = pagamento.status;
 
