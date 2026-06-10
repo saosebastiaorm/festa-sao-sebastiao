@@ -440,7 +440,7 @@ txid: pagamento.txid,
 
 pix_copia_cola: pagamento.pixCopiaECola || null,
 
-qr_code: pagamento.location || pagamento.pixCopiaECola || null,
+qr_code: pagamento.pixCopiaECola || null,
 
   status_pagamento: "pendente",
   status_retirada: "nao_retirado",
@@ -480,9 +480,9 @@ return res.status(200).json({
 
   total,
 
-pix_copia_cola: pagamento.pixCopiaECola || null,
+  pix_copia_cola: pagamento.pixCopiaECola || null,
 
-qr_code: pagamento.location || pagamento.pixCopiaECola || null,
+  qr_code: pagamento.pixCopiaECola || null,
 
   pedido: pedidoSalvo || null
 });
