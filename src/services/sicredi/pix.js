@@ -3,15 +3,18 @@ const { v4: uuidv4 } = require("uuid");
 
 const { getAccessToken, agent } = require("./auth");
 
-async function criarPix(valor, nome, cidade) {
-
+async function criarPix(valor, nome, cpf) {
+    console.log("VALOR RECEBIDO NO criarPix:", valor);
     const token = await getAccessToken();
 
-    const txid = uuidv4().replace(/-/g, "").substring(0, 26);
+    const txid = uuidv4()
+        .replace(/-/g, "")
+        .substring(0, 26);
 
     const response = await axios.put(
         `${process.env.SICREDI_BASE_URL}/api/v2/cob/${txid}`,
         {
+
             calendario: {
                 expiracao: 3600
             },
@@ -25,18 +28,25 @@ async function criarPix(valor, nome, cidade) {
             solicitacaoPagador: "Pagamento FPSS 2027",
 
             devedor: {
-                nome,
-                cidade
+                cpf,
+                nome
             }
+
         },
+
         {
             headers: {
                 Authorization: `Bearer ${token}`
             },
+
             httpsAgent: agent
         }
-    );
 
+    );
+console.log(
+    "RETORNO SICREDI:",
+    JSON.stringify(response.data, null, 2)
+);
     return response.data;
 }
 

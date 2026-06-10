@@ -17,6 +17,21 @@ const upload = multer({
   }
 });
 
+/* =====================================================
+   SICREDI
+===================================================== */
+
+const {
+  getAccessToken
+} = require("./src/services/sicredi/auth");
+
+const {
+  criarPix
+} = require("./src/services/sicredi/pix");
+
+const {
+  consultarPix
+} = require("./src/services/sicredi/consultarPix");
 
 const app = express();
 
@@ -96,6 +111,50 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
+
+/* =====================================================
+   TESTE TOKEN SICREDI
+===================================================== */
+
+
+console.log("ROTA SICREDI REGISTRADA");
+app.get("/sicredi/token", async (req, res) => {
+console.log(">>> ROTA /sicredi/token ACIONADA");
+  try {
+
+    const token = await getAccessToken();
+
+    return res.json({
+      sucesso: true,
+      access_token: token
+    });
+
+  } catch (error) {
+
+    console.error("ERRO SICREDI:");
+
+    if (error.response) {
+
+      console.error(error.response.status);
+      console.error(error.response.data);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: error.response.data
+      });
+
+    }
+
+    console.error(error.message);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
+
+  }
+
+});
 
 /* =====================================================
    MERCADO PAGO
@@ -191,7 +250,7 @@ app.get("/api", (req, res) => {
       preco_churrasco: "/config/preco/churrasco",
       criar_pix: "/criar-pix",
       webhook_mercadopago: "/webhook/mercadopago",
-      verificar_pagamento: "/verificar-pagamento/:paymentId",
+      verificar_pagamento: /verificar-pagamento/:txid
       consultar_payment_id: "/pedido/:orderId",
       buscar_codigo: "/pedido/codigo/:codigoPedido",
       buscar_cpf: "/pedido/cpf/:cpf",
@@ -318,7 +377,7 @@ const total =
    /* =====================================================
    MERCADO PAGO
     ===================================================== */
-
+/*
     const paymentData = {
       body: {
         transaction_amount: total,
@@ -338,6 +397,23 @@ const total =
     };
 
     const pagamento = await payment.create(paymentData);
+//*
+
+
+/* =====================================================
+   SICREDI PIX
+===================================================== */
+
+const pagamento = await criarPix(
+
+  total,
+
+  `${nome} ${sobrenome || ""}`.trim(),
+
+  cpfLimpo
+
+);
+
 
    /* =====================================================
    SALVAR PEDIDO
@@ -358,14 +434,13 @@ const pedidoData = {
 
   valor_total: total,
 
-  payment_id: pagamento.id,
+payment_id: pagamento.txid,
 
+txid: pagamento.txid,
 
-pix_copia_cola:
-  pagamento.point_of_interaction?.transaction_data?.qr_code || null,
+pix_copia_cola: pagamento.pixCopiaECola || null,
 
-qr_code:
-  pagamento.point_of_interaction?.transaction_data?.qr_code_base64 || null,
+qr_code: pagamento.location || pagamento.pixCopiaECola || null,
 
   status_pagamento: "pendente",
   status_retirada: "nao_retirado",
@@ -397,19 +472,18 @@ return res.status(200).json({
   sucesso: true,
   mensagem: "PIX gerado com sucesso.",
 
-  payment_id: pagamento.id,
+  txid: pagamento.txid,
+
   codigo_pedido: codigoPedido,
+
   produto_tipo: produtoTipo,
 
   total,
 
-  qr_code:
-    pagamento.point_of_interaction?.transaction_data?.qr_code || null,
+pix_copia_cola: pagamento.pixCopiaECola || null,
 
-  qr_code_base64:
-    pagamento.point_of_interaction?.transaction_data?.qr_code_base64 || null,
+qr_code: pagamento.location || pagamento.pixCopiaECola || null,
 
-  /* NÃO ENVIAR RETIRADA ANTES DO PAGAMENTO */
   pedido: pedidoSalvo || null
 });
 
@@ -536,19 +610,30 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
 
     const { paymentId } = req.params;
 
-    const pagamento = await payment.get({ id: paymentId });
+   /* const pagamento = await payment.get({ id: paymentId });
 
     console.log(
       "PAGAMENTO MP:",
       JSON.stringify(pagamento, null, 2)
     );
 
+    const statusPagamento = pagamento.status;*/
+
+
+    const pagamento = await consultarPix(paymentId);
+
+    console.log(
+      "PAGAMENTO SICREDI:",
+      JSON.stringify(pagamento, null, 2)
+    );
+
     const statusPagamento = pagamento.status;
+
 
     /* =========================================
        PAGAMENTO APROVADO
     ========================================= */
-    if (statusPagamento === "approved") {
+    if (statusPagamento === "CONCLUIDA") {
 
       const { data: pedido, error: pedidoError } = await supabase
         .from("pedidos")
@@ -641,7 +726,49 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
     });
   }
 });
+/* =====================================================
+   RECUPERAR PIX DE PEDIDOS ANTIGOS
+===================================================== */
+app.get("/recuperar-pix/:txid", async (req, res) => {
 
+    try {
+
+        const { txid } = req.params;
+
+        const pagamento = await consultarPix(txid);
+
+        return res.json({
+
+            sucesso: true,
+
+            txid,
+
+            pix_copia_cola:
+                pagamento.pixCopiaECola || null,
+
+            qr_code:
+                pagamento.pixCopiaECola || null
+
+        });
+
+    } catch (erro) {
+
+        console.error(
+            "ERRO RECUPERAR PIX:",
+            erro.response?.data || erro.message
+        );
+
+        return res.status(500).json({
+
+            sucesso: false,
+
+            erro: erro.message
+
+        });
+
+    }
+
+});
 
 
 /* =====================================================
@@ -1363,7 +1490,63 @@ const PORT = process.env.PORT || 3000;
    BLOCO DE ALTA SEGURANÇA - ROTA VIP DEFINITIVA
 ===================================================== */
 
+/* =====================================================
+   TESTE CONSULTA PIX SICREDI
+===================================================== */
+
+app.get("/sicredi/teste-consulta/:txid", async (req, res) => {
+
+  try {
+
+    const { txid } = req.params;
+
+    const resultado = await consultarPix(txid);
+
+    return res.json(resultado);
+
+  } catch (erro) {
+
+    console.error(
+      erro.response?.data || erro.message
+    );
+
+    return res.status(500).json(
+      erro.response?.data || {
+        erro: erro.message
+      }
+    );
+
+  }
+
+});
+
+
 
 app.listen(PORT, () => {
   console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
+});
+
+
+app.get("/sicredi/teste-pix", async (req, res) => {
+
+    try {
+
+        const pix = await criarPix(
+            0.15,
+            "Marcos Belgamazzi",
+            "71117881253"
+        );
+
+        res.json(pix);
+
+    } catch (e) {
+
+        console.error(e.response?.data || e.message);
+
+        res.status(500).json(
+            e.response?.data || e.message
+        );
+
+    }
+
 });
