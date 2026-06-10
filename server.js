@@ -4,9 +4,9 @@ const path = require("path");
 require("dotenv").config();
 console.log("SUPABASE_URL:", !!process.env.SUPABASE_URL);
 console.log("SUPABASE_KEY:", !!process.env.SUPABASE_KEY);
-console.log("MP_TOKEN:", !!process.env.MERCADOPAGO_ACCESS_TOKEN);
 
-const { MercadoPagoConfig, Payment } = require("mercadopago");
+
+
 const { createClient } = require("@supabase/supabase-js");
 
 const multer = require("multer");
@@ -156,22 +156,7 @@ console.log(">>> ROTA /sicredi/token ACIONADA");
 
 });
 
-/* =====================================================
-   MERCADO PAGO
-===================================================== */
-if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-  console.error("ERRO: Token Mercado Pago não encontrado.");
-  process.exit(1);
-}
 
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN.trim(),
-  options: {
-    timeout: 10000
-  }
-});
-
-const payment = new Payment(client);
 
 /* =====================================================
    FUNÇÕES AUXILIARES
@@ -250,7 +235,7 @@ app.get("/api", (req, res) => {
       preco_churrasco: "/config/preco/churrasco",
       criar_pix: "/criar-pix",
       webhook_mercadopago: "/webhook/mercadopago",
-      verificar_pagamento: /verificar-pagamento/:txid
+      verificar_pagamento: "/verificar-pagamento/:txid",
       consultar_payment_id: "/pedido/:orderId",
       buscar_codigo: "/pedido/codigo/:codigoPedido",
       buscar_cpf: "/pedido/cpf/:cpf",
@@ -374,31 +359,6 @@ const total =
 
     const codigoPedido = `FPSS-${anoEvento}-${produtoTipo}-${String(numeroSequencial).padStart(6, "0")}`;
 
-   /* =====================================================
-   MERCADO PAGO
-    ===================================================== */
-/*
-    const paymentData = {
-      body: {
-        transaction_amount: total,
-        description:
-  `${codigoPedido} - ${produto.nome}`,
-        payment_method_id: "pix",
-        payer: {
-          email: email || "cliente@fpss.com",
-          first_name: nome,
-          last_name: sobrenome || "",
-          identification: {
-            type: "CPF",
-            number: cpfLimpo
-          }
-        }
-      }
-    };
-
-    const pagamento = await payment.create(paymentData);
-//*
-
 
 /* =====================================================
    SICREDI PIX
@@ -434,7 +394,6 @@ const pedidoData = {
 
   valor_total: total,
 
-payment_id: pagamento.txid,
 
 txid: pagamento.txid,
 
@@ -469,22 +428,24 @@ if (supabaseError) {
 }
 
 return res.status(200).json({
-  sucesso: true,
-  mensagem: "PIX gerado com sucesso.",
+    sucesso: true,
+    mensagem: "PIX gerado com sucesso.",
 
-  txid: pagamento.txid,
+    txid: pagamento.txid,
 
-  codigo_pedido: codigoPedido,
+    codigo_pedido: codigoPedido,
 
-  produto_tipo: produtoTipo,
+    produto_tipo: produtoTipo,
 
-  total,
+    total,
 
-  pix_copia_cola: pagamento.pixCopiaECola || null,
+    pix_copia_cola: pagamento.pixCopiaECola,
 
-  qr_code: pagamento.pixCopiaECola || null,
+    qr_code: pagamento.pixCopiaECola,
 
-  pedido: pedidoSalvo || null
+    qr_code_base64: pagamento.qrCodeBase64,
+
+    pedido: pedidoSalvo
 });
 
 } catch (erro) {
@@ -551,76 +512,17 @@ app.post("/api/vip", async (req, res) => {
   }
 });
 
-/* =====================================================
-   WEBHOOK MERCADO PAGO
-===================================================== */
-app.post("/webhook/mercadopago", async (req, res) => {
-  try {
-    console.log("Webhook recebido:", req.body);
-
-    const paymentId =
-      req.body?.data?.id ||
-      req.body?.resource?.split("/")?.pop();
-
-    if (!paymentId) {
-      return res.sendStatus(200);
-    }
-    let novoStatus = "pendente";
-
-    const pagamento = await payment.get({
-      id: paymentId
-    });
-
-    if (!pagamento || !pagamento.status) {
-      return res.sendStatus(200);
-    }
-
-  
-    if (pagamento.status === "approved") {
-      novoStatus = "pago";
-    }
-
-    await supabase
-      .from("pedidos")
-      .update({
-        status_pagamento: novoStatus,
-        data_pagamento: novoStatus === "pago" ? new Date() : null
-      })
-      .eq("payment_id", paymentId);
-
-    console.log(
-      `Pagamento ${paymentId} atualizado para ${novoStatus}`
-    );
-
-    return res.sendStatus(200);
-
-  } catch (erro) {
-    console.error("Erro webhook:", erro);
-    return res.sendStatus(500);
-  }
-});
 
 /* =====================================================
-   VERIFICAR PAGAMENTO MERCADO PAGO
+   VERIFICAR PAGAMENTO 
 ===================================================== */
-app.get("/verificar-pagamento/:paymentId", async (req, res) => {
+app.get("/verificar-pagamento/:txid", async (req, res) => {
   
   
   try {
 
-    const { paymentId } = req.params;
-
-   /* const pagamento = await payment.get({ id: paymentId });
-
-    console.log(
-      "PAGAMENTO MP:",
-      JSON.stringify(pagamento, null, 2)
-    );
-
-    const statusPagamento = pagamento.status;*/
-
-
-    const pagamento = await consultarPix(paymentId);
+    const { txid } = req.params;
+    const pagamento = await consultarPix(txid);
 
     console.log(
       "PAGAMENTO SICREDI:",
@@ -638,7 +540,7 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
       const { data: pedido, error: pedidoError } = await supabase
         .from("pedidos")
         .select("*")
-        .eq("payment_id", paymentId)
+        .eq("payment_id", txid)
         .single();
 
       if (pedidoError || !pedido) {
@@ -670,7 +572,7 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
             token_retirada: tokenRetirada,
             qr_code_retirada: qrCodeRetirada
           })
-          .eq("payment_id", paymentId);
+          .eq("payment_id", txid);
 
         if (updateError) {
           console.error("Erro ao atualizar retirada:", updateError);
@@ -685,12 +587,12 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
             status: "pago",
             data_pagamento: new Date()
           })
-          .eq("payment_id", paymentId);
+          .eq("payment_id", txid);
       }
 
       return res.json({
         sucesso: true,
-        payment_id: paymentId,
+        payment_id: paymenttxidId,
         status: statusPagamento,
         status_interno: "pago",
 
@@ -707,11 +609,11 @@ app.get("/verificar-pagamento/:paymentId", async (req, res) => {
       .update({
         status_pagamento: "pendente"
       })
-      .eq("payment_id", paymentId);
+      .eq("payment_id", txid);
 
     return res.json({
       sucesso: true,
-      payment_id: paymentId,
+      payment_id: txid,
       status: statusPagamento,
       status_interno: "pendente"
     });
