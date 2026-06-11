@@ -427,7 +427,9 @@ if (supabaseError) {
 }
 
 return res.status(200).json({
+
     sucesso: true,
+
     mensagem: "PIX gerado com sucesso.",
 
     txid: pagamento.txid,
@@ -436,17 +438,24 @@ return res.status(200).json({
 
     produto_tipo: produtoTipo,
 
-    total,
+    produto_codigo: produto.codigo,
+
+    produto_nome: produto.nome,
+
+    produto_imagem: produto.imagem,
+
+    quantidade: quantidadeNumerica,
+
+    total: total,
 
     pix_copia_cola: pagamento.pixCopiaECola,
 
-    pix_copia_cola: pagamento.pixCopiaECola,
-qr_code: pagamento.pixCopiaECola,
-qr_code_base64: pagamento.qrCodeBase64,
+    qr_code: pagamento.pixCopiaECola,
 
     qr_code_base64: pagamento.qrCodeBase64,
 
     pedido: pedidoSalvo
+
 });
 
 } catch (erro) {
