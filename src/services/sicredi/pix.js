@@ -4,7 +4,14 @@ const { v4: uuidv4 } = require("uuid");
 const { getAccessToken, agent } = require("./auth");
 
 async function criarPix(valor, nome, cpf) {
-    console.log("VALOR RECEBIDO NO criarPix:", valor);
+
+    console.log("======================================");
+    console.log("INICIANDO CRIAÇÃO DO PIX SICREDI");
+    console.log("Valor:", valor);
+    console.log("Nome :", nome);
+    console.log("CPF  :", cpf);
+    console.log("======================================");
+
     const token = await getAccessToken();
 
     const txid = uuidv4()
@@ -12,7 +19,9 @@ async function criarPix(valor, nome, cpf) {
         .substring(0, 26);
 
     const response = await axios.put(
+
         `${process.env.SICREDI_BASE_URL}/api/v2/cob/${txid}`,
+
         {
 
             calendario: {
@@ -35,50 +44,101 @@ async function criarPix(valor, nome, cpf) {
         },
 
         {
+
             headers: {
                 Authorization: `Bearer ${token}`
             },
 
             httpsAgent: agent
+
         }
 
     );
-console.log(
-    "RETORNO SICREDI:",
-    JSON.stringify(response.data, null, 2)
-);
 
-// Obtém o QR Code dinâmico do endpoint loc
+    console.log(
+        "RETORNO COBRANÇA SICREDI:"
+    );
 
-const urlQr =
-    response.data.loc.location.startsWith("http")
-        ? response.data.loc.location
-        : `https://${response.data.loc.location}`;
+    console.log(
+        JSON.stringify(response.data, null, 2)
+    );
 
-console.log("URL QR:", urlQr);
+    if (
+        !response.data.loc ||
+        !response.data.loc.location
+    ) {
 
-const qrResponse = await axios.get(
-    urlQr,
-    {
-        headers: {
-            Authorization: `Bearer ${token}`
-        },
-        httpsAgent: agent
+        console.error(
+            "ERRO: loc.location não retornado pelo Sicredi."
+        );
+
+        return {
+            txid: response.data.txid
+        };
+
     }
-);
-console.log(
-    "QR RESPONSE:",
-    JSON.stringify(qrResponse.data, null, 2)
-);
-return {
-    txid: response.data.txid,
 
-    pixCopiaECola:
-        qrResponse.data.qrcode,
+    const urlQr =
+        response.data.loc.location.startsWith("http")
+            ? response.data.loc.location
+            : `https://${response.data.loc.location}`;
 
-    qrCodeBase64:
-        qrResponse.data.imagemQrcode
-};
+    console.log("URL QR:");
+    console.log(urlQr);
+
+    const qrResponse = await axios.get(
+
+        urlQr,
+
+        {
+
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+
+            httpsAgent: agent
+
+        }
+
+    );
+
+    console.log("======================================");
+    console.log("QR RESPONSE COMPLETO:");
+    console.log(
+        JSON.stringify(qrResponse.data, null, 2)
+    );
+    console.log("======================================");
+
+    return {
+
+        txid: response.data.txid,
+
+        pixCopiaECola:
+            qrResponse.data.qrcode ||
+
+            qrResponse.data.pixCopiaECola ||
+
+            qrResponse.data.pix ||
+
+            qrResponse.data.emv ||
+
+            qrResponse.data.payload ||
+
+            null,
+
+        qrCodeBase64:
+            qrResponse.data.imagemQrcode ||
+
+            qrResponse.data.imagem ||
+
+            qrResponse.data.qrCode ||
+
+            qrResponse.data.base64 ||
+
+            null
+
+    };
+
 }
 
 module.exports = {
