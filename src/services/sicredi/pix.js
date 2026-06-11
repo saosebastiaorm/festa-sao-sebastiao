@@ -78,66 +78,27 @@ async function criarPix(valor, nome, cpf) {
 
     }
 
-    const urlQr =
-        response.data.loc.location.startsWith("http")
-            ? response.data.loc.location
-            : `https://${response.data.loc.location}`;
+ // ======================================
+// O Sicredi já retorna o PIX Copia e Cola
+// diretamente na criação da cobrança.
+// Não é necessário consultar o endpoint
+// loc.location para obter o QR.
+// ======================================
 
-    console.log("URL QR:");
-    console.log(urlQr);
+return {
 
-    const qrResponse = await axios.get(
+    txid: response.data.txid,
 
-        urlQr,
+    // Código PIX Copia e Cola
+    pixCopiaECola:
+        response.data.pixCopiaECola || null,
 
-        {
+    // Vamos deixar nulo e gerar o QR Code
+    // diretamente no frontend utilizando
+    // a biblioteca QRCode.js.
+    qrCodeBase64: null
 
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-
-            httpsAgent: agent
-
-        }
-
-    );
-
-    console.log("======================================");
-    console.log("QR RESPONSE COMPLETO:");
-    console.log(
-        JSON.stringify(qrResponse.data, null, 2)
-    );
-    console.log("======================================");
-
-    return {
-
-        txid: response.data.txid,
-
-        pixCopiaECola:
-            qrResponse.data.qrcode ||
-
-            qrResponse.data.pixCopiaECola ||
-
-            qrResponse.data.pix ||
-
-            qrResponse.data.emv ||
-
-            qrResponse.data.payload ||
-
-            null,
-
-        qrCodeBase64:
-            qrResponse.data.imagemQrcode ||
-
-            qrResponse.data.imagem ||
-
-            qrResponse.data.qrCode ||
-
-            qrResponse.data.base64 ||
-
-            null
-
-    };
+};
 
 }
 
