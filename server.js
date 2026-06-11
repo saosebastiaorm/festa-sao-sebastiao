@@ -562,9 +562,8 @@ if (pedidoError || !pedido) {
       /* GERAR RETIRADA SE NÃO EXISTIR */
       if (!tokenRetirada || !qrCodeRetirada) {
 
-        tokenRetirada =
-          `RET-${pedido.codigo_pedido}-${Date.now()}`
-            .replace(/\s/g, "");
+tokenRetirada = `RET-${pedido.codigo_pedido}-${Date.now()}`
+  .replaceAll(" ", "");
 
         qrCodeRetirada =
           `${pedido.codigo_pedido}|${pedido.cpf}|${tokenRetirada}`;
