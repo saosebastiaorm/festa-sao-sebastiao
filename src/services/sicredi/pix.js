@@ -66,7 +66,10 @@ const qrResponse = await axios.get(
         httpsAgent: agent
     }
 );
-
+console.log(
+    "QR RESPONSE:",
+    JSON.stringify(qrResponse.data, null, 2)
+);
 return {
     txid: response.data.txid,
 
