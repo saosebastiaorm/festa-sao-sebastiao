@@ -49,8 +49,16 @@ console.log(
 );
 
 // Obtém o QR Code dinâmico do endpoint loc
+
+const urlQr =
+    response.data.loc.location.startsWith("http")
+        ? response.data.loc.location
+        : `https://${response.data.loc.location}`;
+
+console.log("URL QR:", urlQr);
+
 const qrResponse = await axios.get(
-    response.data.loc.location,
+    urlQr,
     {
         headers: {
             Authorization: `Bearer ${token}`
