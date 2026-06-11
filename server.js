@@ -234,9 +234,8 @@ app.get("/api", (req, res) => {
       api: "/api",
       preco_churrasco: "/config/preco/churrasco",
       criar_pix: "/criar-pix",
-      webhook_mercadopago: "/webhook/mercadopago",
       verificar_pagamento: "/verificar-pagamento/:txid",
-      consultar_payment_id: "/pedido/:orderId",
+      "consultar_txid": "/pedido/txid/:txid",
       buscar_codigo: "/pedido/codigo/:codigoPedido",
       buscar_cpf: "/pedido/cpf/:cpf",
       confirmar_retirada: "/retirada/:codigoPedido",
@@ -441,7 +440,9 @@ return res.status(200).json({
 
     pix_copia_cola: pagamento.pixCopiaECola,
 
-    qr_code: pagamento.pixCopiaECola,
+    pix_copia_cola: pagamento.pixCopiaECola,
+qr_code: pagamento.pixCopiaECola,
+qr_code_base64: pagamento.qrCodeBase64,
 
     qr_code_base64: pagamento.qrCodeBase64,
 
@@ -537,18 +538,23 @@ app.get("/verificar-pagamento/:txid", async (req, res) => {
     ========================================= */
     if (statusPagamento === "CONCLUIDA") {
 
-      const { data: pedido, error: pedidoError } = await supabase
-        .from("pedidos")
-        .select("*")
-        .eq("payment_id", txid)
-        .single();
+const { data: pedido, error: pedidoError } = await supabase
+  .from("pedidos")
+  .select("*")
+  .eq("txid", txid)
+  .single();
 
-      if (pedidoError || !pedido) {
-        return res.status(404).json({
-          sucesso: false,
-          erro: "Pedido não encontrado."
-        });
-      }
+console.log("TXID RECEBIDO:", txid);
+console.log("PEDIDO:", pedido);
+console.log("ERRO SUPABASE:", pedidoError);
+
+if (pedidoError || !pedido) {
+  return res.status(404).json({
+    sucesso: false,
+    erro: "Pedido não encontrado.",
+    detalhe: pedidoError
+  });
+}
 
       let tokenRetirada = pedido.token_retirada;
       let qrCodeRetirada = pedido.qr_code_retirada;
@@ -565,14 +571,14 @@ app.get("/verificar-pagamento/:txid", async (req, res) => {
 
         const { error: updateError } = await supabase
           .from("pedidos")
-          .update({
-            status_pagamento: "pago",
-            status: "pago",
-            data_pagamento: new Date(),
-            token_retirada: tokenRetirada,
-            qr_code_retirada: qrCodeRetirada
-          })
-          .eq("payment_id", txid);
+.update({
+  status_pagamento: "pago",
+  status: "pago",
+  data_pagamento: new Date(),
+  token_retirada: tokenRetirada,
+  qr_code_retirada: qrCodeRetirada
+})
+.eq("txid", txid)
 
         if (updateError) {
           console.error("Erro ao atualizar retirada:", updateError);
@@ -582,17 +588,17 @@ app.get("/verificar-pagamento/:txid", async (req, res) => {
 
         await supabase
           .from("pedidos")
-          .update({
-            status_pagamento: "pago",
-            status: "pago",
-            data_pagamento: new Date()
-          })
-          .eq("payment_id", txid);
+.update({
+  status_pagamento: "pago",
+  status: "pago",
+  data_pagamento: new Date()
+})
+.eq("txid", txid)
       }
 
       return res.json({
         sucesso: true,
-        payment_id: paymenttxidId,
+        txid: txid,
         status: statusPagamento,
         status_interno: "pago",
 
@@ -606,14 +612,14 @@ app.get("/verificar-pagamento/:txid", async (req, res) => {
     ========================================= */
     await supabase
       .from("pedidos")
-      .update({
-        status_pagamento: "pendente"
-      })
-      .eq("payment_id", txid);
+.update({
+  status_pagamento: "pendente"
+})
+.eq("txid", txid)
 
     return res.json({
       sucesso: true,
-      payment_id: txid,
+      txid: txid,
       status: statusPagamento,
       status_interno: "pendente"
     });
@@ -683,7 +689,7 @@ app.get("/pedido/:orderId", async (req, res) => {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .eq("payment_id", orderId)
+      eq("txid", txid)
       .single();
 
     if (error || !data) {

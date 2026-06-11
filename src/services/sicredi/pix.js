@@ -47,7 +47,27 @@ console.log(
     "RETORNO SICREDI:",
     JSON.stringify(response.data, null, 2)
 );
-    return response.data;
+
+// Obtém o QR Code dinâmico do endpoint loc
+const qrResponse = await axios.get(
+    response.data.loc.location,
+    {
+        headers: {
+            Authorization: `Bearer ${token}`
+        },
+        httpsAgent: agent
+    }
+);
+
+return {
+    txid: response.data.txid,
+
+    pixCopiaECola:
+        qrResponse.data.qrcode,
+
+    qrCodeBase64:
+        qrResponse.data.imagemQrcode
+};
 }
 
 module.exports = {
