@@ -604,15 +604,26 @@ tokenRetirada = `RET-${pedido.codigo_pedido}-${Date.now()}`
 .eq("txid", txid)
       }
 
-      return res.json({
-        sucesso: true,
-        txid: txid,
-        status: statusPagamento,
-        status_interno: "pago",
+return res.json({
+  sucesso: true,
 
-        token_retirada: tokenRetirada,
-        qr_code_retirada: qrCodeRetirada
-      });
+  txid: txid,
+
+  status: statusPagamento,
+
+  status_interno: "pago",
+
+  created_at: pedido.created_at,
+
+  updated_at: new Date().toISOString(),
+
+  data_pagamento:
+    pedido.data_pagamento || new Date().toISOString(),
+
+  token_retirada: tokenRetirada,
+
+  qr_code_retirada: qrCodeRetirada
+});
     }
 
     /* =========================================
