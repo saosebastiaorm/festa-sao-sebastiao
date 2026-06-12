@@ -2,9 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
-console.log("SUPABASE_URL:", !!process.env.SUPABASE_URL);
-console.log("SUPABASE_KEY:", !!process.env.SUPABASE_KEY);
-
 
 
 const { createClient } = require("@supabase/supabase-js");
@@ -55,7 +52,7 @@ const allowedOrigins = [
 ];
 app.use(cors({
   origin: function (origin, callback) {
-    console.log("ORIGIN RECEBIDA:", origin);
+    
 
     if (!origin) return callback(null, true);
 
@@ -117,9 +114,8 @@ const supabase = createClient(
 ===================================================== */
 
 
-console.log("ROTA SICREDI REGISTRADA");
 app.get("/sicredi/token", async (req, res) => {
-console.log(">>> ROTA /sicredi/token ACIONADA");
+
   try {
 
     const token = await getAccessToken();
@@ -225,57 +221,51 @@ app.get("/", (req, res) => {
    API STATUS
 ===================================================== */
 app.get("/api", (req, res) => {
+
   res.json({
+
     status: "API ONLINE",
+
     sistema: "FPSS BACKEND",
+
     ambiente: process.env.NODE_ENV || "development",
+
     rotas: {
+
       status: "/",
+
       api: "/api",
-      preco_churrasco: "/config/preco/churrasco",
+
+      config_produto: "/produto/:codigo",
+
       criar_pix: "/criar-pix",
+
       verificar_pagamento: "/verificar-pagamento/:txid",
-      "consultar_txid": "/pedido/txid/:txid",
+
+      consultar_txid: "/pedido/:orderId",
+
       buscar_codigo: "/pedido/codigo/:codigoPedido",
+
       buscar_cpf: "/pedido/cpf/:cpf",
+
       confirmar_retirada: "/retirada/:codigoPedido",
+
       admin_dashboard: "/admin/dashboard",
+
       admin_pedidos: "/admin/pedidos",
+
       cliente_login: "/cliente-login"
+
     }
+
   });
+
 });
 
 /* =====================================================
    CONFIG PREÇO CHURRASCO
 ===================================================== */
-app.get("/config/preco/churrasco", async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("configuracoes")
-      .select("valor")
-      .eq("chave", "CHU_PRECO")
-      .single();
 
-    if (error || !data) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Preço não encontrado."
-      });
-    }
-
-    return res.json({
-      sucesso: true,
-      valor: Number(data.valor)
-    });
-
-  } catch (erro) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao carregar preço."
-    });
-  }
-});
 
 /* =====================================================
    CRIAR PIX + REGISTRAR PEDIDO
@@ -309,9 +299,18 @@ if (!validarCPF(cpfLimpo)) {
 ===================================================== */
 
 const codigoProduto =
-  String(produto_codigo || "CHU")
+  String(produto_codigo || "")
     .trim()
     .toUpperCase();
+
+if (!codigoProduto) {
+
+  return res.status(400).json({
+    sucesso: false,
+    erro: "Produto não informado."
+  });
+
+}
 
 const { data: produto, error: produtoError } =
   await supabase
@@ -398,10 +397,11 @@ txid: pagamento.txid,
 
 pix_copia_cola: pagamento.pixCopiaECola || null,
 
-qr_code: pagamento.pixCopiaECola || null,
+
 
   status_pagamento: "pendente",
-  status_retirada: "nao_retirado",
+
+status_retirada: "pendente",
 
   /* IMPORTANTE:
      QR/TOKEN DE RETIRADA NÃO DEVEM SER LIBERADOS AINDA.
@@ -443,14 +443,15 @@ return res.status(200).json({
     produto_nome: produto.nome,
 
     produto_imagem: produto.imagem,
+    produto_descricao: produto.descricao,
+
+produto_preco_unitario: precoUnitario,
 
     quantidade: quantidadeNumerica,
 
     total: total,
 
     pix_copia_cola: pagamento.pixCopiaECola,
-
-    qr_code: pagamento.pixCopiaECola,
 
     qr_code_base64: pagamento.qrCodeBase64,
 
@@ -534,10 +535,7 @@ app.get("/verificar-pagamento/:txid", async (req, res) => {
     const { txid } = req.params;
     const pagamento = await consultarPix(txid);
 
-    console.log(
-      "PAGAMENTO SICREDI:",
-      JSON.stringify(pagamento, null, 2)
-    );
+
 
     const statusPagamento = pagamento.status;
 
@@ -553,9 +551,7 @@ const { data: pedido, error: pedidoError } = await supabase
   .eq("txid", txid)
   .single();
 
-console.log("TXID RECEBIDO:", txid);
-console.log("PEDIDO:", pedido);
-console.log("ERRO SUPABASE:", pedidoError);
+
 
 if (pedidoError || !pedido) {
   return res.status(404).json({
@@ -673,8 +669,7 @@ app.get("/recuperar-pix/:txid", async (req, res) => {
             pix_copia_cola:
                 pagamento.pixCopiaECola || null,
 
-            qr_code:
-                pagamento.pixCopiaECola || null
+
 
         });
 
@@ -703,13 +698,13 @@ app.get("/recuperar-pix/:txid", async (req, res) => {
 ===================================================== */
 app.get("/pedido/:orderId", async (req, res) => {
   try {
-    const { orderId } = req.params;
+   const { orderId } = req.params;
 
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      eq("txid", txid)
-      .single();
+const { data, error } = await supabase
+  .from("pedidos")
+  .select("*")
+  .eq("txid", orderId)
+  .single();
 
     if (error || !data) {
       return res.status(404).json({
@@ -999,8 +994,11 @@ app.get("/produtos", async (req, res) => {
 app.get("/produto/:codigo", async (req, res) => {
   try {
 
-    const codigo = String(req.params.codigo || "").toUpperCase();
-
+ 
+const codigo =
+    String(req.params.codigo || "")
+        .trim()
+        .toUpperCase();
     const { data, error } = await supabase
       .from("produtos")
       .select("*")
@@ -1068,7 +1066,7 @@ app.get("/admin/produtos", async (req, res) => {
    ADMIN PRODUTOS - CRIAR / ATUALIZAR
 ===================================================== */
 app.post("/admin/produtos", async (req, res) => {
-  console.log("BODY RECEBIDO ADMIN PRODUTOS:", req.body);
+  
   try {
 
     const {
@@ -1091,17 +1089,7 @@ app.post("/admin/produtos", async (req, res) => {
     }
 
     const codigoNormalizado = String(codigo).trim().toUpperCase();
-	console.log("TIPOS:", {
-  codigo,
-  nome,
-  descricao,
-  preco,
-  ativo,
-  estoque,
-  tipo,
-  imagem,
-  ordem
-});
+
     const produtoData = {
       codigo: codigoNormalizado,
       nome: String(nome).trim(),
@@ -1170,7 +1158,7 @@ const produtoExistente =
         .select();
     }
 
-console.log("RESULTADO SUPABASE:", resultado);
+
 
 if (!resultado || resultado.error) {
 
@@ -1264,66 +1252,6 @@ app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
  
 
 
-app.get("/retirada/teste/:codigoPedido", async (req, res) => {
-  try {
-    const { codigoPedido } = req.params;
-
-    const { data: pedido, error: pedidoError } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("codigo_pedido", codigoPedido)
-      .single();
-
-    if (pedidoError || !pedido) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Pedido não encontrado."
-      });
-    }
-
-    if (pedido.status_pagamento !== "pago") {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Pagamento ainda não confirmado."
-      });
-    }
-
-    if (pedido.status_retirada === "retirado") {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Pedido já retirado."
-      });
-    }
-
-    const { data, error } = await supabase
-      .from("pedidos")
-      .update({
-        status_retirada: "retirado",
-        data_retirada: new Date()
-      })
-      .eq("codigo_pedido", codigoPedido)
-      .select();
-
-    if (error) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Erro ao confirmar retirada."
-      });
-    }
-
-    return res.json({
-      sucesso: true,
-      mensagem: "Retirada confirmada com sucesso.",
-      pedido: data
-    });
-
-  } catch (erro) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno."
-    });
-  }
-});
 
 /* =====================================================
    CENTRAL DO CLIENTE - LOGIN REAL
@@ -1360,6 +1288,13 @@ if (!validarCPF(cpfLimpo)) {
    BUSCAR PRODUTOS
 ===================================================== */
 
+
+    if (error || !data || data.length === 0) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Cliente não encontrado."
+      });
+    }
 const { data: produtos } = await supabase
   .from("produtos")
   .select("codigo,nome,imagem");
@@ -1377,13 +1312,6 @@ const pedidosEnriquecidos = data.map(pedido => {
   };
 
 });
-    if (error || !data || data.length === 0) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Cliente não encontrado."
-      });
-    }
-
     return res.json({
       sucesso: true,
       cliente: {
