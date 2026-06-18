@@ -1070,6 +1070,7 @@ app.post("/admin/produtos", async (req, res) => {
   try {
 
     const {
+      id,
       codigo,
       nome,
       descricao,
@@ -1103,62 +1104,75 @@ app.post("/admin/produtos", async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    /* =========================================
-       BUSCA PRODUTO EXISTENTE
-    ========================================= */
-const { data: existente, error: buscaErro } = await supabase
-  .from("produtos")
-  .select("id")
-  .eq("codigo", codigoNormalizado)
-  .limit(1);
-
-
-if (buscaErro) {
-  console.error("ERRO BUSCA PRODUTO:", buscaErro);
-
-  return res.status(500).json({
-    sucesso: false,
-    erro: buscaErro.message || "Erro ao verificar produto."
-  });
-}
-
-const produtoExistente =
-  existente && existente.length > 0
-    ? existente[0]
-    : null;
-
-
-
     let resultado;
 
     /* =========================================
-       UPDATE
+       CAMINHO 1 — EDIÇÃO COM ID CONHECIDO
+       Se o frontend mandou o id do produto (tela de
+       edição), o UPDATE é feito direto por id. Isso
+       evita o bug antigo: se o código fosse alterado
+       durante a edição, a busca por "codigo" não achava
+       o produto original e criava um duplicado novo,
+       deixando o antigo intacto.
     ========================================= */
-    if (produtoExistente) {
+    if (id) {
 
       resultado = await supabase
         .from("produtos")
         .update(produtoData)
-        .eq("codigo", codigoNormalizado)
+        .eq("id", id)
         .select();
 
     } else {
 
       /* =========================================
-         INSERT
+         CAMINHO 2 — SEM ID (fluxo antigo, produto novo)
+         Continua buscando por "codigo" pra decidir entre
+         update/insert, mantendo compatibilidade com
+         qualquer chamada antiga que não envie id.
       ========================================= */
-      resultado = await supabase
+      const { data: existente, error: buscaErro } = await supabase
         .from("produtos")
-        .insert([
-          {
-            ...produtoData,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select();
+        .select("id")
+        .eq("codigo", codigoNormalizado)
+        .limit(1);
+
+      if (buscaErro) {
+        console.error("ERRO BUSCA PRODUTO:", buscaErro);
+
+        return res.status(500).json({
+          sucesso: false,
+          erro: buscaErro.message || "Erro ao verificar produto."
+        });
+      }
+
+      const produtoExistente =
+        existente && existente.length > 0
+          ? existente[0]
+          : null;
+
+      if (produtoExistente) {
+
+        resultado = await supabase
+          .from("produtos")
+          .update(produtoData)
+          .eq("codigo", codigoNormalizado)
+          .select();
+
+      } else {
+
+        resultado = await supabase
+          .from("produtos")
+          .insert([
+            {
+              ...produtoData,
+              created_at: new Date().toISOString()
+            }
+          ])
+          .select();
+      }
+
     }
-
-
 
 if (!resultado || resultado.error) {
 
@@ -1185,6 +1199,54 @@ if (!resultado || resultado.error) {
     erro: erro.message || JSON.stringify(erro)
   });
 }
+});
+
+/* =====================================================
+   ADMIN PRODUTOS - EXCLUIR
+===================================================== */
+app.delete("/admin/produtos/:id", async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID do produto é obrigatório."
+      });
+    }
+
+    const { error } = await supabase
+      .from("produtos")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("ERRO EXCLUIR PRODUTO:", error);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: error.message || "Erro ao excluir produto."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Produto excluído com sucesso."
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO EXCLUIR PRODUTO:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: erro.message || "Erro interno ao excluir produto."
+    });
+
+  }
+
 });
 
    
