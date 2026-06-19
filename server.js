@@ -1543,7 +1543,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
   try {
 
-    const { nome, email, password } = req.body || {};
+    const { nome, email, password, role } = req.body || {};
 
     if (!nome || !email || !password) {
       return res.status(400).json({
@@ -1558,6 +1558,8 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
         erro: "A senha precisa ter pelo menos 6 caracteres."
       });
     }
+
+    const roleFinal = role === "admin" ? "admin" : "padrao";
 
     const emailNormalizado = String(email).trim().toLowerCase();
 
@@ -1577,14 +1579,14 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
       });
     }
 
-    /* CRIA O PERFIL (role admin) */
+    /* CRIA O PERFIL */
     const { error: perfilError } = await supabase
       .from("user_profiles")
       .insert([{
         id: novoUsuario.user.id,
         nome: String(nome).trim(),
         email: emailNormalizado,
-        role: "admin"
+        role: roleFinal
       }]);
 
     if (perfilError) {
@@ -1614,6 +1616,66 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro interno ao criar usuário."
+    });
+
+  }
+
+});
+
+/* =====================================================
+   ADMIN USUÁRIOS — EDITAR (nome e papel)
+===================================================== */
+app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+    const { nome, role } = req.body || {};
+
+    if (!nome) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Nome é obrigatório."
+      });
+    }
+
+    const roleFinal = role === "admin" ? "admin" : "padrao";
+
+    if (id === req.usuarioAdmin.id && roleFinal !== "admin") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Você não pode remover o seu próprio acesso de administrador."
+      });
+    }
+
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({
+        nome: String(nome).trim(),
+        role: roleFinal
+      })
+      .eq("id", id);
+
+    if (error) {
+      console.error("ERRO EDITAR USUARIO:", error);
+      return res.status(500).json({
+        sucesso: false,
+        erro: error.message || "Erro ao editar usuário."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Usuário atualizado com sucesso."
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO EDITAR USUARIO:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao editar usuário."
     });
 
   }
