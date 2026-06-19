@@ -1,28 +1,28 @@
 {
    "name": "fpss-backend",
-  "version": "1.0.0",
-  "description": "Backend Sicredi + Supabase",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "keywords": [
-    "fpss",
-    "supabase",
-    "express"
-  ],
-  "author": "FPSS",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.105.3",
-    "axios": "^1.16.1",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "fs": "^0.0.1-security",
-    "https": "^1.0.0",
-    "multer": "^2.1.1",
-    "uuid": "^14.0.0"
-  }
+   "version": "1.0.0",
+   "description": "Backend Sicredi + Supabase",
+   "main": "server.js",
+   "scripts": {
+      "start": "node server.js"
+   },
+   "keywords": [
+      "fpss",
+      "supabase",
+      "express"
+   ],
+   "author": "FPSS",
+   "license": "ISC",
+   "type": "commonjs",
+   "dependencies": {
+      "@supabase/supabase-js": "^2.108.2",
+      "axios": "^1.16.1",
+      "cors": "^2.8.6",
+      "dotenv": "^17.4.2",
+      "express": "^5.2.1",
+      "fs": "^0.0.1-security",
+      "https": "^1.0.0",
+      "multer": "^2.1.1",
+      "uuid": "^14.0.0"
+   }
 }
