@@ -1439,6 +1439,241 @@ app.get("/sicredi/teste-consulta/:txid", async (req, res) => {
 
 
 
+/* =====================================================
+   ADMIN USUÁRIOS — MIDDLEWARE
+   Confere se quem está chamando a rota é mesmo um admin
+   autenticado, antes de deixar passar. Usa a service_role
+   key (já configurada em SUPABASE_KEY) pra validar o token
+   e consultar o perfil do usuário.
+===================================================== */
+async function verificarAdminBackend(req, res, next) {
+
+  try {
+
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: "Sessão não encontrada. Faça login novamente."
+      });
+    }
+
+    const { data: userData, error: userError } =
+      await supabase.auth.getUser(token);
+
+    if (userError || !userData || !userData.user) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: "Sessão inválida ou expirada. Faça login novamente."
+      });
+    }
+
+    const { data: perfil, error: perfilError } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("id", userData.user.id)
+      .single();
+
+    if (perfilError || !perfil || perfil.role !== "admin") {
+      return res.status(403).json({
+        sucesso: false,
+        erro: "Acesso restrito a administradores."
+      });
+    }
+
+    req.usuarioAdmin = userData.user;
+    next();
+
+  } catch (erro) {
+
+    console.error("ERRO VERIFICAR ADMIN BACKEND:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao verificar permissão."
+    });
+
+  }
+
+}
+
+/* =====================================================
+   ADMIN USUÁRIOS — LISTAR
+===================================================== */
+app.get("/admin/usuarios", verificarAdminBackend, async (req, res) => {
+
+  try {
+
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("id, nome, email, role, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: error.message || "Erro ao listar usuários."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      usuarios: data
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO LISTAR USUARIOS:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao listar usuários."
+    });
+
+  }
+
+});
+
+/* =====================================================
+   ADMIN USUÁRIOS — CRIAR
+===================================================== */
+app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
+
+  try {
+
+    const { nome, email, password } = req.body || {};
+
+    if (!nome || !email || !password) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Nome, e-mail e senha são obrigatórios."
+      });
+    }
+
+    if (String(password).length < 6) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "A senha precisa ter pelo menos 6 caracteres."
+      });
+    }
+
+    const emailNormalizado = String(email).trim().toLowerCase();
+
+    /* CRIA O USUÁRIO NO AUTH (exige service_role — já é a chave em uso) */
+    const { data: novoUsuario, error: createError } =
+      await supabase.auth.admin.createUser({
+        email: emailNormalizado,
+        password: String(password),
+        email_confirm: true
+      });
+
+    if (createError) {
+      console.error("ERRO CRIAR USUARIO AUTH:", createError);
+      return res.status(500).json({
+        sucesso: false,
+        erro: createError.message || "Erro ao criar usuário."
+      });
+    }
+
+    /* CRIA O PERFIL (role admin) */
+    const { error: perfilError } = await supabase
+      .from("user_profiles")
+      .insert([{
+        id: novoUsuario.user.id,
+        nome: String(nome).trim(),
+        email: emailNormalizado,
+        role: "admin"
+      }]);
+
+    if (perfilError) {
+
+      console.error("ERRO CRIAR PERFIL:", perfilError);
+
+      /* perfil falhou — desfaz a criação do usuário pra não deixar
+         um usuário "fantasma" sem perfil */
+      await supabase.auth.admin.deleteUser(novoUsuario.user.id);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao salvar perfil do usuário. Operação desfeita."
+      });
+
+    }
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Usuário criado com sucesso."
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO CRIAR USUARIO:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao criar usuário."
+    });
+
+  }
+
+});
+
+/* =====================================================
+   ADMIN USUÁRIOS — EXCLUIR
+===================================================== */
+app.delete("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID do usuário é obrigatório."
+      });
+    }
+
+    if (id === req.usuarioAdmin.id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Você não pode excluir o seu próprio usuário."
+      });
+    }
+
+    const { error: authError } =
+      await supabase.auth.admin.deleteUser(id);
+
+    if (authError) {
+      console.error("ERRO EXCLUIR USUARIO AUTH:", authError);
+      return res.status(500).json({
+        sucesso: false,
+        erro: authError.message || "Erro ao excluir usuário."
+      });
+    }
+
+    await supabase.from("user_profiles").delete().eq("id", id);
+
+    return res.json({
+      sucesso: true,
+      mensagem: "Usuário excluído com sucesso."
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO EXCLUIR USUARIO:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao excluir usuário."
+    });
+
+  }
+
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
 });
