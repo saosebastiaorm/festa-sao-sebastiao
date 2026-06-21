@@ -1736,6 +1736,500 @@ app.delete("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
 
 });
 
+
+/* =====================================================================
+   CARTELAS DO BINGO — FÍSICAS + DIGITAIS (FPSS 2027)
+   Cole este bloco inteiro no server.js, ANTES da linha:
+   app.listen(PORT, () => { ... });
+
+   Usa as mesmas funções já importadas no topo do server.js:
+   criarPix, consultarPix, supabase, limparCPF, limparTelefone, validarCPF
+===================================================================== */
+
+/* =====================================================
+   CARTELAS — CONFIG (lote ativo, modo teste, valores)
+===================================================== */
+async function lerConfigCartelas() {
+  const { data, error } = await supabase
+    .from("cartelas_config")
+    .select("chave, valor");
+
+  if (error) {
+    throw new Error(`Erro ao ler configuração de cartelas: ${error.message}`);
+  }
+
+  const config = {};
+  for (const linha of data) {
+    config[linha.chave] = linha.valor;
+  }
+  return config;
+}
+
+function calcularValorCartela(config) {
+  const emModoTeste = config.modo_teste === "true";
+  const centavos = emModoTeste
+    ? Number(config.valor_teste_centavos || 1)
+    : Number(config.valor_cartela_oficial_centavos || 2000);
+
+  return centavos / 100;
+}
+
+/* =====================================================
+   CARTELAS — VALIDAR NÚMERO (cartela física)
+   Usado pelo formulário, em tempo real, antes de pagar.
+===================================================== */
+app.post("/cartelas/validar-numero", async (req, res) => {
+  try {
+
+    const { numero } = req.body;
+
+    if (!numero) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Informe o número da cartela."
+      });
+    }
+
+    const config = await lerConfigCartelas();
+
+    const { data: cartela, error } = await supabase
+      .from("cartelas")
+      .select("*")
+      .eq("numero_chance1", String(numero).trim())
+      .eq("tipo", "fisica")
+      .eq("lote", config.lote_ativo)
+      .maybeSingle();
+
+    if (error) {
+      console.error("ERRO VALIDAR NUMERO CARTELA:", error);
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro interno ao validar a cartela."
+      });
+    }
+
+    if (!cartela) {
+      return res.status(404).json({
+        sucesso: false,
+        valido: false,
+        erro: "Essa cartela não existe. Verifique o número e tente novamente."
+      });
+    }
+
+    if (cartela.status === "pago") {
+      return res.status(404).json({
+        sucesso: false,
+        valido: false,
+        erro: "Essa cartela já foi paga anteriormente."
+      });
+    }
+
+    if (cartela.status === "cancelado") {
+      return res.status(404).json({
+        sucesso: false,
+        valido: false,
+        erro: "Essa cartela foi cancelada e não pode ser paga."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      valido: true
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO VALIDAR NUMERO CARTELA:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao validar a cartela."
+    });
+  }
+});
+
+/* =====================================================
+   CARTELAS — GERAR PIX (CARTELA FÍSICA)
+===================================================== */
+app.post("/cartelas/pix-fisica", async (req, res) => {
+  try {
+
+    const {
+      numero_cartela,
+      nome,
+      cpf,
+      telefone,
+      vai_na_festa
+    } = req.body;
+
+    const cpfLimpo = limparCPF(cpf);
+    const telefoneLimpo = limparTelefone(telefone);
+
+    if (!numero_cartela) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Número da cartela é obrigatório."
+      });
+    }
+
+    if (!nome) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Nome é obrigatório."
+      });
+    }
+
+    if (!validarCPF(cpfLimpo)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "CPF inválido."
+      });
+    }
+
+    if (!["sim", "nao"].includes(vai_na_festa)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Informe se vai participar da festa."
+      });
+    }
+
+    const config = await lerConfigCartelas();
+
+    /* ===== VALIDAR A CARTELA DE NOVO (proteção no servidor,
+       não confiar só na validação em tempo real do frontend) ===== */
+    const { data: cartela, error: buscaErro } = await supabase
+      .from("cartelas")
+      .select("*")
+      .eq("numero_chance1", String(numero_cartela).trim())
+      .eq("tipo", "fisica")
+      .eq("lote", config.lote_ativo)
+      .maybeSingle();
+
+    if (buscaErro) {
+      console.error("ERRO BUSCAR CARTELA FISICA:", buscaErro);
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro interno ao buscar a cartela."
+      });
+    }
+
+    if (!cartela) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Essa cartela não existe. Verifique o número e tente novamente."
+      });
+    }
+
+    if (cartela.status !== "disponivel") {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Essa cartela já foi paga ou não está mais disponível."
+      });
+    }
+
+    const valor = calcularValorCartela(config);
+
+    /* ===== SICREDI PIX ===== */
+    const pagamento = await criarPix(valor, nome, cpfLimpo);
+
+    /* ===== ATUALIZAR CARTELA (com proteção contra concorrência:
+       só atualiza se ainda estiver "disponivel" nesse exato momento) ===== */
+    const { data: cartelaAtualizada, error: updateErro } = await supabase
+      .from("cartelas")
+      .update({
+        status: "pendente",
+        nome_comprador: nome,
+        cpf_comprador: cpfLimpo,
+        whatsapp_comprador: telefoneLimpo,
+        vai_na_festa,
+        valor_pago: valor,
+        pix_id: pagamento.txid
+      })
+      .eq("id", cartela.id)
+      .eq("status", "disponivel")
+      .select()
+      .single();
+
+    if (updateErro || !cartelaAtualizada) {
+      return res.status(409).json({
+        sucesso: false,
+        erro: "Essa cartela acabou de ser reservada por outra pessoa. Tente novamente com outro número."
+      });
+    }
+
+    return res.status(200).json({
+      sucesso: true,
+      mensagem: "Pix gerado com sucesso.",
+      txid: pagamento.txid,
+      numero_cartela: cartelaAtualizada.numero_chance1,
+      numero_chance2: cartelaAtualizada.numero_chance2,
+      tipo: cartelaAtualizada.tipo,
+      valor: valor,
+      pixCopiaECola: pagamento.pixCopiaECola,
+      qrCode: pagamento.qrCodeBase64
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO GERAR PIX CARTELA FISICA:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao gerar Pix da cartela física."
+    });
+  }
+});
+
+/* =====================================================
+   CARTELAS — GERAR PIX (CARTELA DIGITAL)
+   Atribui automaticamente o próximo número digital
+   disponível, usando a função SQL reservar_cartela_digital
+   (criada no script 01_criar_tabela_cartelas.sql), que usa
+   lock no banco pra evitar duas pessoas recebendo o mesmo
+   número ao comprar ao mesmo tempo.
+===================================================== */
+app.post("/cartelas/pix-digital", async (req, res) => {
+  try {
+
+    const {
+      nome,
+      cpf,
+      telefone,
+      vai_na_festa
+    } = req.body;
+
+    const cpfLimpo = limparCPF(cpf);
+    const telefoneLimpo = limparTelefone(telefone);
+
+    if (!nome) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Nome é obrigatório."
+      });
+    }
+
+    if (!validarCPF(cpfLimpo)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "CPF inválido."
+      });
+    }
+
+    if (!["sim", "nao"].includes(vai_na_festa)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Informe se vai participar da festa."
+      });
+    }
+
+    const config = await lerConfigCartelas();
+
+    /* ===== RESERVAR UM NÚMERO DIGITAL (com lock no banco) ===== */
+    const { data: cartelaReservada, error: erroReserva } = await supabase
+      .rpc("reservar_cartela_digital", { p_lote: config.lote_ativo });
+
+    if (erroReserva) {
+
+      if (String(erroReserva.message || "").includes("NENHUMA_CARTELA_DIGITAL_DISPONIVEL")) {
+        return res.status(409).json({
+          sucesso: false,
+          erro: "Não há cartelas digitais disponíveis no momento."
+        });
+      }
+
+      console.error("ERRO RESERVAR CARTELA DIGITAL:", erroReserva);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro interno ao reservar cartela digital."
+      });
+    }
+
+    const valor = calcularValorCartela(config);
+
+    /* ===== SICREDI PIX ===== */
+    const pagamento = await criarPix(valor, nome, cpfLimpo);
+
+    /* ===== ATUALIZAR CARTELA COM DADOS DO COMPRADOR ===== */
+    const { data: cartelaAtualizada, error: updateErro } = await supabase
+      .from("cartelas")
+      .update({
+        nome_comprador: nome,
+        cpf_comprador: cpfLimpo,
+        whatsapp_comprador: telefoneLimpo,
+        vai_na_festa,
+        valor_pago: valor,
+        pix_id: pagamento.txid
+      })
+      .eq("id", cartelaReservada.id)
+      .select()
+      .single();
+
+    if (updateErro) {
+      console.error("ERRO SALVAR DADOS CARTELA DIGITAL:", updateErro);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro interno ao salvar os dados da cartela digital."
+      });
+    }
+
+    return res.status(200).json({
+      sucesso: true,
+      mensagem: "Pix gerado com sucesso.",
+      txid: pagamento.txid,
+      numero_cartela: cartelaAtualizada.numero_chance1,
+      numero_chance2: cartelaAtualizada.numero_chance2,
+      tipo: cartelaAtualizada.tipo,
+      valor: valor,
+      pixCopiaECola: pagamento.pixCopiaECola,
+      qrCode: pagamento.qrCodeBase64
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO GERAR PIX CARTELA DIGITAL:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao gerar Pix da cartela digital."
+    });
+  }
+});
+
+/* =====================================================
+   CARTELAS — VERIFICAR PAGAMENTO
+   Mesmo modelo de polling usado em /verificar-pagamento/:txid
+   (produtos), adaptado pra tabela "cartelas" — sem retirada.
+===================================================== */
+app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
+  try {
+
+    const { txid } = req.params;
+    const pagamento = await consultarPix(txid);
+
+    const statusPagamento = pagamento.status;
+
+    /* ===== PAGAMENTO APROVADO ===== */
+    if (statusPagamento === "CONCLUIDA") {
+
+      const { data: cartelaAtual, error: buscaErro } = await supabase
+        .from("cartelas")
+        .select("*")
+        .eq("pix_id", txid)
+        .single();
+
+      if (buscaErro || !cartelaAtual) {
+        return res.status(404).json({
+          sucesso: false,
+          erro: "Cartela não encontrada."
+        });
+      }
+
+      let comprovanteId = cartelaAtual.comprovante_id;
+
+      if (cartelaAtual.status !== "pago") {
+
+        comprovanteId = `COMP-${txid}`;
+
+        const { error: updateErro } = await supabase
+          .from("cartelas")
+          .update({
+            status: "pago",
+            data_pagamento: new Date().toISOString(),
+            comprovante_id: comprovanteId
+          })
+          .eq("pix_id", txid);
+
+        if (updateErro) {
+          console.error("ERRO ATUALIZAR PAGAMENTO CARTELA:", updateErro);
+        }
+      }
+
+      return res.json({
+        sucesso: true,
+        status_interno: "pago",
+        data_pagamento: cartelaAtual.data_pagamento || new Date().toISOString(),
+        cartela: {
+          numero_cartela: cartelaAtual.numero_chance1,
+          numero_chance2: cartelaAtual.numero_chance2,
+          tipo: cartelaAtual.tipo,
+          nome: cartelaAtual.nome_comprador,
+          cpf: cartelaAtual.cpf_comprador,
+          telefone: cartelaAtual.whatsapp_comprador,
+          valor: cartelaAtual.valor_pago,
+          comprovante_id: comprovanteId
+        }
+      });
+    }
+
+    /* ===== AINDA NÃO PAGO ===== */
+    return res.json({
+      sucesso: true,
+      status_interno: "pendente",
+      cartela: null
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO VERIFICAR PAGAMENTO CARTELA:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao verificar pagamento da cartela."
+    });
+  }
+});
+
+/* =====================================================
+   ADMIN — BUSCAR CARTELA POR NÚMERO
+   Usado na conferência do sorteio (qual número foi
+   sorteado, quem pagou e quando).
+===================================================== */
+app.get("/admin/cartelas/buscar/:numero", async (req, res) => {
+  try {
+
+    const { numero } = req.params;
+
+    const { data: cartela, error } = await supabase
+      .from("cartelas")
+      .select("*")
+      .or(`numero_chance1.eq.${numero},numero_chance2.eq.${numero}`)
+      .maybeSingle();
+
+    if (error) {
+      console.error("ERRO BUSCAR CARTELA ADMIN:", error);
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao buscar cartela."
+      });
+    }
+
+    if (!cartela) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Cartela não encontrada."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      cartela
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO BUSCAR CARTELA ADMIN:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao buscar cartela."
+    });
+  }
+});
+
+
+
 app.listen(PORT, () => {
   console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
 });
