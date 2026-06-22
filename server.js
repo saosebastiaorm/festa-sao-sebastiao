@@ -2228,6 +2228,98 @@ app.get("/admin/cartelas/buscar/:numero", async (req, res) => {
   }
 });
 
+/* =====================================================================
+   ADMIN — LISTAR TODAS AS CARTELAS
+   Cole este bloco no server.js, junto com os outros endpoints de
+   cartelas (antes do app.listen). Segue o mesmo padrão de
+   /admin/pedidos já existente.
+===================================================================== */
+app.get("/admin/cartelas", async (req, res) => {
+  try {
+
+    const { data, error } = await supabase
+      .from("cartelas")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error("ERRO LISTAR CARTELAS:", error);
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao carregar cartelas."
+      });
+    }
+
+    return res.json({
+      sucesso: true,
+      total: data.length,
+      cartelas: data
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO INTERNO LISTAR CARTELAS:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao listar cartelas."
+    });
+  }
+});
+
+/* =====================================================================
+   ADMIN — RESUMO/ESTATÍSTICAS DE CARTELAS (cards do topo da página)
+===================================================================== */
+app.get("/admin/cartelas/resumo", async (req, res) => {
+  try {
+
+    const { data: cartelas, error } = await supabase
+      .from("cartelas")
+      .select("*");
+
+    if (error) {
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro ao carregar resumo de cartelas."
+      });
+    }
+
+    const pagas = cartelas.filter(c => c.status === "pago");
+    const pendentes = cartelas.filter(c => c.status === "pendente");
+    const disponiveis = cartelas.filter(c => c.status === "disponivel");
+
+    const fisicasPagas = pagas.filter(c => c.tipo === "fisica");
+    const digitaisPagas = pagas.filter(c => c.tipo === "digital");
+
+    const confirmaramPresenca = pagas.filter(c => c.vai_na_festa === "sim");
+
+    const receitaTotal = pagas.reduce(
+      (acc, c) => acc + Number(c.valor_pago || 0),
+      0
+    );
+
+    return res.json({
+      sucesso: true,
+      total_cartelas: cartelas.length,
+      total_pagas: pagas.length,
+      total_pendentes: pendentes.length,
+      total_disponiveis: disponiveis.length,
+      fisicas_pagas: fisicasPagas.length,
+      digitais_pagas: digitaisPagas.length,
+      confirmaram_presenca: confirmaramPresenca.length,
+      receita_total: receitaTotal
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO RESUMO CARTELAS:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao gerar resumo de cartelas."
+    });
+  }
+});
 
 
 app.listen(PORT, () => {
