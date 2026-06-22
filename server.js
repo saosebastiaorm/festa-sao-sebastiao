@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartela-digital");
+const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
 require("dotenv").config();
 
 
@@ -2128,6 +2130,8 @@ app.post("/cartelas/pix-digital", async (req, res) => {
    Mesmo modelo de polling usado em /verificar-pagamento/:txid
    (produtos), adaptado pra tabela "cartelas" — sem retirada.
 ===================================================== */
+const CAMINHO_ARTE_BASE = path.join(__dirname, "assets", "arte-cartela-2027-base.png");
+
 app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
   try {
 
@@ -2153,18 +2157,54 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
       }
 
       let comprovanteId = cartelaAtual.comprovante_id;
+      let pdfUrl = cartelaAtual.pdf_url;
 
       if (cartelaAtual.status !== "pago") {
 
         comprovanteId = `COMP-${txid}`;
 
+        const dadosAtualizacao = {
+          status: "pago",
+          data_pagamento: new Date().toISOString(),
+          comprovante_id: comprovanteId
+        };
+
+        /* ===== GERAR A CARTELA DIGITAL (só para tipo digital,
+           e só se ainda não foi gerada antes) ===== */
+        if (cartelaAtual.tipo === "digital" && !cartelaAtual.pdf_url) {
+
+          try {
+
+            const pngBuffer = await gerarCartelaDigitalPNG(
+              {
+                numeroChance1: cartelaAtual.numero_chance1,
+                numeroChance2: cartelaAtual.numero_chance2,
+                gradeChance1: cartelaAtual.grade_chance1,
+                gradeChance2: cartelaAtual.grade_chance2,
+                nomeComprador: cartelaAtual.nome_comprador,
+                cpfComprador: cartelaAtual.cpf_comprador
+              },
+              CAMINHO_ARTE_BASE
+            );
+
+            pdfUrl = await uploadCartelaDigital(
+              supabase,
+              cartelaAtual.numero_chance1,
+              pngBuffer
+            );
+
+            dadosAtualizacao.pdf_url = pdfUrl;
+            dadosAtualizacao.pdf_gerado_em = new Date().toISOString();
+
+          } catch (erroGeracao) {
+
+            console.error("ERRO AO GERAR CARTELA DIGITAL:", erroGeracao);
+          }
+        }
+
         const { error: updateErro } = await supabase
           .from("cartelas")
-          .update({
-            status: "pago",
-            data_pagamento: new Date().toISOString(),
-            comprovante_id: comprovanteId
-          })
+          .update(dadosAtualizacao)
           .eq("pix_id", txid);
 
         if (updateErro) {
@@ -2184,7 +2224,8 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
           cpf: cartelaAtual.cpf_comprador,
           telefone: cartelaAtual.whatsapp_comprador,
           valor: cartelaAtual.valor_pago,
-          comprovante_id: comprovanteId
+          comprovante_id: comprovanteId,
+          pdf_url: pdfUrl
         }
       });
     }
