@@ -1318,6 +1318,7 @@ app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
 /* =====================================================
    CENTRAL DO CLIENTE - LOGIN REAL
 ===================================================== */
+
 app.post("/cliente-login", async (req, res) => {
   try {
 
@@ -1330,58 +1331,83 @@ app.post("/cliente-login", async (req, res) => {
       });
     }
 
-const cpfLimpo = limparCPF(cpf);
-const telefoneLimpo = limparTelefone(telefone);
+    const cpfLimpo = limparCPF(cpf);
+    const telefoneLimpo = limparTelefone(telefone);
 
-if (!validarCPF(cpfLimpo)) {
-  return res.status(400).json({
-    sucesso: false,
-    erro: "CPF inválido."
-  });
-}
+    if (!validarCPF(cpfLimpo)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "CPF inválido."
+      });
+    }
 
-   const { data, error } = await supabase
-  .from("pedidos")
-  .select("*")
-  .eq("cpf", cpfLimpo)
-  .eq("telefone", telefoneLimpo)
-  .order("id", { ascending: false });
-/* =====================================================
-   BUSCAR PRODUTOS
-===================================================== */
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("cpf", cpfLimpo)
+      .eq("telefone", telefoneLimpo)
+      .order("id", { ascending: false });
 
+    /* ===== BUSCAR CARTELAS DO MESMO CPF (independente de ter
+       pedido de produto ou não — alguém pode ter comprado só
+       cartela, sem nunca ter comprado produto) ===== */
+    const { data: cartelas, error: erroCartelas } = await supabase
+      .from("cartelas")
+      .select("*")
+      .eq("cpf_comprador", cpfLimpo)
+      .in("status", ["pago", "pendente"])
+      .order("id", { ascending: false });
 
-    if (error || !data || data.length === 0) {
+    if (erroCartelas) {
+      console.error("ERRO BUSCAR CARTELAS DO CLIENTE:", erroCartelas);
+      // não bloqueia o login por causa disso — segue só sem as cartelas
+    }
+
+    const temPedidos = !error && data && data.length > 0;
+    const temCartelas = !erroCartelas && cartelas && cartelas.length > 0;
+
+    /* Se a pessoa não tem NEM pedido NEM cartela com esse CPF+telefone,
+       mantém o comportamento de erro de antes */
+    if (!temPedidos && !temCartelas) {
       return res.status(404).json({
         sucesso: false,
         erro: "Cliente não encontrado."
       });
     }
-const { data: produtos } = await supabase
-  .from("produtos")
-  .select("codigo,nome,imagem");
 
-const pedidosEnriquecidos = data.map(pedido => {
+    const { data: produtos } = await supabase
+      .from("produtos")
+      .select("codigo,nome,imagem");
 
-  const produto = produtos?.find(
-    p => p.codigo === pedido.produto_tipo
-  );
+    const pedidosEnriquecidos = (data || []).map(pedido => {
 
-  return {
-    ...pedido,
-    nome_produto: produto?.nome || pedido.produto_tipo,
-    imagem_produto: produto?.imagem || null
-  };
+      const produto = produtos?.find(
+        p => p.codigo === pedido.produto_tipo
+      );
 
-});
+      return {
+        ...pedido,
+        nome_produto: produto?.nome || pedido.produto_tipo,
+        imagem_produto: produto?.imagem || null
+      };
+    });
+
+    /* Dados básicos do cliente (nome/cpf/telefone) podem vir do
+       pedido OU da cartela, dependendo do que a pessoa tiver */
+    const nomeCliente = data && data.length
+      ? `${data[0].nome || ""} ${data[0].sobrenome || ""}`.trim()
+      : (cartelas && cartelas.length ? cartelas[0].nome_comprador : "");
+
     return res.json({
       sucesso: true,
       cliente: {
-        nome: `${data[0].nome || ""} ${data[0].sobrenome || ""}`.trim(),
-        cpf: data[0].cpf,
-        telefone: data[0].telefone,
-        total_pedidos: data.length,
-        pedidos: pedidosEnriquecidos
+        nome: nomeCliente,
+        cpf: cpfLimpo,
+        telefone: telefoneLimpo,
+        total_pedidos: pedidosEnriquecidos.length,
+        pedidos: pedidosEnriquecidos,
+        total_cartelas: (cartelas || []).length,
+        cartelas: cartelas || []
       }
     });
 
@@ -1393,9 +1419,9 @@ const pedidosEnriquecidos = data.map(pedido => {
       sucesso: false,
       erro: "Erro interno no login."
     });
-
   }
 });
+
 
 
 /* ==========================================
