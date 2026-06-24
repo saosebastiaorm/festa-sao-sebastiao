@@ -1220,6 +1220,23 @@ app.delete("/admin/produtos/:id", async (req, res) => {
       });
     }
 
+    /* =========================================
+       1. BUSCA A IMAGEM DO PRODUTO ANTES DE APAGAR
+    ========================================= */
+    const { data: produtoExistente, error: erroBusca } = await supabase
+      .from("produtos")
+      .select("imagem")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (erroBusca) {
+      console.error("ERRO AO BUSCAR PRODUTO PARA EXCLUSÃO:", erroBusca);
+      // não interrompe — segue tentando excluir mesmo sem confirmar a imagem
+    }
+
+    /* =========================================
+       2. APAGA A LINHA DO BANCO
+    ========================================= */
     const { error } = await supabase
       .from("produtos")
       .delete()
@@ -1232,6 +1249,32 @@ app.delete("/admin/produtos/:id", async (req, res) => {
         sucesso: false,
         erro: error.message || "Erro ao excluir produto."
       });
+    }
+
+    /* =========================================
+       3. APAGA O ARQUIVO DE IMAGEM NO STORAGE
+       (best-effort: se falhar, não desfaz a exclusão do produto,
+       só registra no log do servidor pra acompanhamento)
+    ========================================= */
+    if (produtoExistente && produtoExistente.imagem) {
+      try {
+        const urlImagem = produtoExistente.imagem;
+        const nomeArquivo = urlImagem.split("/produtos/").pop();
+
+        if (nomeArquivo) {
+          const { error: erroStorage } = await supabase.storage
+            .from("produtos")
+            .remove([nomeArquivo]);
+
+          if (erroStorage) {
+            console.error(`AVISO: produto ${id} excluído, mas falhou ao remover imagem "${nomeArquivo}" do Storage:`, erroStorage.message);
+          } else {
+            console.log(`Imagem "${nomeArquivo}" removida do Storage junto com o produto ${id}.`);
+          }
+        }
+      } catch (erroParse) {
+        console.error(`AVISO: não foi possível interpretar a URL da imagem do produto ${id} para limpeza do Storage:`, erroParse.message);
+      }
     }
 
     return res.json({
