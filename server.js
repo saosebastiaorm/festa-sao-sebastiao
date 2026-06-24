@@ -3,6 +3,7 @@ const cors = require("cors");
 const path = require("path");
 const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartela-digital");
 const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
+const sharp = require("sharp");
 require("dotenv").config();
 
 
@@ -1271,15 +1272,23 @@ app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
       (req.body.nomeArquivo || `produto-${Date.now()}`)
         .replace(/[^a-zA-Z0-9-_]/g, "_");
 
-    const extensao =
-      req.file.originalname.split(".").pop().toLowerCase();
+    // Sempre salva como .webp, independente do formato original enviado
+    const caminhoArquivo = `${nomeArquivo}.webp`;
 
-    const caminhoArquivo = `${nomeArquivo}.${extensao}`;
+    // Otimiza: redimensiona (máx. 1200px no lado maior, sem esticar
+    // imagens menores) e converte para WebP qualidade 80
+    const bufferOtimizado = await sharp(req.file.buffer)
+      .resize(1200, 1200, {
+        fit: "inside",
+        withoutEnlargement: true
+      })
+      .webp({ quality: 80 })
+      .toBuffer();
 
     const { error: uploadError } = await supabase.storage
       .from("produtos")
-      .upload(caminhoArquivo, req.file.buffer, {
-        contentType: req.file.mimetype,
+      .upload(caminhoArquivo, bufferOtimizado, {
+        contentType: "image/webp",
         upsert: true
       });
 
@@ -1300,7 +1309,9 @@ app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
       sucesso: true,
       mensagem: "Imagem enviada com sucesso.",
       imagem_url: data.publicUrl,
-      arquivo: caminhoArquivo
+      arquivo: caminhoArquivo,
+      tamanho_original_kb: Math.round(req.file.buffer.length / 1024),
+      tamanho_otimizado_kb: Math.round(bufferOtimizado.length / 1024)
     });
 
   } catch (erro) {
@@ -1313,7 +1324,6 @@ app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
     });
   }
 });
- 
 
 
 
