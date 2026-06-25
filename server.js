@@ -2177,6 +2177,26 @@ app.post("/cartelas/pix-digital", async (req, res) => {
     });
   }
 });
+/* POST /cartelas/:id/retomar-pagamento
+   Usado no painel do cliente quando uma cartela está "pendente"
+   (Pix antigo expirado ou nunca pago) e o cliente clica em
+   "Pagar agora" para gerar um novo Pix. */
+async function retomarPagamento(req, res) {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ sucesso: false, erro: "ID da cartela é obrigatório." });
+        }
+
+        const resultado = await cartelasService.retomarPagamentoCartela(id);
+        return res.json({ sucesso: true, ...resultado.data });
+
+    } catch (erro) {
+        console.error("ERRO RETOMAR PAGAMENTO CARTELA:", erro.message);
+        return res.status(400).json({ sucesso: false, erro: erro.message });
+    }
+}
 
 /* =====================================================
    CARTELAS — VERIFICAR PAGAMENTO
