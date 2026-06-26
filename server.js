@@ -2177,26 +2177,141 @@ app.post("/cartelas/pix-digital", async (req, res) => {
     });
   }
 });
-/* POST /cartelas/:id/retomar-pagamento
-   Usado no painel do cliente quando uma cartela está "pendente"
-   (Pix antigo expirado ou nunca pago) e o cliente clica em
-   "Pagar agora" para gerar um novo Pix. */
-async function retomarPagamento(req, res) {
-    try {
-        const { id } = req.params;
+/* =====================================================================
+   ADICIONAR esta rota no server.js, logo depois da rota
+   app.post("/cartelas/pix-digital", ...) — ou em qualquer lugar
+   dentro do bloco de rotas de cartelas, antes do
+   app.get("/cartelas/verificar-pagamento/:txid", ...).
 
-        if (!id) {
-            return res.status(400).json({ sucesso: false, erro: "ID da cartela é obrigatório." });
-        }
+   O QUE FAZ:
+   Usado no painel do cliente quando uma cartela já existe com
+   status "pendente" (o Pix anterior expirou em 1h, como configurado
+   em criarPix, e nunca foi pago). Em vez de reservar um número novo,
+   pega a cartela já existente pelo ID e gera um Pix NOVO para ela,
+   sobrescrevendo o pix_id antigo.
 
-        const resultado = await cartelasService.retomarPagamentoCartela(id);
-        return res.json({ sucesso: true, ...resultado.data });
+   SEGURANÇA CONTRA PAGAMENTO DUPLICADO:
+   A rota /cartelas/verificar-pagamento/:txid (linha ~2188) busca a
+   cartela pelo pix_id ATUAL salvo no banco. Como esta rota sobrescreve
+   o pix_id, qualquer confirmação do Pix antigo (mesmo que alguém
+   pague-o por engano depois de já ter um Pix novo gerado) não vai
+   encontrar nenhuma cartela correspondente — não credita nada,
+   simplesmente não acontece nada. Não há risco de cobrar a pessoa
+   duas vezes nem de gerar duas cartelas pagas para o mesmo registro.
+===================================================================== */
 
-    } catch (erro) {
-        console.error("ERRO RETOMAR PAGAMENTO CARTELA:", erro.message);
-        return res.status(400).json({ sucesso: false, erro: erro.message });
+app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID da cartela é obrigatório."
+      });
     }
-}
+
+    /* ===== BUSCAR A CARTELA ===== */
+    const { data: cartela, error: erroBusca } = await supabase
+      .from("cartelas")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (erroBusca) {
+      console.error("ERRO BUSCAR CARTELA RETOMAR PAGAMENTO:", erroBusca);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro interno ao buscar a cartela."
+      });
+    }
+
+    if (!cartela) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Cartela não encontrada."
+      });
+    }
+
+    /* ===== VALIDAÇÕES DE STATUS ===== */
+    if (cartela.status === "pago") {
+      return res.status(409).json({
+        sucesso: false,
+        erro: "Essa cartela já foi paga. Não é possível gerar um novo Pix."
+      });
+    }
+
+    if (cartela.status === "cancelado") {
+      return res.status(409).json({
+        sucesso: false,
+        erro: "Essa cartela foi cancelada e não pode ser paga."
+      });
+    }
+
+    if (cartela.status !== "pendente") {
+      return res.status(409).json({
+        sucesso: false,
+        erro: `Esta cartela está com status "${cartela.status}" e não pode ter o pagamento retomado.`
+      });
+    }
+
+    if (!cartela.nome_comprador || !cartela.cpf_comprador) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Esta cartela não tem dados de comprador salvos. Não é possível retomar o pagamento automaticamente."
+      });
+    }
+
+    /* ===== GERAR PIX NOVO (mesmo valor já registrado na cartela) ===== */
+    const valor = Number(cartela.valor_pago);
+
+    const pagamento = await criarPix(valor, cartela.nome_comprador, cartela.cpf_comprador);
+
+    /* ===== ATUALIZAR APENAS O PIX_ID (sobrescreve o antigo/expirado) ===== */
+    const { data: cartelaAtualizada, error: erroUpdate } = await supabase
+      .from("cartelas")
+      .update({
+        pix_id: pagamento.txid
+      })
+      .eq("id", cartela.id)
+      .eq("status", "pendente") // proteção: só atualiza se ainda estiver pendente nesse exato momento
+      .select()
+      .single();
+
+    if (erroUpdate || !cartelaAtualizada) {
+      console.error("ERRO ATUALIZAR PIX_ID RETOMAR PAGAMENTO:", erroUpdate);
+
+      return res.status(409).json({
+        sucesso: false,
+        erro: "Não foi possível atualizar a cartela. Ela pode ter sido paga ou alterada nos últimos instantes — atualize a página e tente novamente."
+      });
+    }
+
+    return res.status(200).json({
+      sucesso: true,
+      mensagem: "Novo Pix gerado com sucesso.",
+      txid: pagamento.txid,
+      numero_cartela: cartelaAtualizada.numero_chance1,
+      numero_chance2: cartelaAtualizada.numero_chance2,
+      tipo: cartelaAtualizada.tipo,
+      valor: valor,
+      pixCopiaECola: pagamento.pixCopiaECola,
+      qrCode: pagamento.qrCodeBase64
+    });
+
+  } catch (erro) {
+
+    console.error("ERRO RETOMAR PAGAMENTO CARTELA:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao gerar novo Pix para a cartela."
+    });
+  }
+});
+
 
 /* =====================================================
    CARTELAS — VERIFICAR PAGAMENTO
