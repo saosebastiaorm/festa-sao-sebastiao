@@ -865,7 +865,7 @@ app.post("/retirada/:codigoPedido", async (req, res) => {
 /* =====================================================
    DASHBOARD ADMIN
 ===================================================== */
-app.get("/admin/dashboard", async (req, res) => {
+app.get("/admin/dashboard", verificarAdminBackend, async (req, res) => {
   try {
     const { data: pedidos, error } = await supabase
       .from("pedidos")
@@ -927,7 +927,7 @@ app.get("/admin/dashboard", async (req, res) => {
 /* =====================================================
    LISTA ADMIN PEDIDOS
 ===================================================== */
-app.get("/admin/pedidos", async (req, res) => {
+app.get("/admin/pedidos", verificarAdminBackend, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("pedidos")
@@ -1032,7 +1032,7 @@ const codigo =
 /* =====================================================
    ADMIN PRODUTOS - LISTAR TODOS
 ===================================================== */
-app.get("/admin/produtos", async (req, res) => {
+app.get("/admin/produtos", verificarAdminBackend, async (req, res) => {
   try {
 
     const { data, error } = await supabase
@@ -1068,7 +1068,7 @@ app.get("/admin/produtos", async (req, res) => {
 /* =====================================================
    ADMIN PRODUTOS - CRIAR / ATUALIZAR
 ===================================================== */
-app.post("/admin/produtos", async (req, res) => {
+app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
   
   try {
 
@@ -1207,7 +1207,7 @@ if (!resultado || resultado.error) {
 /* =====================================================
    ADMIN PRODUTOS - EXCLUIR
 ===================================================== */
-app.delete("/admin/produtos/:id", async (req, res) => {
+app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
 
   try {
 
@@ -1301,7 +1301,7 @@ app.delete("/admin/produtos/:id", async (req, res) => {
 /* =====================================================
    ADMIN UPLOAD IMAGEM PRODUTO
 ===================================================== */
-app.post("/admin/upload-imagem", upload.single("imagem"), async (req, res) => {
+app.post("/admin/upload-imagem", verificarAdminBackend, upload.single("imagem"), async (req, res) => {
   try {
 
     if (!req.file) {
@@ -2441,7 +2441,7 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
    Usado na conferência do sorteio (qual número foi
    sorteado, quem pagou e quando).
 ===================================================== */
-app.get("/admin/cartelas/buscar/:numero", async (req, res) => {
+app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res) => {
   try {
 
     const { numero } = req.params;
@@ -2489,7 +2489,7 @@ app.get("/admin/cartelas/buscar/:numero", async (req, res) => {
    cartelas (antes do app.listen). Segue o mesmo padrão de
    /admin/pedidos já existente.
 ===================================================================== */
-app.get("/admin/cartelas", async (req, res) => {
+app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
   try {
 
     const { data, error } = await supabase
@@ -2525,7 +2525,7 @@ app.get("/admin/cartelas", async (req, res) => {
 /* =====================================================================
    ADMIN — RESUMO/ESTATÍSTICAS DE CARTELAS (cards do topo da página)
 ===================================================================== */
-app.get("/admin/cartelas/resumo", async (req, res) => {
+app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
   try {
 
     const { data: cartelas, error } = await supabase
