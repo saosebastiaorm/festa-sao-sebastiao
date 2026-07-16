@@ -1876,7 +1876,7 @@ app.post("/cartelas/validar-numero", async (req, res) => {
     const { data: cartela, error } = await supabase
       .from("cartelas")
       .select("*")
-      .eq("numero_chance1", String(numero).trim())
+      .or(`numero_chance1.eq.${String(numero).trim()},numero_chance2.eq.${String(numero).trim()}`)
       .eq("tipo", "fisica")
       .eq("lote", config.lote_ativo)
       .maybeSingle();
@@ -1982,11 +1982,14 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
     await supabase.rpc("liberar_cartelas_expiradas");
 
     /* ===== VALIDAR A CARTELA DE NOVO (proteção no servidor,
-       não confiar só na validação em tempo real do frontend) ===== */
+       não confiar só na validação em tempo real do frontend) =====
+       Aceita tanto numero_chance1 quanto numero_chance2 — o
+       comprador pode digitar qualquer um dos dois números
+       impressos no canhoto da cartela física. */
     const { data: cartela, error: buscaErro } = await supabase
       .from("cartelas")
       .select("*")
-      .eq("numero_chance1", String(numero_cartela).trim())
+      .or(`numero_chance1.eq.${String(numero_cartela).trim()},numero_chance2.eq.${String(numero_cartela).trim()}`)
       .eq("tipo", "fisica")
       .eq("lote", config.lote_ativo)
       .maybeSingle();
