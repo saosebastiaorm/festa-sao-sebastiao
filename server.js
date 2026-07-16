@@ -2320,6 +2320,44 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
 ===================================================== */
 const CAMINHO_ARTE_BASE = path.join(__dirname, "assets", "arte-cartela-2027-base.png");
 
+/* =====================================================
+   Gera a arte da cartela digital (PNG) e sobe pro storage,
+   depois atualiza a linha no Supabase com o pdf_url pronto.
+   Roda desacoplado da resposta HTTP (ver chamada mais abaixo).
+===================================================== */
+async function gerarEGuardarCartelaDigital(cartelaAtual, txid) {
+
+  const pngBuffer = await gerarCartelaDigitalPNG(
+    {
+      numeroChance1: cartelaAtual.numero_chance1,
+      numeroChance2: cartelaAtual.numero_chance2,
+      gradeChance1: cartelaAtual.grade_chance1,
+      gradeChance2: cartelaAtual.grade_chance2,
+      nomeComprador: cartelaAtual.nome_comprador,
+      cpfComprador: cartelaAtual.cpf_comprador
+    },
+    CAMINHO_ARTE_BASE
+  );
+
+  const pdfUrl = await uploadCartelaDigital(
+    supabase,
+    cartelaAtual.numero_chance1,
+    pngBuffer
+  );
+
+  const { error: updateErro } = await supabase
+    .from("cartelas")
+    .update({
+      pdf_url: pdfUrl,
+      pdf_gerado_em: new Date().toISOString()
+    })
+    .eq("pix_id", txid);
+
+  if (updateErro) {
+    console.error("ERRO AO SALVAR PDF_URL DA CARTELA DIGITAL:", updateErro);
+  }
+}
+
 app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
   try {
 
@@ -2357,39 +2395,6 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
           comprovante_id: comprovanteId
         };
 
-        /* ===== GERAR A CARTELA DIGITAL (só para tipo digital,
-           e só se ainda não foi gerada antes) ===== */
-        if (cartelaAtual.tipo === "digital" && !cartelaAtual.pdf_url) {
-
-          try {
-
-            const pngBuffer = await gerarCartelaDigitalPNG(
-              {
-                numeroChance1: cartelaAtual.numero_chance1,
-                numeroChance2: cartelaAtual.numero_chance2,
-                gradeChance1: cartelaAtual.grade_chance1,
-                gradeChance2: cartelaAtual.grade_chance2,
-                nomeComprador: cartelaAtual.nome_comprador,
-                cpfComprador: cartelaAtual.cpf_comprador
-              },
-              CAMINHO_ARTE_BASE
-            );
-
-            pdfUrl = await uploadCartelaDigital(
-              supabase,
-              cartelaAtual.numero_chance1,
-              pngBuffer
-            );
-
-            dadosAtualizacao.pdf_url = pdfUrl;
-            dadosAtualizacao.pdf_gerado_em = new Date().toISOString();
-
-          } catch (erroGeracao) {
-
-            console.error("ERRO AO GERAR CARTELA DIGITAL:", erroGeracao);
-          }
-        }
-
         const { error: updateErro } = await supabase
           .from("cartelas")
           .update(dadosAtualizacao)
@@ -2397,6 +2402,20 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
 
         if (updateErro) {
           console.error("ERRO ATUALIZAR PAGAMENTO CARTELA:", updateErro);
+        }
+
+        /* ===== GERAR A CARTELA DIGITAL EM SEGUNDO PLANO =====
+           Não usamos "await" aqui de propósito: a resposta pro
+           frontend sai na hora avisando que o pagamento foi
+           confirmado (pdf_url ainda null), e o próximo polling do
+           frontend (a cada 5s) já pega o pdf_url assim que a
+           geração/upload da imagem terminar. Isso evita que o
+           cliente fique com a tela travada esperando a geração
+           da arte pra só então saber que o pagamento passou. */
+        if (cartelaAtual.tipo === "digital" && !cartelaAtual.pdf_url) {
+          gerarEGuardarCartelaDigital(cartelaAtual, txid).catch((erroGeracao) => {
+            console.error("ERRO AO GERAR CARTELA DIGITAL (segundo plano):", erroGeracao);
+          });
         }
       }
 
