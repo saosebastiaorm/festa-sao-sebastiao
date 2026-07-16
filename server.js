@@ -1976,6 +1976,11 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
 
     const config = await lerConfigCartelas();
 
+    /* ===== LIBERA DE VOLTA PRO ESTOQUE QUALQUER RESERVA EXPIRADA
+       (pendente há mais de 1h sem pagamento) ANTES de checar
+       se esta cartela específica ainda está disponível ===== */
+    await supabase.rpc("liberar_cartelas_expiradas");
+
     /* ===== VALIDAR A CARTELA DE NOVO (proteção no servidor,
        não confiar só na validação em tempo real do frontend) ===== */
     const { data: cartela, error: buscaErro } = await supabase
@@ -2013,6 +2018,9 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
     /* ===== SICREDI PIX ===== */
     const pagamento = await criarPix(valor, nome, cpfLimpo);
 
+    const agora = new Date();
+    const expiraEm = new Date(agora.getTime() + 60 * 60 * 1000); // 1h, mesmo prazo do Pix
+
     /* ===== ATUALIZAR CARTELA (com proteção contra concorrência:
        só atualiza se ainda estiver "disponivel" nesse exato momento) ===== */
     const { data: cartelaAtualizada, error: updateErro } = await supabase
@@ -2024,7 +2032,8 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
         whatsapp_comprador: telefoneLimpo,
         vai_na_festa,
         valor_pago: valor,
-        pix_id: pagamento.txid
+        pix_id: pagamento.txid,
+        reservado_em: agora.toISOString()
       })
       .eq("id", cartela.id)
       .eq("status", "disponivel")
@@ -2047,7 +2056,8 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
       tipo: cartelaAtualizada.tipo,
       valor: valor,
       pixCopiaECola: pagamento.pixCopiaECola,
-      qrCode: pagamento.qrCodeBase64
+      qrCode: pagamento.qrCodeBase64,
+      expira_em: expiraEm.toISOString()
     });
 
   } catch (erro) {
@@ -2164,7 +2174,10 @@ app.post("/cartelas/pix-digital", async (req, res) => {
       tipo: cartelaAtualizada.tipo,
       valor: valor,
       pixCopiaECola: pagamento.pixCopiaECola,
-      qrCode: pagamento.qrCodeBase64
+      qrCode: pagamento.qrCodeBase64,
+      expira_em: new Date(
+        new Date(cartelaReservada.reservado_em).getTime() + 60 * 60 * 1000
+      ).toISOString()
     });
 
   } catch (erro) {
@@ -2437,7 +2450,35 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
       });
     }
 
-    /* ===== AINDA NÃO PAGO ===== */
+    /* ===== AINDA NÃO PAGO — checa se a reserva já expirou =====
+       Importante: só chega aqui se o Sicredi disse que NÃO está
+       concluído ainda, então não tem risco de derrubar um
+       pagamento que acabou de cair — a checagem de "pago" sempre
+       vem primeiro, acima. */
+    const { data: cartelaPendente } = await supabase
+      .from("cartelas")
+      .select("status, reservado_em")
+      .eq("pix_id", txid)
+      .maybeSingle();
+
+    const expirou =
+      !cartelaPendente ||
+      (cartelaPendente.status === "pendente" &&
+        cartelaPendente.reservado_em &&
+        new Date(cartelaPendente.reservado_em).getTime() + 60 * 60 * 1000 < Date.now());
+
+    if (expirou) {
+      // garante a liberação no banco (idempotente — não faz nada
+      // se já tiver sido liberada por outra reserva nesse meio tempo)
+      await supabase.rpc("liberar_cartelas_expiradas");
+
+      return res.json({
+        sucesso: true,
+        status_interno: "expirado",
+        cartela: null
+      });
+    }
+
     return res.json({
       sucesso: true,
       status_interno: "pendente",
