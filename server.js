@@ -1873,6 +1873,11 @@ app.post("/cartelas/validar-numero", async (req, res) => {
 
     const config = await lerConfigCartelas();
 
+    /* ===== LIBERA DE VOLTA PRO ESTOQUE QUALQUER RESERVA EXPIRADA
+       antes de checar esta cartela — assim, se a reserva antiga já
+       passou de 1h, ela conta como livre de novo ===== */
+    await supabase.rpc("liberar_cartelas_expiradas");
+
     const { data: cartela, error } = await supabase
       .from("cartelas")
       .select("*")
@@ -1910,6 +1915,14 @@ app.post("/cartelas/validar-numero", async (req, res) => {
         sucesso: false,
         valido: false,
         erro: "Essa cartela foi cancelada e não pode ser paga."
+      });
+    }
+
+    if (cartela.status === "pendente") {
+      return res.status(404).json({
+        sucesso: false,
+        valido: false,
+        erro: "Essa cartela já está reservada, aguardando pagamento de um Pix gerado anteriormente. Se foi você quem gerou, confira em \"Minha Cartela\" — se já passou de 1h, ela é liberada automaticamente."
       });
     }
 
