@@ -1967,7 +1967,7 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
       });
     }
 
-    if (!["sim", "nao"].includes(vai_na_festa)) {
+    if (!["sim", "talvez", "nao"].includes(vai_na_festa)) {
       return res.status(400).json({
         sucesso: false,
         erro: "Informe se vai participar da festa."
@@ -2096,7 +2096,7 @@ app.post("/cartelas/pix-digital", async (req, res) => {
       });
     }
 
-    if (!["sim", "nao"].includes(vai_na_festa)) {
+    if (!["sim", "talvez", "nao"].includes(vai_na_festa)) {
       return res.status(400).json({
         sucesso: false,
         erro: "Informe se vai participar da festa."
