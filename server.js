@@ -2402,6 +2402,8 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
 
     const statusPagamento = pagamento.status;
 
+    console.log(`[verificar-pagamento] txid=${txid} status_sicredi=${statusPagamento}`);
+
     /* ===== PAGAMENTO APROVADO ===== */
     if (statusPagamento === "CONCLUIDA") {
 
