@@ -2298,11 +2298,17 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
 
     const pagamento = await criarPix(valor, cartela.nome_comprador, cartela.cpf_comprador);
 
-    /* ===== ATUALIZAR APENAS O PIX_ID (sobrescreve o antigo/expirado) ===== */
+    /* ===== ATUALIZAR PIX_ID E RENOVAR O PRAZO DA RESERVA =====
+       Sem renovar reservado_em, o relógio de expiração continuaria
+       contando da reserva ORIGINAL — a pessoa veria um Pix novo na
+       tela, mas com pouco (ou nenhum) tempo real pra pagar. */
+    const agora = new Date();
+
     const { data: cartelaAtualizada, error: erroUpdate } = await supabase
       .from("cartelas")
       .update({
-        pix_id: pagamento.txid
+        pix_id: pagamento.txid,
+        reservado_em: agora.toISOString()
       })
       .eq("id", cartela.id)
       .eq("status", "pendente") // proteção: só atualiza se ainda estiver pendente nesse exato momento
@@ -2327,7 +2333,8 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
       tipo: cartelaAtualizada.tipo,
       valor: valor,
       pixCopiaECola: pagamento.pixCopiaECola,
-      qrCode: pagamento.qrCodeBase64
+      qrCode: pagamento.qrCodeBase64,
+      expira_em: new Date(agora.getTime() + 60 * 60 * 1000).toISOString()
     });
 
   } catch (erro) {
