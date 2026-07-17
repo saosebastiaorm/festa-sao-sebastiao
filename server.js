@@ -2478,17 +2478,27 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
        concluído ainda, então não tem risco de derrubar um
        pagamento que acabou de cair — a checagem de "pago" sempre
        vem primeiro, acima. */
-    const { data: cartelaPendente } = await supabase
+    const { data: cartelaPendente, error: erroBuscaPendente } = await supabase
       .from("cartelas")
       .select("status, reservado_em")
       .eq("pix_id", txid)
       .maybeSingle();
 
+    if (erroBuscaPendente) {
+      console.error("ERRO BUSCAR CARTELA PENDENTE (verificar-pagamento):", erroBuscaPendente);
+    }
+
+    // Só considera expirado com base numa confirmação real de
+    // reservado_em antigo. Se a cartela não foi encontrada ou o
+    // reservado_em está ausente, NÃO assume expiração — isso evita
+    // marcar como expirada por causa de um soluço passageiro na
+    // consulta, em vez de simplesmente tentar de novo no próximo
+    // polling (a cada 5s).
     const expirou =
-      !cartelaPendente ||
-      (cartelaPendente.status === "pendente" &&
-        cartelaPendente.reservado_em &&
-        new Date(cartelaPendente.reservado_em).getTime() + 60 * 60 * 1000 < Date.now());
+      !!cartelaPendente &&
+      cartelaPendente.status === "pendente" &&
+      !!cartelaPendente.reservado_em &&
+      new Date(cartelaPendente.reservado_em).getTime() + 60 * 60 * 1000 < Date.now();
 
     if (expirou) {
       // garante a liberação no banco (idempotente — não faz nada
