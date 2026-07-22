@@ -2298,18 +2298,35 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
 
     const pagamento = await criarPix(valor, cartela.nome_comprador, cartela.cpf_comprador);
 
-    /* ===== ATUALIZAR PIX_ID E RENOVAR O PRAZO DA RESERVA =====
-       Sem renovar reservado_em, o relógio de expiração continuaria
-       contando da reserva ORIGINAL — a pessoa veria um Pix novo na
-       tela, mas com pouco (ou nenhum) tempo real pra pagar. */
+    /* ===== ATUALIZAR PIX_ID — E SÓ RENOVAR reservado_em SE JÁ ESTIVER
+       REALMENTE VENCIDO =====
+       Antes, isso renovava o prazo sempre, incondicionalmente. Só que
+       aí o relógio reiniciava mesmo quando ainda faltava bastante
+       tempo, o que não batia com o cronômetro que a pessoa via no
+       painel um segundo antes de clicar em "Pagar agora" — dava a
+       sensação (correta!) de que o sistema tinha "esquecido" quanto
+       tempo já tinha passado.
+       Agora: se a reserva original ainda está dentro da 1h, mantém
+       reservado_em como estava — o cronômetro continua exatamente de
+       onde parou. Só renova de verdade se ela já tiver passado da 1h
+       (caso ainda esteja "pendente" por não ter sido liberada ainda),
+       porque aí sim precisamos de um prazo novo pro Pix novo não cair
+       como "expirado" na hora. */
     const agora = new Date();
+
+    const reservaAtualExpirada =
+      !cartela.reservado_em ||
+      (new Date(cartela.reservado_em).getTime() + 60 * 60 * 1000 < agora.getTime());
+
+    const dadosAtualizacao = { pix_id: pagamento.txid };
+
+    if (reservaAtualExpirada) {
+      dadosAtualizacao.reservado_em = agora.toISOString();
+    }
 
     const { data: cartelaAtualizada, error: erroUpdate } = await supabase
       .from("cartelas")
-      .update({
-        pix_id: pagamento.txid,
-        reservado_em: agora.toISOString()
-      })
+      .update(dadosAtualizacao)
       .eq("id", cartela.id)
       .eq("status", "pendente") // proteção: só atualiza se ainda estiver pendente nesse exato momento
       .select()
@@ -2334,7 +2351,9 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
       valor: valor,
       pixCopiaECola: pagamento.pixCopiaECola,
       qrCode: pagamento.qrCodeBase64,
-      expira_em: new Date(agora.getTime() + 60 * 60 * 1000).toISOString()
+      expira_em: new Date(
+        new Date(cartelaAtualizada.reservado_em).getTime() + 60 * 60 * 1000
+      ).toISOString()
     });
 
   } catch (erro) {
