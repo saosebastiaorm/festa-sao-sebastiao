@@ -11,8 +11,8 @@
    separadas de criação do bucket.
 ===================================================== */
 
-async function uploadCartelaDigital(supabase, numeroChance1, pngBuffer) {
-  const nomeArquivo = `cartela-${numeroChance1.replace(/[^a-zA-Z0-9-]/g, "")}.png`;
+async function uploadCartelaDigital(supabase, numeroChance1, pngBuffer, sufixo = "") {
+  const nomeArquivo = `cartela-${numeroChance1.replace(/[^a-zA-Z0-9-]/g, "")}${sufixo}.png`;
 
   const { error: uploadError } = await supabase.storage
     .from("cartelas-digitais")
