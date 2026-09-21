@@ -2103,7 +2103,12 @@ app.post("/cartelas/pix-digital", async (req, res) => {
       nome,
       cpf,
       telefone,
-      vai_na_festa
+      vai_na_festa,
+      cep,
+      cidade,
+      bairro,
+      rua,
+      numero_endereco
     } = req.body;
 
     const cpfLimpo = limparCPF(cpf);
@@ -2129,6 +2134,16 @@ app.post("/cartelas/pix-digital", async (req, res) => {
         erro: "Informe se vai participar da festa."
       });
     }
+
+    // endereço do comprador (usado no cupom do verso da cartela digital)
+    const limparTexto = (valor) => String(valor || "").trim().slice(0, 120) || null;
+    const enderecoComprador = {
+      cep: String(cep || "").replace(/\D/g, "").slice(0, 8) || null,
+      cidade: limparTexto(cidade),
+      bairro: limparTexto(bairro),
+      rua: limparTexto(rua),
+      numero_endereco: limparTexto(numero_endereco)
+    };
 
     const config = await lerConfigCartelas();
 
@@ -2166,6 +2181,7 @@ app.post("/cartelas/pix-digital", async (req, res) => {
         cpf_comprador: cpfLimpo,
         whatsapp_comprador: telefoneLimpo,
         vai_na_festa,
+        ...enderecoComprador,
         valor_pago: valor,
         pix_id: pagamento.txid
       })
