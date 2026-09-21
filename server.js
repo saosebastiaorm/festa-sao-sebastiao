@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartela-digital");
+const { gerarVersoCartelaPNG } = require("./src/services/cartelas/gerar-verso-cartela");
 const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
 const sharp = require("sharp");
 require("dotenv").config();
@@ -2373,7 +2374,8 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
    Mesmo modelo de polling usado em /verificar-pagamento/:txid
    (produtos), adaptado pra tabela "cartelas" — sem retirada.
 ===================================================== */
-const CAMINHO_ARTE_BASE = path.join(__dirname, "assets", "arte-cartela-2027-base.png");
+const CAMINHO_ARTE_BASE = path.join(__dirname, "assets", "arte-cartela-2027-oficial.png");
+const CAMINHO_ARTE_VERSO = path.join(__dirname, "assets", "arte-cartela-2027-verso.png");
 
 /* =====================================================
    Gera a arte da cartela digital (PNG) e sobe pro storage,
@@ -2389,9 +2391,36 @@ async function gerarEGuardarCartelaDigital(cartelaAtual, txid) {
       gradeChance1: cartelaAtual.grade_chance1,
       gradeChance2: cartelaAtual.grade_chance2,
       nomeComprador: cartelaAtual.nome_comprador,
-      cpfComprador: cartelaAtual.cpf_comprador
+      cpfComprador: cartelaAtual.cpf_comprador,
+      whatsappComprador: cartelaAtual.whatsapp_comprador,
+      rua: cartelaAtual.rua,
+      numeroEndereco: cartelaAtual.numero_endereco,
+      bairro: cartelaAtual.bairro,
+      cidade: cartelaAtual.cidade
     },
     CAMINHO_ARTE_BASE
+  );
+
+  const versoBuffer = await gerarVersoCartelaPNG(
+    {
+      numeroChance1: cartelaAtual.numero_chance1,
+      numeroChance2: cartelaAtual.numero_chance2,
+      nomeComprador: cartelaAtual.nome_comprador,
+      cpfComprador: cartelaAtual.cpf_comprador,
+      whatsappComprador: cartelaAtual.whatsapp_comprador,
+      rua: cartelaAtual.rua,
+      numeroEndereco: cartelaAtual.numero_endereco,
+      bairro: cartelaAtual.bairro,
+      cidade: cartelaAtual.cidade
+    },
+    CAMINHO_ARTE_VERSO
+  );
+
+  await uploadCartelaDigital(
+    supabase,
+    cartelaAtual.numero_chance1,
+    versoBuffer,
+    "-verso"
   );
 
   const pdfUrl = await uploadCartelaDigital(
@@ -2598,31 +2627,137 @@ app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res
 });
 
 /* =====================================================================
-   ADMIN — LISTAR TODAS AS CARTELAS
-   Cole este bloco no server.js, junto com os outros endpoints de
-   cartelas (antes do app.listen). Segue o mesmo padrão de
-   /admin/pedidos já existente.
+   ADMIN — CARTELAS: FILTROS, PAGINAÇÃO E CONTAGENS
+   O Supabase devolve no máximo 1.000 linhas por consulta, então
+   a listagem busca em páginas e os totais vêm de contagens no banco.
+===================================================================== */
+const COLUNAS_LISTA_CARTELAS =
+  "id,numero_chance1,numero_chance2,tipo,lote,status,nome_comprador,cpf_comprador,whatsapp_comprador,valor_pago,vai_na_festa,reservado_em,data_pagamento,comprovante_id";
+
+function filtrosCartelasDaQuery(query, config) {
+  const lote = String(query.lote || config.lote_ativo || "").trim();
+
+  return {
+    loteRotulo: lote,
+    lote: lote === "todos" ? null : lote,
+    tipo: ["fisica", "digital"].includes(query.tipo) ? query.tipo : null,
+    status: ["disponivel", "pendente", "pago", "cancelado"].includes(query.status)
+      ? query.status
+      : null
+  };
+}
+
+function aplicarFiltrosCartelas(consulta, filtros) {
+  if (filtros.lote) consulta = consulta.eq("lote", filtros.lote);
+  if (filtros.tipo) consulta = consulta.eq("tipo", filtros.tipo);
+  if (filtros.status) consulta = consulta.eq("status", filtros.status);
+  if (filtros.vai_na_festa) consulta = consulta.eq("vai_na_festa", filtros.vai_na_festa);
+  return consulta;
+}
+
+async function contarCartelas(filtros) {
+  const { count, error } = await aplicarFiltrosCartelas(
+    supabase.from("cartelas").select("id", { count: "exact", head: true }),
+    filtros
+  );
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function listarCartelasPaginado(filtros, limite) {
+  const TAMANHO_PAGINA = 1000;
+  const resultado = [];
+
+  for (let inicio = 0; inicio < limite; inicio += TAMANHO_PAGINA) {
+    const fim = Math.min(inicio + TAMANHO_PAGINA, limite) - 1;
+
+    const { data, error } = await aplicarFiltrosCartelas(
+      supabase.from("cartelas").select(COLUNAS_LISTA_CARTELAS),
+      filtros
+    )
+      .order("id", { ascending: false })
+      .range(inicio, fim);
+
+    if (error) throw error;
+
+    resultado.push(...data);
+    if (data.length < fim - inicio + 1) break;
+  }
+
+  return resultado;
+}
+
+async function somarValorPagoCartelas(filtros) {
+  const TAMANHO_PAGINA = 1000;
+  let soma = 0;
+
+  for (let inicio = 0; ; inicio += TAMANHO_PAGINA) {
+    const { data, error } = await aplicarFiltrosCartelas(
+      supabase.from("cartelas").select("valor_pago"),
+      { ...filtros, status: "pago" }
+    )
+      .order("id", { ascending: true })
+      .range(inicio, inicio + TAMANHO_PAGINA - 1);
+
+    if (error) throw error;
+
+    soma += data.reduce((acc, c) => acc + Number(c.valor_pago || 0), 0);
+    if (data.length < TAMANHO_PAGINA) break;
+  }
+
+  return Math.round(soma * 100) / 100;
+}
+
+// Lista os lotes existentes sem varrer a tabela: pula de um lote pro próximo
+// (o índice idx_cartelas_lote torna cada consulta instantânea)
+async function listarLotesCartelas() {
+  const lotes = [];
+  let anterior = null;
+
+  for (let i = 0; i < 50; i++) {
+    let consulta = supabase.from("cartelas").select("lote").order("lote", { ascending: true }).limit(1);
+    if (anterior !== null) consulta = consulta.gt("lote", anterior);
+
+    const { data, error } = await consulta;
+    if (error) throw error;
+    if (!data.length) break;
+
+    anterior = data[0].lote;
+    lotes.push(anterior);
+  }
+
+  return lotes;
+}
+
+/* =====================================================================
+   ADMIN — LISTAR CARTELAS (filtro por lote, padrão: lote ativo)
 ===================================================================== */
 app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
   try {
 
-    const { data, error } = await supabase
-      .from("cartelas")
-      .select("*")
-      .order("id", { ascending: false });
+    const config = await lerConfigCartelas();
+    const filtros = filtrosCartelasDaQuery(req.query, config);
 
-    if (error) {
-      console.error("ERRO LISTAR CARTELAS:", error);
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Erro ao carregar cartelas."
-      });
-    }
+    const limiteSolicitado = Number(req.query.limite);
+    const limite = Math.min(
+      Number.isInteger(limiteSolicitado) && limiteSolicitado > 0 ? limiteSolicitado : 2000,
+      5000
+    );
+
+    const totalNoFiltro = await contarCartelas(filtros);
+    const cartelas = await listarCartelasPaginado(filtros, limite);
+    const lotes = await listarLotesCartelas();
 
     return res.json({
       sucesso: true,
-      total: data.length,
-      cartelas: data
+      total: cartelas.length,
+      total_no_filtro: totalNoFiltro,
+      truncado: totalNoFiltro > cartelas.length,
+      lote_ativo: config.lote_ativo,
+      lote_aplicado: filtros.loteRotulo,
+      lotes,
+      cartelas
     });
 
   } catch (erro) {
@@ -2638,44 +2773,46 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
 
 /* =====================================================================
    ADMIN — RESUMO/ESTATÍSTICAS DE CARTELAS (cards do topo da página)
+   Respeita o mesmo filtro de lote da listagem (padrão: lote ativo) e
+   usa contagens no banco, sem baixar as linhas (o Supabase limita a
+   1.000 linhas por consulta).
 ===================================================================== */
 app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
   try {
 
-    const { data: cartelas, error } = await supabase
-      .from("cartelas")
-      .select("*");
+    const config = await lerConfigCartelas();
+    const base = filtrosCartelasDaQuery({ lote: req.query.lote }, config);
 
-    if (error) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Erro ao carregar resumo de cartelas."
-      });
-    }
+    const [
+      total,
+      pagas,
+      pendentes,
+      disponiveis,
+      fisicasPagas,
+      digitaisPagas,
+      confirmaramPresenca
+    ] = await Promise.all([
+      contarCartelas(base),
+      contarCartelas({ ...base, status: "pago" }),
+      contarCartelas({ ...base, status: "pendente" }),
+      contarCartelas({ ...base, status: "disponivel" }),
+      contarCartelas({ ...base, status: "pago", tipo: "fisica" }),
+      contarCartelas({ ...base, status: "pago", tipo: "digital" }),
+      contarCartelas({ ...base, status: "pago", vai_na_festa: "sim" })
+    ]);
 
-    const pagas = cartelas.filter(c => c.status === "pago");
-    const pendentes = cartelas.filter(c => c.status === "pendente");
-    const disponiveis = cartelas.filter(c => c.status === "disponivel");
-
-    const fisicasPagas = pagas.filter(c => c.tipo === "fisica");
-    const digitaisPagas = pagas.filter(c => c.tipo === "digital");
-
-    const confirmaramPresenca = pagas.filter(c => c.vai_na_festa === "sim");
-
-    const receitaTotal = pagas.reduce(
-      (acc, c) => acc + Number(c.valor_pago || 0),
-      0
-    );
+    const receitaTotal = await somarValorPagoCartelas(base);
 
     return res.json({
       sucesso: true,
-      total_cartelas: cartelas.length,
-      total_pagas: pagas.length,
-      total_pendentes: pendentes.length,
-      total_disponiveis: disponiveis.length,
-      fisicas_pagas: fisicasPagas.length,
-      digitais_pagas: digitaisPagas.length,
-      confirmaram_presenca: confirmaramPresenca.length,
+      lote_aplicado: base.loteRotulo,
+      total_cartelas: total,
+      total_pagas: pagas,
+      total_pendentes: pendentes,
+      total_disponiveis: disponiveis,
+      fisicas_pagas: fisicasPagas,
+      digitais_pagas: digitaisPagas,
+      confirmaram_presenca: confirmaramPresenca,
       receita_total: receitaTotal
     });
 
