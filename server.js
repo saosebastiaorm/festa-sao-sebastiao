@@ -2692,6 +2692,9 @@ async function listarCartelasPaginado(filtros, limite) {
       supabase.from("cartelas").select(COLUNAS_LISTA_CARTELAS),
       filtros
     )
+      // mais recentes primeiro: pagamento, depois reserva (ainda nao pagas) e por fim o id
+      .order("data_pagamento", { ascending: false, nullsFirst: false })
+      .order("reservado_em", { ascending: false, nullsFirst: false })
       .order("id", { ascending: false })
       .range(inicio, fim);
 
