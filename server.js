@@ -2679,7 +2679,7 @@ app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res
    a listagem busca em páginas e os totais vêm de contagens no banco.
 ===================================================================== */
 const COLUNAS_LISTA_CARTELAS =
-  "id,numero_chance1,numero_chance2,tipo,lote,status,nome_comprador,cpf_comprador,whatsapp_comprador,valor_pago,vai_na_festa,reservado_em,data_pagamento,comprovante_id";
+  "id,numero_chance1,numero_chance2,tipo,lote,status,nome_comprador,cpf_comprador,whatsapp_comprador,valor_pago,vai_na_festa,reservado_em,data_pagamento,comprovante_id,pdf_url,pix_id";
 
 function filtrosCartelasDaQuery(query, config) {
   const lote = String(query.lote || config.lote_ativo || "").trim();
