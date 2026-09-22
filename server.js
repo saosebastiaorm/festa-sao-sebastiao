@@ -2393,6 +2393,10 @@ app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
 const CAMINHO_ARTE_BASE = path.join(__dirname, "assets", "arte-cartela-2027-oficial.png");
 const CAMINHO_ARTE_VERSO = path.join(__dirname, "assets", "arte-cartela-2027-verso.png");
 
+// txids cuja geração da cartela digital está rodando agora — evita disparar
+// duas gerações em paralelo pro mesmo pagamento se dois polls se cruzarem
+const cartelasDigitaisEmGeracao = new Set();
+
 /* =====================================================
    Gera a arte da cartela digital (PNG) e sobe pro storage,
    depois atualiza a linha no Supabase com o pdf_url pronto.
@@ -2505,20 +2509,38 @@ app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
         if (updateErro) {
           console.error("ERRO ATUALIZAR PAGAMENTO CARTELA:", updateErro);
         }
+      }
 
-        /* ===== GERAR A CARTELA DIGITAL EM SEGUNDO PLANO =====
-           Não usamos "await" aqui de propósito: a resposta pro
-           frontend sai na hora avisando que o pagamento foi
-           confirmado (pdf_url ainda null), e o próximo polling do
-           frontend (a cada 5s) já pega o pdf_url assim que a
-           geração/upload da imagem terminar. Isso evita que o
-           cliente fique com a tela travada esperando a geração
-           da arte pra só então saber que o pagamento passou. */
-        if (cartelaAtual.tipo === "digital" && !cartelaAtual.pdf_url) {
-          gerarEGuardarCartelaDigital(cartelaAtual, txid).catch((erroGeracao) => {
+      /* ===== GERAR A CARTELA DIGITAL EM SEGUNDO PLANO =====
+         Não usamos "await" aqui de propósito: a resposta pro frontend
+         sai na hora avisando que o pagamento foi confirmado (pdf_url
+         ainda null), e o próximo polling do frontend (a cada 5s) já
+         pega o pdf_url assim que a geração/upload da imagem terminar.
+         Isso evita que o cliente fique com a tela travada esperando a
+         geração da arte pra só então saber que o pagamento passou.
+
+         IMPORTANTE: roda em TODO poll enquanto pdf_url continuar nulo —
+         não só na transição pendente->pago. Um serviço grátis como o
+         Render pode suspender o processo logo depois da resposta HTTP
+         sair, mesmo com essa promise ainda rodando; sem essa repetição,
+         uma única tentativa interrompida deixava a cartela sem imagem
+         pra sempre, mesmo com o polling batendo aqui a cada 5s. O Set
+         evita disparar duas gerações em paralelo pro mesmo txid se dois
+         polls se cruzarem antes da primeira terminar. */
+      if (
+        cartelaAtual.tipo === "digital" &&
+        !cartelaAtual.pdf_url &&
+        !cartelasDigitaisEmGeracao.has(txid)
+      ) {
+        cartelasDigitaisEmGeracao.add(txid);
+
+        gerarEGuardarCartelaDigital(cartelaAtual, txid)
+          .catch((erroGeracao) => {
             console.error("ERRO AO GERAR CARTELA DIGITAL (segundo plano):", erroGeracao);
+          })
+          .finally(() => {
+            cartelasDigitaisEmGeracao.delete(txid);
           });
-        }
       }
 
       return res.json({
