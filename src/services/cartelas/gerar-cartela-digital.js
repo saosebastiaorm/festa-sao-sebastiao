@@ -127,10 +127,14 @@ async function gerarCartelaDigitalPNG(dados, caminhoArteBase) {
 
   const overlayBuffer = Buffer.from(svgCompleto);
 
+  // OBS: a opção "quality" no .png() do sharp ativa quantização de cor
+  // (reduz pra paleta), que é MUITO cara de CPU (~12x mais lenta em teste
+  // local) e ainda piora a qualidade visual. Removida de propósito — o
+  // compressionLevel sozinho já cuida do tamanho do arquivo sem esse custo.
   const resultado = await sharp(caminhoArteBase)
     .resize(COORD.LARGURA_IMAGEM, COORD.ALTURA_IMAGEM)
     .composite([{ input: overlayBuffer, top: 0, left: 0 }])
-    .png({ quality: 80, compressionLevel: 8 })
+    .png({ compressionLevel: 8 })
     .toBuffer();
 
   return resultado;
