@@ -40,13 +40,10 @@ async function gerarVersoCartelaPNG(dados, caminhoArteVerso) {
     </svg>
   `;
 
-  // Ver comentário equivalente em gerar-cartela-digital.js: "quality" no
-  // PNG do sharp ativa quantização de cor, muito cara de CPU e sem
-  // benefício real aqui — removida de propósito.
   return sharp(caminhoArteVerso)
     .resize(COORD.LARGURA_IMAGEM, COORD.ALTURA_IMAGEM)
     .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
-    .png({ compressionLevel: 8 })
+    .png({ quality: 80, compressionLevel: 8 })
     .toBuffer();
 }
 
