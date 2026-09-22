@@ -222,6 +222,61 @@ app.get("/", (req, res) => {
 });
 
 /* =====================================================
+   LINK COM PRÉVIA BONITA (Open Graph) PRA IMAGEM DIRETA
+   O WhatsApp (e a maioria dos apps) monta o card de prévia de um
+   link lendo as tags og:title/og:image da página — pra um link
+   direto de imagem (sem HTML), ele só tem o domínio pra mostrar,
+   o que fica feio (ex: "dzhgawgzrpgmyopptiwl.supabase.co"). Essa
+   rota serve uma página mínima com essas tags preenchidas, então o
+   card de prévia mostra um título legível + miniatura da cartela
+   em vez do nome do domínio. Quem abre o link de verdade (humano,
+   não o crawler de prévia) é redirecionado pra imagem na hora.
+
+   Só aceita imagens do nosso próprio bucket público do Storage —
+   não é um redirecionador aberto pra qualquer URL.
+===================================================== */
+const PREFIXO_STORAGE_PUBLICO =
+  new URL(process.env.SUPABASE_URL).origin + "/storage/v1/object/public/";
+
+function escaparHtml(texto) {
+  return String(texto || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+app.get("/link-imagem", (req, res) => {
+
+  const img = String(req.query.img || "");
+  const titulo = String(req.query.titulo || "Cartela FPSS").slice(0, 200);
+
+  if (!img.startsWith(PREFIXO_STORAGE_PUBLICO)) {
+    return res.status(400).send("Link inválido.");
+  }
+
+  const tituloSeguro = escaparHtml(titulo);
+  const imgSeguro = escaparHtml(img);
+
+  res.set("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>${tituloSeguro}</title>
+<meta property="og:title" content="${tituloSeguro}">
+<meta property="og:image" content="${imgSeguro}">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta http-equiv="refresh" content="0; url=${imgSeguro}">
+</head>
+<body>
+<p><a href="${imgSeguro}">Ver imagem</a></p>
+</body>
+</html>`);
+});
+
+/* =====================================================
    API STATUS
 ===================================================== */
 app.get("/api", (req, res) => {
