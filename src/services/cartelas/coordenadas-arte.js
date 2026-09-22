@@ -12,6 +12,15 @@
 const LARGURA_IMAGEM = 2599;
 const ALTURA_IMAGEM = 3780;
 
+// Resolução FINAL de saída do PNG (depois de toda a composição), reduzida
+// de 300 para ~200dpi — todas as coordenadas acima continuam calibradas
+// pro canvas de 2599x3780 (LARGURA_IMAGEM/ALTURA_IMAGEM); a composição
+// roda normalmente nesse tamanho e só é reduzida no fim, antes do
+// encode do PNG. Isso corta o trabalho da etapa mais cara (quantização
+// de cor) proporcionalmente, sem precisar remapear nenhuma coordenada.
+const LARGURA_FINAL = 1733;
+const ALTURA_FINAL = 2520;
+
 // Centro [x, y] das 24 bolinhas de cada grade, na ordem em que os
 // numeros sao distribuidos: coluna a coluna (S,O,R,T,E => 5,5,4,5,5),
 // de cima pra baixo. Chave: "<premio>-<chance>" (premio 1..3, chance 1..2).
@@ -69,6 +78,8 @@ const VERSO = {
 module.exports = {
   LARGURA_IMAGEM,
   ALTURA_IMAGEM,
+  LARGURA_FINAL,
+  ALTURA_FINAL,
   BOLINHAS,
   FONTE_NUMERO,
   COR_TEXTO,

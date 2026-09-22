@@ -40,9 +40,18 @@ async function gerarVersoCartelaPNG(dados, caminhoArteVerso) {
     </svg>
   `;
 
-  return sharp(caminhoArteVerso)
+  // Mesma lógica do gerar-cartela-digital.js: compõe no canvas cheio
+  // (coordenadas calibradas pra 2599x3780) num pipeline separado, e só
+  // reduz pra resolução final (~200dpi) num segundo sharp() em cima do
+  // resultado — sharp não permite dois .resize() numa mesma cadeia.
+  const composto = await sharp(caminhoArteVerso)
     .resize(COORD.LARGURA_IMAGEM, COORD.ALTURA_IMAGEM)
     .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+    .png()
+    .toBuffer();
+
+  return sharp(composto)
+    .resize(COORD.LARGURA_FINAL, COORD.ALTURA_FINAL, { fit: "fill" })
     .png({ quality: 80, compressionLevel: 8 })
     .toBuffer();
 }

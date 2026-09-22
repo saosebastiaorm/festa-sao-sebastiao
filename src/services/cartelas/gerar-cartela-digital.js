@@ -127,9 +127,22 @@ async function gerarCartelaDigitalPNG(dados, caminhoArteBase) {
 
   const overlayBuffer = Buffer.from(svgCompleto);
 
-  const resultado = await sharp(caminhoArteBase)
+  // A composição roda no canvas cheio (2599x3780, onde as coordenadas de
+  // COORD estão calibradas) num pipeline separado do resize final — o
+  // sharp não permite dois .resize() numa mesma cadeia (o segundo
+  // sobrescreve o primeiro), então a redução pra resolução final
+  // (~200dpi) precisa ser um sharp() novo em cima do resultado já
+  // composto. Isso ainda corta bastante o custo da quantização de cor
+  // do PNG (que é o que dominava o tempo), já que ela roda só na etapa
+  // final, em bem menos pixels.
+  const composto = await sharp(caminhoArteBase)
     .resize(COORD.LARGURA_IMAGEM, COORD.ALTURA_IMAGEM)
     .composite([{ input: overlayBuffer, top: 0, left: 0 }])
+    .png()
+    .toBuffer();
+
+  const resultado = await sharp(composto)
+    .resize(COORD.LARGURA_FINAL, COORD.ALTURA_FINAL, { fit: "fill" })
     .png({ quality: 80, compressionLevel: 8 })
     .toBuffer();
 
