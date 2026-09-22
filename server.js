@@ -2797,7 +2797,12 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
       1000
     );
 
-    const totalNoFiltro = await contarCartelas(filtros);
+    // contagem e lista de lotes não dependem uma da outra — em paralelo,
+    // menos uma ida-e-volta ao banco por requisição
+    const [totalNoFiltro, lotes] = await Promise.all([
+      contarCartelas(filtros),
+      listarLotesCartelas()
+    ]);
     const totalPaginas = Math.max(1, Math.ceil(totalNoFiltro / porPagina));
 
     const paginaSolicitada = Number(req.query.pagina);
@@ -2807,7 +2812,6 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
     );
 
     const cartelas = await buscarPaginaCartelas(filtros, pagina, porPagina);
-    const lotes = await listarLotesCartelas();
 
     return res.json({
       sucesso: true,
