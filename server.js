@@ -2652,6 +2652,7 @@ const COLUNAS_LISTA_CARTELAS =
 
 function filtrosCartelasDaQuery(query, config) {
   const lote = String(query.lote || config.lote_ativo || "").trim();
+  const busca = String(query.busca || "").trim();
 
   return {
     loteRotulo: lote,
@@ -2659,7 +2660,10 @@ function filtrosCartelasDaQuery(query, config) {
     tipo: ["fisica", "digital"].includes(query.tipo) ? query.tipo : null,
     status: ["disponivel", "pendente", "pago", "cancelado"].includes(query.status)
       ? query.status
-      : null
+      : null,
+    vai_na_festa: ["sim", "talvez", "nao"].includes(query.presenca) ? query.presenca : null,
+    // usado tanto pelo resumo (sem busca) quanto pela listagem/exportação
+    busca: busca || null
   };
 }
 
@@ -2668,6 +2672,20 @@ function aplicarFiltrosCartelas(consulta, filtros) {
   if (filtros.tipo) consulta = consulta.eq("tipo", filtros.tipo);
   if (filtros.status) consulta = consulta.eq("status", filtros.status);
   if (filtros.vai_na_festa) consulta = consulta.eq("vai_na_festa", filtros.vai_na_festa);
+
+  if (filtros.busca) {
+    // mesmos 4 campos que a busca livre do admin já comparava no navegador
+    // (nome, CPF, número em qualquer uma das 2 chances) — "%"/"," não tem
+    // uso legítimo nesses campos, então são removidos por segurança do filtro
+    const termo = filtros.busca.replace(/[%,()]/g, "");
+    if (termo) {
+      consulta = consulta.or(
+        `nome_comprador.ilike.%${termo}%,cpf_comprador.ilike.%${termo}%,` +
+        `numero_chance1.ilike.%${termo}%,numero_chance2.ilike.%${termo}%`
+      );
+    }
+  }
+
   return consulta;
 }
 
@@ -2681,27 +2699,42 @@ async function contarCartelas(filtros) {
   return count || 0;
 }
 
-async function listarCartelasPaginado(filtros, limite) {
+function ordenarCartelasMaisRecentes(consulta) {
+  // mais recentes primeiro: pagamento, depois reserva (ainda nao pagas) e por fim o id
+  return consulta
+    .order("data_pagamento", { ascending: false, nullsFirst: false })
+    .order("reservado_em", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false });
+}
+
+// Uma página real (offset = (pagina-1)*porPagina), pra navegação no admin
+async function buscarPaginaCartelas(filtros, pagina, porPagina) {
+  const inicio = (pagina - 1) * porPagina;
+  const fim = inicio + porPagina - 1;
+
+  const { data, error } = await ordenarCartelasMaisRecentes(
+    aplicarFiltrosCartelas(supabase.from("cartelas").select(COLUNAS_LISTA_CARTELAS), filtros)
+  ).range(inicio, fim);
+
+  if (error) throw error;
+  return data;
+}
+
+// TODAS as linhas do filtro, sem limite — só pra exportação de CSV (o Supabase
+// limita 1.000 por consulta, então busca em páginas até esgotar)
+async function listarTodasCartelasFiltro(filtros) {
   const TAMANHO_PAGINA = 1000;
   const resultado = [];
 
-  for (let inicio = 0; inicio < limite; inicio += TAMANHO_PAGINA) {
-    const fim = Math.min(inicio + TAMANHO_PAGINA, limite) - 1;
-
-    const { data, error } = await aplicarFiltrosCartelas(
-      supabase.from("cartelas").select(COLUNAS_LISTA_CARTELAS),
-      filtros
-    )
-      // mais recentes primeiro: pagamento, depois reserva (ainda nao pagas) e por fim o id
-      .order("data_pagamento", { ascending: false, nullsFirst: false })
-      .order("reservado_em", { ascending: false, nullsFirst: false })
-      .order("id", { ascending: false })
-      .range(inicio, fim);
+  for (let inicio = 0; ; inicio += TAMANHO_PAGINA) {
+    const { data, error } = await ordenarCartelasMaisRecentes(
+      aplicarFiltrosCartelas(supabase.from("cartelas").select(COLUNAS_LISTA_CARTELAS), filtros)
+    ).range(inicio, inicio + TAMANHO_PAGINA - 1);
 
     if (error) throw error;
 
     resultado.push(...data);
-    if (data.length < fim - inicio + 1) break;
+    if (data.length < TAMANHO_PAGINA) break;
   }
 
   return resultado;
@@ -2758,21 +2791,31 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
     const config = await lerConfigCartelas();
     const filtros = filtrosCartelasDaQuery(req.query, config);
 
-    const limiteSolicitado = Number(req.query.limite);
-    const limite = Math.min(
-      Number.isInteger(limiteSolicitado) && limiteSolicitado > 0 ? limiteSolicitado : 2000,
-      5000
+    const porPaginaSolicitado = Number(req.query.porPagina);
+    const porPagina = Math.min(
+      Number.isInteger(porPaginaSolicitado) && porPaginaSolicitado > 0 ? porPaginaSolicitado : 100,
+      1000
     );
 
     const totalNoFiltro = await contarCartelas(filtros);
-    const cartelas = await listarCartelasPaginado(filtros, limite);
+    const totalPaginas = Math.max(1, Math.ceil(totalNoFiltro / porPagina));
+
+    const paginaSolicitada = Number(req.query.pagina);
+    const pagina = Math.min(
+      Math.max(Number.isInteger(paginaSolicitada) && paginaSolicitada > 0 ? paginaSolicitada : 1, 1),
+      totalPaginas
+    );
+
+    const cartelas = await buscarPaginaCartelas(filtros, pagina, porPagina);
     const lotes = await listarLotesCartelas();
 
     return res.json({
       sucesso: true,
       total: cartelas.length,
       total_no_filtro: totalNoFiltro,
-      truncado: totalNoFiltro > cartelas.length,
+      pagina,
+      por_pagina: porPagina,
+      total_paginas: totalPaginas,
       lote_ativo: config.lote_ativo,
       lote_aplicado: filtros.loteRotulo,
       lotes,
@@ -2786,6 +2829,80 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       erro: "Erro interno ao listar cartelas."
+    });
+  }
+});
+
+/* =====================================================================
+   ADMIN — EXPORTAR CARTELAS EM CSV
+   Mesmos filtros da listagem (lote/tipo/status/presença/busca), mas sem
+   paginação — todas as linhas que baterem com o filtro, não só a página
+   visível na tela.
+===================================================================== */
+app.get("/admin/cartelas/exportar", verificarAdminBackend, async (req, res) => {
+  try {
+
+    const config = await lerConfigCartelas();
+    const filtros = filtrosCartelasDaQuery(req.query, config);
+
+    const cartelas = await listarTodasCartelasFiltro(filtros);
+
+    const cabecalho = [
+      "ID",
+      "Número Chance 1",
+      "Número Chance 2",
+      "Tipo",
+      "Lote",
+      "Status",
+      "Nome",
+      "CPF",
+      "WhatsApp",
+      "Valor Pago",
+      "Vai à Festa",
+      "Data Reserva",
+      "Data Pagamento",
+      "Comprovante"
+    ];
+
+    const escaparCSV = (valor) => `"${String(valor).replace(/"/g, '""')}"`;
+
+    const linhas = cartelas.map((c) => [
+      c.id || "",
+      c.numero_chance1 || "",
+      c.numero_chance2 || "",
+      c.tipo || "",
+      c.lote || "",
+      c.status || "",
+      c.nome_comprador || "",
+      c.cpf_comprador || "",
+      c.whatsapp_comprador || "",
+      c.valor_pago || "",
+      c.vai_na_festa || "",
+      c.reservado_em || "",
+      c.data_pagamento || "",
+      c.comprovante_id || ""
+    ]);
+
+    let csv = cabecalho.map(escaparCSV).join(";") + "\n";
+    linhas.forEach((linha) => {
+      csv += linha.map(escaparCSV).join(";") + "\n";
+    });
+
+    const hoje = new Date();
+    const nomeArquivo =
+      `cartelas-fpss-${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${nomeArquivo}"`);
+    return res.send("﻿" + csv);
+
+  } catch (erro) {
+
+    console.error("ERRO EXPORTAR CARTELAS CSV:", erro);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao exportar cartelas."
     });
   }
 });
