@@ -2404,50 +2404,55 @@ const cartelasDigitaisEmGeracao = new Set();
 ===================================================== */
 async function gerarEGuardarCartelaDigital(cartelaAtual, txid) {
 
-  const pngBuffer = await gerarCartelaDigitalPNG(
-    {
-      numeroChance1: cartelaAtual.numero_chance1,
-      numeroChance2: cartelaAtual.numero_chance2,
-      gradeChance1: cartelaAtual.grade_chance1,
-      gradeChance2: cartelaAtual.grade_chance2,
-      nomeComprador: cartelaAtual.nome_comprador,
-      cpfComprador: cartelaAtual.cpf_comprador,
-      whatsappComprador: cartelaAtual.whatsapp_comprador,
-      rua: cartelaAtual.rua,
-      numeroEndereco: cartelaAtual.numero_endereco,
-      bairro: cartelaAtual.bairro,
-      cidade: cartelaAtual.cidade
-    },
-    CAMINHO_ARTE_BASE
-  );
+  const inicioGeracao = Date.now();
 
-  const versoBuffer = await gerarVersoCartelaPNG(
-    {
-      numeroChance1: cartelaAtual.numero_chance1,
-      numeroChance2: cartelaAtual.numero_chance2,
-      nomeComprador: cartelaAtual.nome_comprador,
-      cpfComprador: cartelaAtual.cpf_comprador,
-      whatsappComprador: cartelaAtual.whatsapp_comprador,
-      rua: cartelaAtual.rua,
-      numeroEndereco: cartelaAtual.numero_endereco,
-      bairro: cartelaAtual.bairro,
-      cidade: cartelaAtual.cidade
-    },
-    CAMINHO_ARTE_VERSO
-  );
+  const dadosComprador = {
+    numeroChance1: cartelaAtual.numero_chance1,
+    numeroChance2: cartelaAtual.numero_chance2,
+    nomeComprador: cartelaAtual.nome_comprador,
+    cpfComprador: cartelaAtual.cpf_comprador,
+    whatsappComprador: cartelaAtual.whatsapp_comprador,
+    rua: cartelaAtual.rua,
+    numeroEndereco: cartelaAtual.numero_endereco,
+    bairro: cartelaAtual.bairro,
+    cidade: cartelaAtual.cidade
+  };
 
-  await uploadCartelaDigital(
-    supabase,
-    cartelaAtual.numero_chance1,
-    versoBuffer,
-    "-verso"
-  );
+  // Frente e verso são duas artes independentes (não dependem uma da
+  // outra) — gerar as duas ao mesmo tempo em vez de uma depois da outra
+  // corta bastante o tempo total de espera do comprador.
+  const [pngBuffer, versoBuffer] = await Promise.all([
+    gerarCartelaDigitalPNG(
+      {
+        ...dadosComprador,
+        gradeChance1: cartelaAtual.grade_chance1,
+        gradeChance2: cartelaAtual.grade_chance2
+      },
+      CAMINHO_ARTE_BASE
+    ),
+    gerarVersoCartelaPNG(dadosComprador, CAMINHO_ARTE_VERSO)
+  ]);
 
-  const pdfUrl = await uploadCartelaDigital(
-    supabase,
-    cartelaAtual.numero_chance1,
-    pngBuffer
-  );
+  const tempoGeracaoMs = Date.now() - inicioGeracao;
+
+  // Os dois uploads pro Storage também são independentes entre si.
+  const inicioUpload = Date.now();
+
+  const [pdfUrl] = await Promise.all([
+    uploadCartelaDigital(
+      supabase,
+      cartelaAtual.numero_chance1,
+      pngBuffer
+    ),
+    uploadCartelaDigital(
+      supabase,
+      cartelaAtual.numero_chance1,
+      versoBuffer,
+      "-verso"
+    )
+  ]);
+
+  const tempoUploadMs = Date.now() - inicioUpload;
 
   const { error: updateErro } = await supabase
     .from("cartelas")
@@ -2460,6 +2465,10 @@ async function gerarEGuardarCartelaDigital(cartelaAtual, txid) {
   if (updateErro) {
     console.error("ERRO AO SALVAR PDF_URL DA CARTELA DIGITAL:", updateErro);
   }
+
+  console.log(
+    `[gerarEGuardarCartelaDigital] txid=${txid} geracao_ms=${tempoGeracaoMs} upload_ms=${tempoUploadMs} total_ms=${Date.now() - inicioGeracao}`
+  );
 }
 
 app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
