@@ -4,7 +4,8 @@
    "description": "Backend Sicredi + Supabase",
    "main": "server.js",
    "scripts": {
-      "start": "node server.js"
+      "start": "node server.js",
+      "smoke-test": "node scripts/smoke-test.js"
    },
    "keywords": [
       "fpss",
