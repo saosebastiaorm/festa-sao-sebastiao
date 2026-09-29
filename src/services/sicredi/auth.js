@@ -15,7 +15,7 @@ const ca = fs.readFileSync(process.env.SICREDI_CHAIN_PATH);
 const agent = new https.Agent({
     cert,
     key,
-    ca
+    rejectUnauthorized: false
 });
 
 async function getAccessToken() {
@@ -42,16 +42,21 @@ try {
 
 } catch (err) {
 
-    console.error("[PIX] Erro ao obter access token Sicredi:", {
-        codigo: err.code,
-        mensagem: err.message,
-        status: err.response?.status,
-        dados: err.response?.data,
-        causa: err.cause
-    });
+    console.log("========== ERRO COMPLETO ==========");
+
+    console.log(err.code);
+
+    console.log(err.message);
+
+    console.log(err.response?.status);
+
+    console.log(err.response?.data);
+
+    console.log(err.cause);
 
     throw err;
 }
+    return response.data.access_token;
 }
 
 module.exports = {
