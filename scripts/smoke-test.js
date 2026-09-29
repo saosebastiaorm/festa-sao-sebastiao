@@ -46,6 +46,20 @@ async function main() {
     assert(j.status === "online", "campo status não é 'online'");
   });
 
+  await checar("GET /health responde ok", async () => {
+    const r = await fetch(`${BASE}/health`);
+    const j = await r.json();
+    assert(r.status === 200, `esperava 200, veio ${r.status}`);
+    assert(j.status === "ok", "campo status não é 'ok'");
+  });
+
+  await checar("GET /ready confirma banco disponível", async () => {
+    const r = await fetch(`${BASE}/ready`);
+    const j = await r.json();
+    assert(r.status === 200, `esperava 200, veio ${r.status}`);
+    assert(j.database === "ok", "banco não está ok");
+  });
+
   await checar("GET /rota-inexistente devolve 404 em JSON", async () => {
     const r = await fetch(`${BASE}/rota-que-nao-deveria-existir-${Date.now()}`);
     const j = await r.json();
