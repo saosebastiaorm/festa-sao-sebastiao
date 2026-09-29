@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartela-digital");
 const { gerarVersoCartelaPNG } = require("./src/services/cartelas/gerar-verso-cartela");
 const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
@@ -36,7 +38,25 @@ const {
 
 const app = express();
 
-//const vipRoutes = require("./vip.routes");
+/* Sem isso, um erro que escapa de todo try/catch (ou uma promise rejeitada
+   sem .catch) derruba o processo Node inteiro — o Render reinicia sozinho,
+   mas isso tira TODO MUNDO do ar até o restart terminar. Loga e mantém o
+   processo de pé; o ideal a longo prazo é sempre tratar o erro na origem,
+   isso aqui é uma rede de segurança, não substitui os try/catch. */
+process.on("uncaughtException", (erro) => {
+  console.error("ERRO NÃO TRATADO (uncaughtException):", erro);
+});
+process.on("unhandledRejection", (erro) => {
+  console.error("PROMISE REJEITADA SEM CATCH (unhandledRejection):", erro);
+});
+
+/* Headers de segurança (Helmet) + remove o header que revela a stack.
+   CSP desligado aqui: quem serve HTML é o frontend (Vercel), que já tem
+   sua própria CSP em vercel.json — esta API só responde JSON, então uma
+   CSP genérica do Helmet não se aplica e só atrapalharia. */
+app.use(helmet({ contentSecurityPolicy: false }));
+app.disable("x-powered-by");
+
 /* =====================================================
    CORS MASTER
 ===================================================== */
@@ -54,18 +74,24 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000"
 ];
+
+/* Preview deploys do próprio projeto no Vercel seguem esse padrão de nome
+   (festa-sao-sebastiao-<hash>-saosebastiaorm.vercel.app) — troca do
+   "origin.includes('vercel.app')" antigo, que aceitava QUALQUER site
+   hospedado no Vercel, não só os deploys deste projeto. */
+const origemVercelDoProjeto = /^https:\/\/festa-sao-sebastiao-[a-z0-9-]+-saosebastiaorm\.vercel\.app$/;
+
 app.use(cors({
   origin: function (origin, callback) {
-    
 
     if (!origin) return callback(null, true);
 
-if (
-  allowedOrigins.includes(origin) ||
-  origin.includes("vercel.app")
-) {
-  return callback(null, true);
-}
+    if (
+      allowedOrigins.includes(origin) ||
+      origemVercelDoProjeto.test(origin)
+    ) {
+      return callback(null, true);
+    }
 
     return callback(new Error("Origem não permitida pelo CORS"));
   },
@@ -74,30 +100,41 @@ if (
   credentials: true
 }));
 
-
-
 app.options(/.*/, cors());
+
+/* =====================================================
+   RATE LIMITING (rotas sensíveis: login, criação/consulta de Pix, admin)
+   Resposta em JSON, no mesmo formato "sucesso:false" usado pelo resto da
+   API, pra não quebrar nenhum tratamento de erro já existente no front.
+===================================================== */
+function criarLimitador(opcoes) {
+  return rateLimit({
+    windowMs: opcoes.janelaMs,
+    limit: opcoes.max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { sucesso: false, erro: "Muitas tentativas. Aguarde um pouco e tente de novo." },
+  });
+}
+
+const limitadorLoginCliente = criarLimitador({ janelaMs: 15 * 60 * 1000, max: 8 });
+const limitadorPix = criarLimitador({ janelaMs: 5 * 60 * 1000, max: 20 });
+const limitadorAdmin = criarLimitador({ janelaMs: 60 * 1000, max: 60 });
+/* Rotas de "verificar-pagamento" são consultadas pelo PRÓPRIO navegador
+   do comprador a cada 5s enquanto ele espera o Pix confirmar (pode durar
+   vários minutos) — um limite apertado aqui bloquearia pagamento
+   legítimo. Limite bem mais folgado, só pra conter abuso real. */
+const limitadorPolling = criarLimitador({ janelaMs: 5 * 60 * 1000, max: 120 });
+
+/* Aplicado a toda rota /admin/* de uma vez, antes da checagem de login —
+   protege tanto tentativas autenticadas quanto tentativas de adivinhar
+   token, sem precisar repetir o limitador em cada uma das rotas admin. */
+app.use("/admin", limitadorAdmin);
 
 /* =====================================================
    BODY + ARQUIVOS ESTÁTICOS
 ===================================================== */
 app.use(express.json({ limit: "10mb" }));
-//app.use("/api/vip", vipRoutes);
-
-
-// app.use("/css", express.static(path.join(__dirname, "css")));
-// app.use("/js", express.static(path.join(__dirname, "js")));
-// app.use("/assets", express.static(path.join(__dirname, "assets")));
-
-// app.use("/venda", express.static(path.join(__dirname, "venda")));
-// app.use("/doacao", express.static(path.join(__dirname, "doacao")));
-// app.use("/enquete", express.static(path.join(__dirname, "enquete")));
-
-//app.use("/admin", express.static(path.join(__dirname, "front-end", "admin")));
-
-
-
-// ... (resto do seu código do server.js original) ...
 
 
 /* =====================================================
@@ -118,7 +155,7 @@ const supabase = createClient(
 ===================================================== */
 
 
-app.get("/sicredi/token", async (req, res) => {
+app.get("/sicredi/token", limitadorAdmin, async (req, res) => {
 
   try {
 
@@ -210,6 +247,26 @@ function validarCPF(cpf) {
 
   return true;
 }
+
+/* Remove os caracteres que servem pra montar HTML/script (<, >) de campos
+   de texto livre digitados pelo comprador (nome, sobrenome...) antes de
+   gravar no banco — defesa em profundidade junto com o escape no
+   front-end: mesmo que uma tela esqueça de escapar na hora de exibir, o
+   dado já chega limpo. Não mexe em acentos/pontuação normal. */
+function sanitizarTexto(valor, tamanhoMaximo = 200) {
+  return String(valor || "")
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, tamanhoMaximo);
+}
+
+/* Código de pedido só deve ter letras/números/hífen — qualquer coisa fora
+   disso não é um código válido de verdade, então é mais seguro rejeitar
+   do que tentar sanitizar. */
+function codigoPedidoValido(valor) {
+  return /^[A-Za-z0-9-]{1,50}$/.test(String(valor || ""));
+}
+
 /* =====================================================
    STATUS
 ===================================================== */
@@ -329,11 +386,11 @@ app.get("/api", (req, res) => {
 /* =====================================================
    CRIAR PIX + REGISTRAR PEDIDO
 ===================================================== */
-app.post("/criar-pix", async (req, res) => {
+app.post("/criar-pix", limitadorPix, async (req, res) => {
   try {
 const {
-  nome,
-  sobrenome,
+  nome: nomeBruto,
+  sobrenome: sobrenomeBruto,
   cpf,
   telefone,
   quantidade,
@@ -343,6 +400,8 @@ const {
   produto_codigo
 } = req.body;
 
+const nome = sanitizarTexto(nomeBruto, 100);
+const sobrenome = sanitizarTexto(sobrenomeBruto, 100);
 const cpfLimpo = limparCPF(cpf);
 const telefoneLimpo = limparTelefone(telefone);
 
@@ -586,7 +645,7 @@ app.post("/api/vip", async (req, res) => {
 /* =====================================================
    VERIFICAR PAGAMENTO 
 ===================================================== */
-app.get("/verificar-pagamento/:txid", async (req, res) => {
+app.get("/verificar-pagamento/:txid", limitadorPolling, async (req, res) => {
   
   
   try {
@@ -792,6 +851,13 @@ app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
   try {
     const { codigoPedido } = req.params;
 
+    if (!codigoPedidoValido(codigoPedido)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Código de pedido inválido."
+      });
+    }
+
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
@@ -860,6 +926,13 @@ app.get("/pedido/cpf/:cpf", async (req, res) => {
 app.post("/retirada/:codigoPedido", async (req, res) => {
   try {
     const { codigoPedido } = req.params;
+
+    if (!codigoPedidoValido(codigoPedido)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Código de pedido inválido."
+      });
+    }
 
     const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
@@ -1430,7 +1503,7 @@ app.post("/admin/upload-imagem", verificarAdminBackend, upload.single("imagem"),
    CENTRAL DO CLIENTE - LOGIN REAL
 ===================================================== */
 
-app.post("/cliente-login", async (req, res) => {
+app.post("/cliente-login", limitadorLoginCliente, async (req, res) => {
   try {
 
     const { cpf, telefone } = req.body;
@@ -1548,7 +1621,7 @@ const PORT = process.env.PORT || 3000;
    TESTE CONSULTA PIX SICREDI
 ===================================================== */
 
-app.get("/sicredi/teste-consulta/:txid", async (req, res) => {
+app.get("/sicredi/teste-consulta/:txid", limitadorAdmin, async (req, res) => {
 
   try {
 
@@ -2001,17 +2074,18 @@ app.post("/cartelas/validar-numero", async (req, res) => {
 /* =====================================================
    CARTELAS — GERAR PIX (CARTELA FÍSICA)
 ===================================================== */
-app.post("/cartelas/pix-fisica", async (req, res) => {
+app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
   try {
 
     const {
       numero_cartela,
-      nome,
+      nome: nomeBruto,
       cpf,
       telefone,
       vai_na_festa
     } = req.body;
 
+    const nome = sanitizarTexto(nomeBruto, 150);
     const cpfLimpo = limparCPF(cpf);
     const telefoneLimpo = limparTelefone(telefone);
 
@@ -2151,21 +2225,26 @@ app.post("/cartelas/pix-fisica", async (req, res) => {
    lock no banco pra evitar duas pessoas recebendo o mesmo
    número ao comprar ao mesmo tempo.
 ===================================================== */
-app.post("/cartelas/pix-digital", async (req, res) => {
+app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
   try {
 
     const {
-      nome,
+      nome: nomeBruto,
       cpf,
       telefone,
       vai_na_festa,
       cep,
-      cidade,
-      bairro,
-      rua,
-      numero_endereco
+      cidade: cidadeBruta,
+      bairro: bairroBruto,
+      rua: ruaBruta,
+      numero_endereco: numeroEnderecoBruto
     } = req.body;
 
+    const nome = sanitizarTexto(nomeBruto, 150);
+    const cidade = sanitizarTexto(cidadeBruta, 100);
+    const bairro = sanitizarTexto(bairroBruto, 100);
+    const rua = sanitizarTexto(ruaBruta, 150);
+    const numero_endereco = sanitizarTexto(numeroEnderecoBruto, 20);
     const cpfLimpo = limparCPF(cpf);
     const telefoneLimpo = limparTelefone(telefone);
 
@@ -2301,7 +2380,7 @@ app.post("/cartelas/pix-digital", async (req, res) => {
    duas vezes nem de gerar duas cartelas pagas para o mesmo registro.
 ===================================================================== */
 
-app.post("/cartelas/:id/retomar-pagamento", async (req, res) => {
+app.post("/cartelas/:id/retomar-pagamento", limitadorPix, async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -2526,7 +2605,7 @@ async function gerarEGuardarCartelaDigital(cartelaAtual, txid) {
   );
 }
 
-app.get("/cartelas/verificar-pagamento/:txid", async (req, res) => {
+app.get("/cartelas/verificar-pagamento/:txid", limitadorPolling, async (req, res) => {
   try {
 
     const { txid } = req.params;
@@ -3059,7 +3138,7 @@ app.listen(PORT, () => {
 });
 
 
-app.get("/sicredi/teste-pix", async (req, res) => {
+app.get("/sicredi/teste-pix", limitadorPix, async (req, res) => {
 
     try {
 
@@ -3081,4 +3160,31 @@ app.get("/sicredi/teste-pix", async (req, res) => {
 
     }
 
+});
+
+/* =====================================================
+   404 + ERRO GLOBAL
+   Precisam ser os ÚLTIMOS middlewares registrados — o Express só chega
+   até aqui se nenhuma rota acima bateu (404) ou se algo chamou next(err)
+   / lançou dentro de um handler async (erro global). Sem isso, uma
+   exceção fora de um try/catch usava o handler padrão do Express (que
+   pode vazar stack trace) em vez de uma resposta JSON consistente com o
+   resto da API.
+===================================================== */
+app.use((req, res) => {
+  res.status(404).json({
+    sucesso: false,
+    erro: "Rota não encontrada."
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error("ERRO GLOBAL NÃO TRATADO:", err);
+
+  if (res.headersSent) return next(err);
+
+  res.status(err.status || 500).json({
+    sucesso: false,
+    erro: "Erro interno no servidor."
+  });
 });
