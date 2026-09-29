@@ -44,10 +44,10 @@ const app = express();
    processo de pé; o ideal a longo prazo é sempre tratar o erro na origem,
    isso aqui é uma rede de segurança, não substitui os try/catch. */
 process.on("uncaughtException", (erro) => {
-  console.error("ERRO NÃO TRATADO (uncaughtException):", erro);
+  console.error("[ERROR] ERRO NÃO TRATADO (uncaughtException):", erro);
 });
 process.on("unhandledRejection", (erro) => {
-  console.error("PROMISE REJEITADA SEM CATCH (unhandledRejection):", erro);
+  console.error("[ERROR] PROMISE REJEITADA SEM CATCH (unhandledRejection):", erro);
 });
 
 /* Headers de segurança (Helmet) + remove o header que revela a stack.
@@ -141,7 +141,7 @@ app.use(express.json({ limit: "10mb" }));
    SUPABASE
 ===================================================== */
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-  console.error("ERRO: Credenciais Supabase ausentes.");
+  console.error("[ERROR] ERRO: Credenciais Supabase ausentes.");
   process.exit(1);
 }
 
@@ -168,7 +168,7 @@ app.get("/sicredi/token", limitadorAdmin, async (req, res) => {
 
   } catch (error) {
 
-    console.error("ERRO SICREDI:");
+    console.error("[PIX] ERRO SICREDI:");
 
     if (error.response) {
 
@@ -275,6 +275,49 @@ app.get("/", (req, res) => {
     status: "online",
     sistema: "FPSS PRODUÇÃO PROFISSIONAL",
     ambiente: process.env.NODE_ENV || "development"
+  });
+});
+
+/* =====================================================
+   MONITORAMENTO — /health e /ready
+   /health: o processo Node está de pé e respondendo (liveness) — não
+   depende de nada externo, então nunca falha por causa do Supabase
+   estar fora do ar. Uso: ping simples de "o servidor caiu?".
+   /ready: além de estar de pé, as dependências essenciais respondem
+   (readiness) — usado antes de mandar tráfego real pro processo (ex.:
+   healthcheck do Render, ou um load balancer futuro).
+===================================================== */
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get("/ready", async (req, res) => {
+
+  const variaveisEssenciais = ["SUPABASE_URL", "SUPABASE_KEY"];
+  const faltando = variaveisEssenciais.filter((v) => !process.env[v]);
+
+  let bancoOk = false;
+  let erroBanco = null;
+
+  try {
+    const { error } = await supabase.from("cartelas_config").select("chave").limit(1);
+    bancoOk = !error;
+    if (error) erroBanco = error.message;
+  } catch (erro) {
+    erroBanco = erro.message;
+  }
+
+  const pronto = bancoOk && faltando.length === 0;
+
+  res.status(pronto ? 200 : 503).json({
+    status: pronto ? "ok" : "not_ready",
+    database: bancoOk ? "ok" : "erro",
+    erro_database: erroBanco || undefined,
+    variaveis_ausentes: faltando.length ? faltando : undefined,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -536,7 +579,7 @@ const { data: pedidoSalvo, error: supabaseError } = await supabase
   .select();
 
 if (supabaseError) {
-  console.error("Erro Supabase:", supabaseError);
+  console.error("[ERROR] Erro Supabase:", supabaseError);
 
   return res.status(500).json({
     sucesso: false,
@@ -578,7 +621,7 @@ produto_preco_unitario: precoUnitario,
 });
 
 } catch (erro) {
-  console.error("ERRO AO GERAR PIX:", erro);
+  console.error("[PIX] ERRO AO GERAR PIX:", erro);
 
   return res.status(500).json({
     sucesso: false,
@@ -618,7 +661,7 @@ app.post("/api/vip", async (req, res) => {
       .insert([payload]);
 
     if (error) {
-      console.error("Erro interno Supabase VIP:", error);
+      console.error("[PEDIDO] Erro interno Supabase VIP:", error);
 
       return res.status(500).json({
         sucesso: false,
@@ -632,7 +675,7 @@ app.post("/api/vip", async (req, res) => {
     });
 
   } catch (erro) {
-    console.error("Erro crítico na rota VIP:", erro);
+    console.error("[PEDIDO] Erro crítico na rota VIP:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -703,7 +746,7 @@ tokenRetirada = `RET-${pedido.codigo_pedido}-${Date.now()}`
 .eq("txid", txid)
 
         if (updateError) {
-          console.error("Erro ao atualizar retirada:", updateError);
+          console.error("[PEDIDO] Erro ao atualizar retirada:", updateError);
         }
 
       } else {
@@ -759,7 +802,7 @@ return res.json({
 
   } catch (erro) {
 
-    console.error("Erro verificar pagamento:", erro);
+    console.error("[PIX] Erro verificar pagamento:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -794,7 +837,7 @@ app.get("/recuperar-pix/:txid", async (req, res) => {
     } catch (erro) {
 
         console.error(
-            "ERRO RECUPERAR PIX:",
+            "[PIX] ERRO RECUPERAR PIX:",
             erro.response?.data || erro.message
         );
 
@@ -1270,7 +1313,7 @@ app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
         .limit(1);
 
       if (buscaErro) {
-        console.error("ERRO BUSCA PRODUTO:", buscaErro);
+        console.error("[PEDIDO] ERRO BUSCA PRODUTO:", buscaErro);
 
         return res.status(500).json({
           sucesso: false,
@@ -1308,7 +1351,7 @@ app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
 
 if (!resultado || resultado.error) {
 
-  console.error("ERRO SALVAR PRODUTO:", resultado?.error || resultado);
+  console.error("[PEDIDO] ERRO SALVAR PRODUTO:", resultado?.error || resultado);
 
   return res.status(500).json({
     sucesso: false,
@@ -1324,7 +1367,7 @@ if (!resultado || resultado.error) {
 
   } catch (erro) {
 
-  console.error("ERRO INTERNO ADMIN PRODUTOS DETALHADO:", erro);
+  console.error("[ADMIN] ERRO INTERNO ADMIN PRODUTOS DETALHADO:", erro);
 
   return res.status(500).json({
     sucesso: false,
@@ -1359,7 +1402,7 @@ app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
       .maybeSingle();
 
     if (erroBusca) {
-      console.error("ERRO AO BUSCAR PRODUTO PARA EXCLUSÃO:", erroBusca);
+      console.error("[PEDIDO] ERRO AO BUSCAR PRODUTO PARA EXCLUSÃO:", erroBusca);
       // não interrompe — segue tentando excluir mesmo sem confirmar a imagem
     }
 
@@ -1372,7 +1415,7 @@ app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
       .eq("id", id);
 
     if (error) {
-      console.error("ERRO EXCLUIR PRODUTO:", error);
+      console.error("[PEDIDO] ERRO EXCLUIR PRODUTO:", error);
 
       return res.status(500).json({
         sucesso: false,
@@ -1396,13 +1439,13 @@ app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
             .remove([nomeArquivo]);
 
           if (erroStorage) {
-            console.error(`AVISO: produto ${id} excluído, mas falhou ao remover imagem "${nomeArquivo}" do Storage:`, erroStorage.message);
+            console.error(`[PEDIDO] AVISO: produto ${id} excluído, mas falhou ao remover imagem "${nomeArquivo}" do Storage:`, erroStorage.message);
           } else {
-            console.log(`Imagem "${nomeArquivo}" removida do Storage junto com o produto ${id}.`);
+            console.log(`[PEDIDO] Imagem "${nomeArquivo}" removida do Storage junto com o produto ${id}.`);
           }
         }
       } catch (erroParse) {
-        console.error(`AVISO: não foi possível interpretar a URL da imagem do produto ${id} para limpeza do Storage:`, erroParse.message);
+        console.error(`[PEDIDO] AVISO: não foi possível interpretar a URL da imagem do produto ${id} para limpeza do Storage:`, erroParse.message);
       }
     }
 
@@ -1413,7 +1456,7 @@ app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO EXCLUIR PRODUTO:", erro);
+    console.error("[PEDIDO] ERRO INTERNO EXCLUIR PRODUTO:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1465,7 +1508,7 @@ app.post("/admin/upload-imagem", verificarAdminBackend, upload.single("imagem"),
       });
 
     if (uploadError) {
-      console.error("ERRO UPLOAD:", uploadError);
+      console.error("[PEDIDO] ERRO UPLOAD:", uploadError);
 
       return res.status(500).json({
         sucesso: false,
@@ -1488,7 +1531,7 @@ app.post("/admin/upload-imagem", verificarAdminBackend, upload.single("imagem"),
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO UPLOAD:", erro);
+    console.error("[PEDIDO] ERRO INTERNO UPLOAD:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1543,7 +1586,7 @@ app.post("/cliente-login", limitadorLoginCliente, async (req, res) => {
       .order("id", { ascending: false });
 
     if (erroCartelas) {
-      console.error("ERRO BUSCAR CARTELAS DO CLIENTE:", erroCartelas);
+      console.error("[ERROR] ERRO BUSCAR CARTELAS DO CLIENTE:", erroCartelas);
       // não bloqueia o login por causa disso — segue só sem as cartelas
     }
 
@@ -1597,7 +1640,7 @@ app.post("/cliente-login", limitadorLoginCliente, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO CLIENTE LOGIN:", erro);
+    console.error("[ERROR] ERRO CLIENTE LOGIN:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1634,7 +1677,7 @@ app.get("/sicredi/teste-consulta/:txid", limitadorAdmin, async (req, res) => {
   } catch (erro) {
 
     console.error(
-      erro.response?.data || erro.message
+      "[PIX]", erro.response?.data || erro.message
     );
 
     return res.status(500).json(
@@ -1698,7 +1741,7 @@ async function verificarAdminBackend(req, res, next) {
 
   } catch (erro) {
 
-    console.error("ERRO VERIFICAR ADMIN BACKEND:", erro);
+    console.error("[ADMIN] ERRO VERIFICAR ADMIN BACKEND:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1735,7 +1778,7 @@ app.get("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO LISTAR USUARIOS:", erro);
+    console.error("[ADMIN] ERRO LISTAR USUARIOS:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1782,7 +1825,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
       });
 
     if (createError) {
-      console.error("ERRO CRIAR USUARIO AUTH:", createError);
+      console.error("[ADMIN] ERRO CRIAR USUARIO AUTH:", createError);
       return res.status(500).json({
         sucesso: false,
         erro: createError.message || "Erro ao criar usuário."
@@ -1801,7 +1844,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
     if (perfilError) {
 
-      console.error("ERRO CRIAR PERFIL:", perfilError);
+      console.error("[ERROR] ERRO CRIAR PERFIL:", perfilError);
 
       /* perfil falhou — desfaz a criação do usuário pra não deixar
          um usuário "fantasma" sem perfil */
@@ -1821,7 +1864,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO CRIAR USUARIO:", erro);
+    console.error("[ADMIN] ERRO INTERNO CRIAR USUARIO:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1867,7 +1910,7 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
       .eq("id", id);
 
     if (error) {
-      console.error("ERRO EDITAR USUARIO:", error);
+      console.error("[ADMIN] ERRO EDITAR USUARIO:", error);
       return res.status(500).json({
         sucesso: false,
         erro: error.message || "Erro ao editar usuário."
@@ -1881,7 +1924,7 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO EDITAR USUARIO:", erro);
+    console.error("[ADMIN] ERRO INTERNO EDITAR USUARIO:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -1919,7 +1962,7 @@ app.delete("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
       await supabase.auth.admin.deleteUser(id);
 
     if (authError) {
-      console.error("ERRO EXCLUIR USUARIO AUTH:", authError);
+      console.error("[ADMIN] ERRO EXCLUIR USUARIO AUTH:", authError);
       return res.status(500).json({
         sucesso: false,
         erro: authError.message || "Erro ao excluir usuário."
@@ -1935,7 +1978,7 @@ app.delete("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO EXCLUIR USUARIO:", erro);
+    console.error("[ADMIN] ERRO INTERNO EXCLUIR USUARIO:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2016,7 +2059,7 @@ app.post("/cartelas/validar-numero", async (req, res) => {
       .maybeSingle();
 
     if (error) {
-      console.error("ERRO VALIDAR NUMERO CARTELA:", error);
+      console.error("[ERROR] ERRO VALIDAR NUMERO CARTELA:", error);
       return res.status(500).json({
         sucesso: false,
         erro: "Erro interno ao validar a cartela."
@@ -2062,7 +2105,7 @@ app.post("/cartelas/validar-numero", async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO VALIDAR NUMERO CARTELA:", erro);
+    console.error("[ERROR] ERRO INTERNO VALIDAR NUMERO CARTELA:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2138,7 +2181,7 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
       .maybeSingle();
 
     if (buscaErro) {
-      console.error("ERRO BUSCAR CARTELA FISICA:", buscaErro);
+      console.error("[ERROR] ERRO BUSCAR CARTELA FISICA:", buscaErro);
       return res.status(500).json({
         sucesso: false,
         erro: "Erro interno ao buscar a cartela."
@@ -2208,7 +2251,7 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO GERAR PIX CARTELA FISICA:", erro);
+    console.error("[PIX] ERRO GERAR PIX CARTELA FISICA:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2294,7 +2337,7 @@ app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
         });
       }
 
-      console.error("ERRO RESERVAR CARTELA DIGITAL:", erroReserva);
+      console.error("[ERROR] ERRO RESERVAR CARTELA DIGITAL:", erroReserva);
 
       return res.status(500).json({
         sucesso: false,
@@ -2324,7 +2367,7 @@ app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
       .single();
 
     if (updateErro) {
-      console.error("ERRO SALVAR DADOS CARTELA DIGITAL:", updateErro);
+      console.error("[ERROR] ERRO SALVAR DADOS CARTELA DIGITAL:", updateErro);
 
       return res.status(500).json({
         sucesso: false,
@@ -2349,7 +2392,7 @@ app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO GERAR PIX CARTELA DIGITAL:", erro);
+    console.error("[PIX] ERRO GERAR PIX CARTELA DIGITAL:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2400,7 +2443,7 @@ app.post("/cartelas/:id/retomar-pagamento", limitadorPix, async (req, res) => {
       .maybeSingle();
 
     if (erroBusca) {
-      console.error("ERRO BUSCAR CARTELA RETOMAR PAGAMENTO:", erroBusca);
+      console.error("[PIX] ERRO BUSCAR CARTELA RETOMAR PAGAMENTO:", erroBusca);
 
       return res.status(500).json({
         sucesso: false,
@@ -2484,7 +2527,7 @@ app.post("/cartelas/:id/retomar-pagamento", limitadorPix, async (req, res) => {
       .single();
 
     if (erroUpdate || !cartelaAtualizada) {
-      console.error("ERRO ATUALIZAR PIX_ID RETOMAR PAGAMENTO:", erroUpdate);
+      console.error("[PIX] ERRO ATUALIZAR PIX_ID RETOMAR PAGAMENTO:", erroUpdate);
 
       return res.status(409).json({
         sucesso: false,
@@ -2509,7 +2552,7 @@ app.post("/cartelas/:id/retomar-pagamento", limitadorPix, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO RETOMAR PAGAMENTO CARTELA:", erro);
+    console.error("[PIX] ERRO RETOMAR PAGAMENTO CARTELA:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2597,11 +2640,11 @@ async function gerarEGuardarCartelaDigital(cartelaAtual, txid) {
     .eq("pix_id", txid);
 
   if (updateErro) {
-    console.error("ERRO AO SALVAR PDF_URL DA CARTELA DIGITAL:", updateErro);
+    console.error("[ERROR] ERRO AO SALVAR PDF_URL DA CARTELA DIGITAL:", updateErro);
   }
 
   console.log(
-    `[gerarEGuardarCartelaDigital] txid=${txid} geracao_ms=${tempoGeracaoMs} upload_ms=${tempoUploadMs} total_ms=${Date.now() - inicioGeracao}`
+    `[INFO] [gerarEGuardarCartelaDigital] txid=${txid} geracao_ms=${tempoGeracaoMs} upload_ms=${tempoUploadMs} total_ms=${Date.now() - inicioGeracao}`
   );
 }
 
@@ -2650,7 +2693,7 @@ app.get("/cartelas/verificar-pagamento/:txid", limitadorPolling, async (req, res
           .eq("pix_id", txid);
 
         if (updateErro) {
-          console.error("ERRO ATUALIZAR PAGAMENTO CARTELA:", updateErro);
+          console.error("[PIX] ERRO ATUALIZAR PAGAMENTO CARTELA:", updateErro);
         }
       }
 
@@ -2679,7 +2722,7 @@ app.get("/cartelas/verificar-pagamento/:txid", limitadorPolling, async (req, res
 
         gerarEGuardarCartelaDigital(cartelaAtual, txid)
           .catch((erroGeracao) => {
-            console.error("ERRO AO GERAR CARTELA DIGITAL (segundo plano):", erroGeracao);
+            console.error("[ERROR] ERRO AO GERAR CARTELA DIGITAL (segundo plano):", erroGeracao);
           })
           .finally(() => {
             cartelasDigitaisEmGeracao.delete(txid);
@@ -2716,7 +2759,7 @@ app.get("/cartelas/verificar-pagamento/:txid", limitadorPolling, async (req, res
       .maybeSingle();
 
     if (erroBuscaPendente) {
-      console.error("ERRO BUSCAR CARTELA PENDENTE (verificar-pagamento):", erroBuscaPendente);
+      console.error("[PIX] ERRO BUSCAR CARTELA PENDENTE (verificar-pagamento):", erroBuscaPendente);
     }
 
     // Só considera expirado com base numa confirmação real de
@@ -2751,7 +2794,7 @@ app.get("/cartelas/verificar-pagamento/:txid", limitadorPolling, async (req, res
 
   } catch (erro) {
 
-    console.error("ERRO VERIFICAR PAGAMENTO CARTELA:", erro);
+    console.error("[PIX] ERRO VERIFICAR PAGAMENTO CARTELA:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2777,7 +2820,7 @@ app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res
       .maybeSingle();
 
     if (error) {
-      console.error("ERRO BUSCAR CARTELA ADMIN:", error);
+      console.error("[ADMIN] ERRO BUSCAR CARTELA ADMIN:", error);
       return res.status(500).json({
         sucesso: false,
         erro: "Erro ao buscar cartela."
@@ -2798,7 +2841,7 @@ app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO BUSCAR CARTELA ADMIN:", erro);
+    console.error("[ADMIN] ERRO INTERNO BUSCAR CARTELA ADMIN:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -2993,7 +3036,7 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO INTERNO LISTAR CARTELAS:", erro);
+    console.error("[ERROR] ERRO INTERNO LISTAR CARTELAS:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -3067,7 +3110,7 @@ app.get("/admin/cartelas/exportar", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO EXPORTAR CARTELAS CSV:", erro);
+    console.error("[ERROR] ERRO EXPORTAR CARTELAS CSV:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -3123,7 +3166,7 @@ app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
 
   } catch (erro) {
 
-    console.error("ERRO RESUMO CARTELAS:", erro);
+    console.error("[ERROR] ERRO RESUMO CARTELAS:", erro);
 
     return res.status(500).json({
       sucesso: false,
@@ -3134,7 +3177,7 @@ app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
 
 
 app.listen(PORT, () => {
-  console.log(`Servidor FPSS PRO rodando na porta ${PORT}`);
+  console.log(`[INFO] Servidor FPSS PRO rodando na porta ${PORT}`);
 });
 
 
@@ -3179,7 +3222,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("ERRO GLOBAL NÃO TRATADO:", err);
+  console.error("[ERROR] ERRO GLOBAL NÃO TRATADO:", err);
 
   if (res.headersSent) return next(err);
 
