@@ -153,6 +153,82 @@ const supabase = createClient(
 );
 
 /* =====================================================
+   MIDDLEWARE DE ACESSO ADMIN
+   Confere se quem está chamando a rota é mesmo um usuário
+   autenticado com o papel certo, antes de deixar passar. Usa a
+   service_role key (já configurada em SUPABASE_KEY) pra validar
+   o token e consultar o perfil do usuário.
+
+   Fábrica — recebe quais papéis (user_profiles.role) podem passar.
+   "admin" sozinho pras telas sensíveis (Lotes, Usuários, Produtos,
+   Cartelas, Dashboard, Pedidos, Parceiros); ["admin","padrao"] só
+   nas rotas operacionais de Retirada/Leitor, pra dar acesso a um
+   funcionário no dia do evento sem precisar dar acesso total de
+   administrador. Definida logo no topo (antes de qualquer rota)
+   porque, diferente de "function", "const" não é hoisted — uma
+   rota registrada mais acima no arquivo travaria o servidor inteiro
+   ao tentar usar essa constante antes dela existir.
+===================================================== */
+function criarVerificadorDeAcesso(papeisPermitidos) {
+  return async function (req, res, next) {
+
+    try {
+
+      const authHeader = req.headers.authorization || "";
+      const token = authHeader.replace("Bearer ", "").trim();
+
+      if (!token) {
+        return res.status(401).json({
+          sucesso: false,
+          erro: "Sessão não encontrada. Faça login novamente."
+        });
+      }
+
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser(token);
+
+      if (userError || !userData || !userData.user) {
+        return res.status(401).json({
+          sucesso: false,
+          erro: "Sessão inválida ou expirada. Faça login novamente."
+        });
+      }
+
+      const { data: perfil, error: perfilError } = await supabase
+        .from("user_profiles")
+        .select("role")
+        .eq("id", userData.user.id)
+        .single();
+
+      if (perfilError || !perfil || !papeisPermitidos.includes(perfil.role)) {
+        return res.status(403).json({
+          sucesso: false,
+          erro: "Acesso restrito."
+        });
+      }
+
+      req.usuarioAdmin = userData.user;
+      req.papelUsuario = perfil.role;
+      next();
+
+    } catch (erro) {
+
+      console.error("[ADMIN] ERRO VERIFICAR ACESSO BACKEND:", erro);
+
+      return res.status(500).json({
+        sucesso: false,
+        erro: "Erro interno ao verificar permissão."
+      });
+
+    }
+  };
+
+}
+
+const verificarAdminBackend = criarVerificadorDeAcesso(["admin"]);
+const verificarAcessoRetirada = criarVerificadorDeAcesso(["admin", "padrao"]);
+
+/* =====================================================
    TESTE TOKEN SICREDI
 ===================================================== */
 
@@ -859,7 +935,7 @@ app.get("/recuperar-pix/:txid", async (req, res) => {
 /* =====================================================
    CONSULTAR POR PAYMENT ID
 ===================================================== */
-app.get("/pedido/:orderId", async (req, res) => {
+app.get("/pedido/:orderId", verificarAcessoRetirada, async (req, res) => {
   try {
    const { orderId } = req.params;
 
@@ -892,7 +968,7 @@ const { data, error } = await supabase
 /* =====================================================
    CONSULTAR POR CÓDIGO OFICIAL
 ===================================================== */
-app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
+app.get("/pedido/codigo/:codigoPedido", verificarAcessoRetirada, async (req, res) => {
   try {
     const { codigoPedido } = req.params;
 
@@ -932,7 +1008,7 @@ app.get("/pedido/codigo/:codigoPedido", async (req, res) => {
 /* =====================================================
    CONSULTAR POR CPF
 ===================================================== */
-app.get("/pedido/cpf/:cpf", async (req, res) => {
+app.get("/pedido/cpf/:cpf", verificarAcessoRetirada, async (req, res) => {
   try {
 
     const cpf = limparCPF(req.params.cpf);
@@ -968,7 +1044,7 @@ app.get("/pedido/cpf/:cpf", async (req, res) => {
 /* =====================================================
    CONFIRMAR RETIRADA
 ===================================================== */
-app.post("/retirada/:codigoPedido", async (req, res) => {
+app.post("/retirada/:codigoPedido", verificarAcessoRetirada, async (req, res) => {
   try {
     const { codigoPedido } = req.params;
 
@@ -1693,66 +1769,6 @@ app.get("/sicredi/teste-consulta/:txid", limitadorAdmin, async (req, res) => {
 });
 
 
-
-/* =====================================================
-   ADMIN USUÁRIOS — MIDDLEWARE
-   Confere se quem está chamando a rota é mesmo um admin
-   autenticado, antes de deixar passar. Usa a service_role
-   key (já configurada em SUPABASE_KEY) pra validar o token
-   e consultar o perfil do usuário.
-===================================================== */
-async function verificarAdminBackend(req, res, next) {
-
-  try {
-
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "").trim();
-
-    if (!token) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão não encontrada. Faça login novamente."
-      });
-    }
-
-    const { data: userData, error: userError } =
-      await supabase.auth.getUser(token);
-
-    if (userError || !userData || !userData.user) {
-      return res.status(401).json({
-        sucesso: false,
-        erro: "Sessão inválida ou expirada. Faça login novamente."
-      });
-    }
-
-    const { data: perfil, error: perfilError } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", userData.user.id)
-      .single();
-
-    if (perfilError || !perfil || perfil.role !== "admin") {
-      return res.status(403).json({
-        sucesso: false,
-        erro: "Acesso restrito a administradores."
-      });
-    }
-
-    req.usuarioAdmin = userData.user;
-    next();
-
-  } catch (erro) {
-
-    console.error("[ADMIN] ERRO VERIFICAR ADMIN BACKEND:", erro);
-
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno ao verificar permissão."
-    });
-
-  }
-
-}
 
 /* =====================================================
    ADMIN USUÁRIOS — LISTAR
