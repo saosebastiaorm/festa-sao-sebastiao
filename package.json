@@ -5,7 +5,8 @@
    "main": "server.js",
    "scripts": {
       "start": "node server.js",
-      "smoke-test": "node scripts/smoke-test.js"
+      "smoke-test": "node scripts/smoke-test.js",
+      "teste-importacao-lotes": "node scripts/teste-manual-importar-lote.js"
    },
    "keywords": [
       "fpss",
@@ -21,6 +22,7 @@
       "canvas": "^3.2.3",
       "cors": "^2.8.6",
       "dotenv": "^17.4.2",
+      "exceljs": "^4.4.0",
       "express": "^5.2.1",
       "express-rate-limit": "^8.7.0",
       "fs": "^0.0.1-security",

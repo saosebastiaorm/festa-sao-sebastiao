@@ -6,6 +6,8 @@ const rateLimit = require("express-rate-limit");
 const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartela-digital");
 const { gerarVersoCartelaPNG } = require("./src/services/cartelas/gerar-verso-cartela");
 const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
+const { buscarLoteAtivo, valorEmReais } = require("./src/services/cartelas/lotes");
+const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -1999,33 +2001,6 @@ app.delete("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
    criarPix, consultarPix, supabase, limparCPF, limparTelefone, validarCPF
 ===================================================================== */
 
-/* =====================================================
-   CARTELAS — CONFIG (lote ativo, modo teste, valores)
-===================================================== */
-async function lerConfigCartelas() {
-  const { data, error } = await supabase
-    .from("cartelas_config")
-    .select("chave, valor");
-
-  if (error) {
-    throw new Error(`Erro ao ler configuração de cartelas: ${error.message}`);
-  }
-
-  const config = {};
-  for (const linha of data) {
-    config[linha.chave] = linha.valor;
-  }
-  return config;
-}
-
-function calcularValorCartela(config) {
-  const emModoTeste = config.modo_teste === "true";
-  const centavos = emModoTeste
-    ? Number(config.valor_teste_centavos || 1)
-    : Number(config.valor_cartela_oficial_centavos || 2000);
-
-  return centavos / 100;
-}
 
 /* =====================================================
    CARTELAS — VALIDAR NÚMERO (cartela física)
@@ -2043,7 +2018,15 @@ app.post("/cartelas/validar-numero", async (req, res) => {
       });
     }
 
-    const config = await lerConfigCartelas();
+    const loteFisica = await buscarLoteAtivo(supabase, "fisica");
+
+    if (!loteFisica) {
+      return res.status(503).json({
+        sucesso: false,
+        valido: false,
+        erro: "Vendas de cartela física estão temporariamente indisponíveis."
+      });
+    }
 
     /* ===== LIBERA DE VOLTA PRO ESTOQUE QUALQUER RESERVA EXPIRADA
        antes de checar esta cartela — assim, se a reserva antiga já
@@ -2055,7 +2038,7 @@ app.post("/cartelas/validar-numero", async (req, res) => {
       .select("*")
       .or(`numero_chance1.eq.${String(numero).trim()},numero_chance2.eq.${String(numero).trim()}`)
       .eq("tipo", "fisica")
-      .eq("lote", config.lote_ativo)
+      .eq("lote", loteFisica.chave)
       .maybeSingle();
 
     if (error) {
@@ -2160,7 +2143,14 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
       });
     }
 
-    const config = await lerConfigCartelas();
+    const loteFisica = await buscarLoteAtivo(supabase, "fisica");
+
+    if (!loteFisica) {
+      return res.status(503).json({
+        sucesso: false,
+        erro: "Vendas de cartela física estão temporariamente indisponíveis."
+      });
+    }
 
     /* ===== LIBERA DE VOLTA PRO ESTOQUE QUALQUER RESERVA EXPIRADA
        (pendente há mais de 1h sem pagamento) ANTES de checar
@@ -2177,7 +2167,7 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
       .select("*")
       .or(`numero_chance1.eq.${String(numero_cartela).trim()},numero_chance2.eq.${String(numero_cartela).trim()}`)
       .eq("tipo", "fisica")
-      .eq("lote", config.lote_ativo)
+      .eq("lote", loteFisica.chave)
       .maybeSingle();
 
     if (buscaErro) {
@@ -2202,7 +2192,7 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
       });
     }
 
-    const valor = calcularValorCartela(config);
+    const valor = valorEmReais(loteFisica);
 
     /* ===== SICREDI PIX ===== */
     const pagamento = await criarPix(valor, nome, cpfLimpo);
@@ -2322,11 +2312,18 @@ app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
       numero_endereco: limparTexto(numero_endereco)
     };
 
-    const config = await lerConfigCartelas();
+    const loteDigital = await buscarLoteAtivo(supabase, "digital");
+
+    if (!loteDigital) {
+      return res.status(503).json({
+        sucesso: false,
+        erro: "Vendas de cartela digital estão temporariamente indisponíveis."
+      });
+    }
 
     /* ===== RESERVAR UM NÚMERO DIGITAL (com lock no banco) ===== */
     const { data: cartelaReservada, error: erroReserva } = await supabase
-      .rpc("reservar_cartela_digital", { p_lote: config.lote_ativo });
+      .rpc("reservar_cartela_digital", { p_lote: loteDigital.chave });
 
     if (erroReserva) {
 
@@ -2345,7 +2342,7 @@ app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
       });
     }
 
-    const valor = calcularValorCartela(config);
+    const valor = valorEmReais(loteDigital);
 
     /* ===== SICREDI PIX ===== */
     const pagamento = await criarPix(valor, nome, cpfLimpo);
@@ -2858,8 +2855,11 @@ app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res
 const COLUNAS_LISTA_CARTELAS =
   "id,numero_chance1,numero_chance2,tipo,lote,status,nome_comprador,cpf_comprador,whatsapp_comprador,valor_pago,vai_na_festa,reservado_em,data_pagamento,comprovante_id,pdf_url,pix_id";
 
-function filtrosCartelasDaQuery(query, config) {
-  const lote = String(query.lote || config.lote_ativo || "").trim();
+function filtrosCartelasDaQuery(query) {
+  // sem lote na query = "todos" (não existe mais um único "lote ativo"
+  // global desde que física e digital passaram a poder ter lotes
+  // diferentes — ver lotes_cartelas)
+  const lote = String(query.lote || "").trim();
   const busca = String(query.busca || "").trim();
 
   return {
@@ -2991,13 +2991,12 @@ async function listarLotesCartelas() {
 }
 
 /* =====================================================================
-   ADMIN — LISTAR CARTELAS (filtro por lote, padrão: lote ativo)
+   ADMIN — LISTAR CARTELAS (filtro por lote, padrão: todos)
 ===================================================================== */
 app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
   try {
 
-    const config = await lerConfigCartelas();
-    const filtros = filtrosCartelasDaQuery(req.query, config);
+    const filtros = filtrosCartelasDaQuery(req.query);
 
     const porPaginaSolicitado = Number(req.query.porPagina);
     const porPagina = Math.min(
@@ -3028,7 +3027,6 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
       pagina,
       por_pagina: porPagina,
       total_paginas: totalPaginas,
-      lote_ativo: config.lote_ativo,
       lote_aplicado: filtros.loteRotulo,
       lotes,
       cartelas
@@ -3054,8 +3052,7 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
 app.get("/admin/cartelas/exportar", verificarAdminBackend, async (req, res) => {
   try {
 
-    const config = await lerConfigCartelas();
-    const filtros = filtrosCartelasDaQuery(req.query, config);
+    const filtros = filtrosCartelasDaQuery(req.query);
 
     const cartelas = await listarTodasCartelasFiltro(filtros);
 
@@ -3128,8 +3125,7 @@ app.get("/admin/cartelas/exportar", verificarAdminBackend, async (req, res) => {
 app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
   try {
 
-    const config = await lerConfigCartelas();
-    const base = filtrosCartelasDaQuery({ lote: req.query.lote }, config);
+    const base = filtrosCartelasDaQuery({ lote: req.query.lote });
 
     const [
       total,
@@ -3172,6 +3168,271 @@ app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
       sucesso: false,
       erro: "Erro interno ao gerar resumo de cartelas."
     });
+  }
+});
+
+/* =====================================================================
+   ADMIN — LOTES DE CARTELAS (remessas)
+   Cada tipo (física/digital) tem no máximo um lote ativo por vez —
+   é o que a rota de compra usa pra saber qual "lote" da tabela
+   cartelas vender e por qual preço (ver buscarLoteAtivo em
+   src/services/cartelas/lotes.js). Essas rotas só mexem na tabela
+   lotes_cartelas e, na importação, em NOVAS linhas de "cartelas"
+   (nunca alteram cartelas existentes).
+===================================================================== */
+
+const uploadPlanilha = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 } // planilhas de milhares de linhas cabem tranquilo em 15MB
+});
+
+const CHAVE_LOTE_VALIDA = /^[a-z0-9][a-z0-9_-]{2,49}$/;
+
+/* ===== LISTAR LOTES (com contagem ao vivo de disponíveis/pendentes/pagas) ===== */
+app.get("/admin/lotes", verificarAdminBackend, async (req, res) => {
+  try {
+
+    const { data: lotes, error } = await supabase
+      .from("lotes_cartelas")
+      .select("*")
+      .order("tipo", { ascending: true })
+      .order("criado_em", { ascending: true });
+
+    if (error) throw error;
+
+    const lotesComContagem = await Promise.all(
+      (lotes || []).map(async (lote) => {
+        const [disponiveis, pendentes, pagas] = await Promise.all([
+          supabase.from("cartelas").select("id", { count: "exact", head: true })
+            .eq("lote", lote.chave).eq("tipo", lote.tipo).eq("status", "disponivel"),
+          supabase.from("cartelas").select("id", { count: "exact", head: true })
+            .eq("lote", lote.chave).eq("tipo", lote.tipo).eq("status", "pendente"),
+          supabase.from("cartelas").select("id", { count: "exact", head: true })
+            .eq("lote", lote.chave).eq("tipo", lote.tipo).eq("status", "pago")
+        ]);
+
+        return {
+          ...lote,
+          disponiveis: disponiveis.count || 0,
+          pendentes: pendentes.count || 0,
+          pagas: pagas.count || 0
+        };
+      })
+    );
+
+    return res.json({ sucesso: true, lotes: lotesComContagem });
+
+  } catch (erro) {
+    console.error("[ADMIN] ERRO LISTAR LOTES:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao listar lotes." });
+  }
+});
+
+/* ===== CRIAR LOTE (só metadados — nenhuma cartela ainda) ===== */
+app.post("/admin/lotes", verificarAdminBackend, async (req, res) => {
+  try {
+
+    const { chave, tipo, descricao, valor_centavos, quantidade_total } = req.body || {};
+
+    const chaveLimpa = String(chave || "").trim().toLowerCase();
+
+    if (!CHAVE_LOTE_VALIDA.test(chaveLimpa)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Identificador do lote inválido. Use só letras minúsculas, números, hífen e underscore (3-50 caracteres), ex: remessa_02_fisica."
+      });
+    }
+
+    if (!["fisica", "digital"].includes(tipo)) {
+      return res.status(400).json({ sucesso: false, erro: "Tipo deve ser \"fisica\" ou \"digital\"." });
+    }
+
+    const centavos = Number(valor_centavos);
+    if (!Number.isInteger(centavos) || centavos <= 0) {
+      return res.status(400).json({ sucesso: false, erro: "Valor (em centavos) deve ser um número inteiro maior que zero." });
+    }
+
+    const qtdTotal = quantidade_total === undefined || quantidade_total === null || quantidade_total === ""
+      ? null
+      : Number(quantidade_total);
+
+    if (qtdTotal !== null && (!Number.isInteger(qtdTotal) || qtdTotal < 0)) {
+      return res.status(400).json({ sucesso: false, erro: "Quantidade total deve ser um número inteiro." });
+    }
+
+    const { data, error } = await supabase
+      .from("lotes_cartelas")
+      .insert({
+        chave: chaveLimpa,
+        tipo,
+        descricao: sanitizarTexto(descricao, 200) || null,
+        valor_centavos: centavos,
+        quantidade_total: qtdTotal,
+        ativo: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === "23505") { // unique_violation (chave, tipo)
+        return res.status(409).json({ sucesso: false, erro: "Já existe um lote com esse identificador e tipo." });
+      }
+      throw error;
+    }
+
+    return res.status(201).json({ sucesso: true, lote: data });
+
+  } catch (erro) {
+    console.error("[ADMIN] ERRO CRIAR LOTE:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao criar lote." });
+  }
+});
+
+/* ===== ATIVAR LOTE (desativa qualquer outro do mesmo tipo) ===== */
+app.post("/admin/lotes/:id/ativar", verificarAdminBackend, async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const { data: lote, error: erroBusca } = await supabase
+      .from("lotes_cartelas").select("*").eq("id", id).maybeSingle();
+
+    if (erroBusca) throw erroBusca;
+    if (!lote) return res.status(404).json({ sucesso: false, erro: "Lote não encontrado." });
+
+    const { error: erroDesativar } = await supabase
+      .from("lotes_cartelas")
+      .update({ ativo: false, atualizado_em: new Date().toISOString() })
+      .eq("tipo", lote.tipo)
+      .eq("ativo", true)
+      .neq("id", id);
+
+    if (erroDesativar) throw erroDesativar;
+
+    const { data: loteAtivado, error: erroAtivar } = await supabase
+      .from("lotes_cartelas")
+      .update({ ativo: true, atualizado_em: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (erroAtivar) throw erroAtivar;
+
+    console.log(`[ADMIN] Lote ativado: ${loteAtivado.chave} (${loteAtivado.tipo})`);
+
+    return res.json({ sucesso: true, lote: loteAtivado });
+
+  } catch (erro) {
+    console.error("[ADMIN] ERRO ATIVAR LOTE:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao ativar lote." });
+  }
+});
+
+/* ===== DESATIVAR LOTE ===== */
+app.post("/admin/lotes/:id/desativar", verificarAdminBackend, async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const { data: lote, error } = await supabase
+      .from("lotes_cartelas")
+      .update({ ativo: false, atualizado_em: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!lote) return res.status(404).json({ sucesso: false, erro: "Lote não encontrado." });
+
+    console.log(`[ADMIN] Lote desativado: ${lote.chave} (${lote.tipo})`);
+
+    return res.json({ sucesso: true, lote });
+
+  } catch (erro) {
+    console.error("[ADMIN] ERRO DESATIVAR LOTE:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao desativar lote." });
+  }
+});
+
+/* =====================================================================
+   IMPORTAR CARTELAS PRA UM LOTE — planilha (.xlsx/.csv) com as colunas:
+     física:  numero_chance1, numero_chance2       (formato NNNNN-DD)
+     digital: numero_chance1, numero_chance2, grade_chance1, grade_chance2
+              (grade = 24 números separados por vírgula, ordem S-O-R-T-E)
+
+   modo=validar (padrão): só analisa e devolve um relatório, NADA é gravado.
+   modo=confirmar: grava — só se a validação (rodada de novo, sempre, nunca
+   confia numa validação anterior) não encontrar NENHUMA linha inválida.
+   A gravação é uma única inserção (todas as linhas de uma vez), que no
+   Postgres é atômica: ou entra tudo, ou não entra nada.
+===================================================================== */
+app.post("/admin/lotes/:id/importar", verificarAdminBackend, uploadPlanilha.single("planilha"), async (req, res) => {
+  try {
+
+    const { id } = req.params;
+    const modo = req.query.modo === "confirmar" ? "confirmar" : "validar";
+
+    if (!req.file) {
+      return res.status(400).json({ sucesso: false, erro: "Nenhuma planilha enviada." });
+    }
+
+    const { data: lote, error: erroLote } = await supabase
+      .from("lotes_cartelas").select("*").eq("id", id).maybeSingle();
+
+    if (erroLote) throw erroLote;
+    if (!lote) return res.status(404).json({ sucesso: false, erro: "Lote não encontrado." });
+
+    let resultado;
+    try {
+      resultado = await processarPlanilha(req.file.buffer, { loteChave: lote.chave, tipo: lote.tipo });
+    } catch (erroLeitura) {
+      console.error("[ADMIN] ERRO LER PLANILHA DE LOTE:", erroLeitura);
+      return res.status(400).json({ sucesso: false, erro: "Não foi possível ler a planilha. Confira se é um .xlsx válido." });
+    }
+
+    if (!resultado.total_linhas) {
+      return res.status(400).json({ sucesso: false, erro: "A planilha está vazia." });
+    }
+
+    const { validas, invalidas } = resultado;
+
+    const relatorio = {
+      total_linhas: resultado.total_linhas,
+      validas: validas.length,
+      invalidas: invalidas.length,
+      erros: invalidas.slice(0, 50), // não devolve milhares de erros de uma vez
+      amostra: validas.slice(0, 5)
+    };
+
+    if (modo === "validar" || invalidas.length > 0) {
+      return res.json({ sucesso: true, gravado: false, relatorio });
+    }
+
+    /* ===== GRAVAÇÃO — uma inserção só, atômica ===== */
+    const { error: erroInsert } = await supabase.from("cartelas").insert(validas);
+
+    if (erroInsert) {
+      console.error("[ADMIN] ERRO GRAVAR IMPORTACAO DE LOTE:", erroInsert);
+
+      const duplicado = erroInsert.code === "23505";
+
+      return res.status(409).json({
+        sucesso: false,
+        gravado: false,
+        erro: duplicado
+          ? "Um ou mais números dessa planilha já existem em outra cartela do sistema (nenhuma linha foi gravada — a operação é tudo-ou-nada)."
+          : "Erro ao gravar a importação (nenhuma linha foi gravada).",
+        detalhe: erroInsert.message
+      });
+    }
+
+    console.log(`[ADMIN] Importação confirmada: ${validas.length} cartelas novas no lote ${lote.chave} (${lote.tipo})`);
+
+    return res.json({ sucesso: true, gravado: true, relatorio });
+
+  } catch (erro) {
+    console.error("[ADMIN] ERRO IMPORTAR LOTE:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao importar planilha." });
   }
 });
 
