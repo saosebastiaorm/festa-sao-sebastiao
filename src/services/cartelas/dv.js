@@ -39,6 +39,17 @@ function formatarNumeroFisica(id) {
   return `${pad5(id)}-${pad2(calcularDV(id))}`;
 }
 
+/* Cliente pode digitar sem os zeros à esquerda (ex: "6793-83" em vez
+   de "06793-83" — bem comum, ninguém digita zero à esquerda por
+   hábito) — normaliza pro formato oficial antes de comparar com o
+   banco. Sem isso, a busca por igualdade exata falha silenciosamente
+   e a pessoa recebe "cartela não existe" numa cartela real. */
+function normalizarNumeroDigitado(numero) {
+  const m = /^(\d+)-(\d+)$/.exec(String(numero || "").trim());
+  if (!m) return String(numero || "").trim();
+  return `${pad5(m[1])}-${pad2(m[2])}`;
+}
+
 /* Confere se uma string "NNNNN-DD" já pronta (vinda de uma planilha,
    por exemplo) bate com o DV recalculado — não confia no DV que veio
    no arquivo, sempre recalcula a partir do id. */
@@ -81,6 +92,7 @@ function validarGrade(grade) {
 module.exports = {
   calcularDV,
   formatarNumeroFisica,
+  normalizarNumeroDigitado,
   validarNumeroFormatado,
   validarGrade,
   pad2,

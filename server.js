@@ -7,6 +7,7 @@ const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartel
 const { gerarVersoCartelaPNG } = require("./src/services/cartelas/gerar-verso-cartela");
 const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
 const { buscarLoteAtivo, valorEmReais } = require("./src/services/cartelas/lotes");
+const { normalizarNumeroDigitado } = require("./src/services/cartelas/dv");
 const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const sharp = require("sharp");
 require("dotenv").config();
@@ -2049,10 +2050,13 @@ app.post("/cartelas/validar-numero", async (req, res) => {
        passou de 1h, ela conta como livre de novo ===== */
     await supabase.rpc("liberar_cartelas_expiradas");
 
+    const termoDigitado = String(numero).trim();
+    const termoNormalizado = normalizarNumeroDigitado(numero);
+
     const { data: cartela, error } = await supabase
       .from("cartelas")
       .select("*")
-      .or(`numero_chance1.eq.${String(numero).trim()},numero_chance2.eq.${String(numero).trim()}`)
+      .or(`numero_chance1.eq.${termoDigitado},numero_chance2.eq.${termoDigitado},numero_chance1.eq.${termoNormalizado},numero_chance2.eq.${termoNormalizado}`)
       .eq("tipo", "fisica")
       .eq("lote", loteFisica.chave)
       .maybeSingle();
@@ -2178,10 +2182,13 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
        Aceita tanto numero_chance1 quanto numero_chance2 — o
        comprador pode digitar qualquer um dos dois números
        impressos no canhoto da cartela física. */
+    const termoDigitadoFisica = String(numero_cartela).trim();
+    const termoNormalizadoFisica = normalizarNumeroDigitado(numero_cartela);
+
     const { data: cartela, error: buscaErro } = await supabase
       .from("cartelas")
       .select("*")
-      .or(`numero_chance1.eq.${String(numero_cartela).trim()},numero_chance2.eq.${String(numero_cartela).trim()}`)
+      .or(`numero_chance1.eq.${termoDigitadoFisica},numero_chance2.eq.${termoDigitadoFisica},numero_chance1.eq.${termoNormalizadoFisica},numero_chance2.eq.${termoNormalizadoFisica}`)
       .eq("tipo", "fisica")
       .eq("lote", loteFisica.chave)
       .maybeSingle();
@@ -2825,11 +2832,12 @@ app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res
   try {
 
     const { numero } = req.params;
+    const numeroNormalizado = normalizarNumeroDigitado(numero);
 
     const { data: cartela, error } = await supabase
       .from("cartelas")
       .select("*")
-      .or(`numero_chance1.eq.${numero},numero_chance2.eq.${numero}`)
+      .or(`numero_chance1.eq.${numero},numero_chance2.eq.${numero},numero_chance1.eq.${numeroNormalizado},numero_chance2.eq.${numeroNormalizado}`)
       .maybeSingle();
 
     if (error) {
