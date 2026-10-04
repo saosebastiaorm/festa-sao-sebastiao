@@ -896,8 +896,24 @@ function registrarRotasVendas(app, deps) {
       .limit(200);
     if (error) return res.status(500).json({ sucesso: false, erro: "Erro ao carregar caixas." });
 
+    // sangrias/suprimentos de todos os caixas listados (abertos e fechados)
+    const ids = (sessoes || []).map(s => s.id);
+    const movPorSessao = {};
+    if (ids.length) {
+      const { data: movs } = await supabase
+        .from("caixa_movimentos")
+        .select("sessao_id, tipo, valor")
+        .in("sessao_id", ids);
+      for (const m of movs || []) {
+        const t = movPorSessao[m.sessao_id] || (movPorSessao[m.sessao_id] = { sangrias: 0, suprimentos: 0 });
+        if (m.tipo === "sangria") t.sangrias = arred(t.sangrias + Number(m.valor || 0));
+        else if (m.tipo === "suprimento") t.suprimentos = arred(t.suprimentos + Number(m.valor || 0));
+      }
+    }
+
     const resultado = [];
     for (const s of sessoes || []) {
+      const mov = movPorSessao[s.id] || { sangrias: 0, suprimentos: 0 };
       if (s.status === "aberto") {
         const r = await resumoSessaoCaixa(supabase, s);
         resultado.push({ ...s, totais: r.totais });
@@ -909,7 +925,9 @@ function registrarRotasVendas(app, deps) {
             pix: Number(s.total_pix || 0),
             cartao: Number(s.total_cartao || 0),
             geral: arred(Number(s.total_dinheiro || 0) + Number(s.total_pix || 0) + Number(s.total_cartao || 0)),
-            dinheiro_esperado: Number(s.dinheiro_esperado || 0)
+            dinheiro_esperado: Number(s.dinheiro_esperado || 0),
+            sangrias: mov.sangrias,
+            suprimentos: mov.suprimentos
           }
         });
       }

@@ -2833,6 +2833,7 @@ function filtrosCartelasDaQuery(query) {
 
 function aplicarFiltrosCartelas(consulta, filtros) {
   if (filtros.lote) consulta = consulta.eq("lote", filtros.lote);
+  if (filtros.lotes && filtros.lotes.length) consulta = consulta.in("lote", filtros.lotes);
   if (filtros.tipo) consulta = consulta.eq("tipo", filtros.tipo);
   if (filtros.status) consulta = consulta.eq("status", filtros.status);
   if (filtros.vai_na_festa) consulta = consulta.eq("vai_na_festa", filtros.vai_na_festa);
@@ -3082,6 +3083,15 @@ app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
   try {
 
     const base = filtrosCartelasDaQuery({ lote: req.query.lote });
+
+    // ?lotes=a,b → totais de vários lotes juntos (os cards do admin)
+    const lotes = String(req.query.lotes || "")
+      .split(",").map(l => l.trim()).filter(Boolean).slice(0, 50);
+    if (lotes.length) {
+      base.lote = null;
+      base.lotes = lotes;
+      base.loteRotulo = lotes.join(",");
+    }
 
     const [
       total,
