@@ -9,6 +9,7 @@ const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela
 const { buscarLoteAtivo, valorEmReais } = require("./src/services/cartelas/lotes");
 const { normalizarNumeroDigitado } = require("./src/services/cartelas/dv");
 const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
+const vendas = require("./src/vendas/vendas");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -40,6 +41,11 @@ const {
 } = require("./src/services/sicredi/consultarPix");
 
 const app = express();
+
+/* O Render fica atrás de um proxy: sem isso, o limitador de requisições
+   enxerga o IP do proxy (igual pra todo mundo) em vez do IP real de quem
+   acessa. */
+app.set("trust proxy", 1);
 
 /* Sem isso, um erro que escapa de todo try/catch (ou uma promise rejeitada
    sem .catch) derruba o processo Node inteiro — o Render reinicia sozinho,
@@ -116,13 +122,28 @@ function criarLimitador(opcoes) {
     limit: opcoes.max,
     standardHeaders: true,
     legacyHeaders: false,
+    ...(opcoes.keyGenerator ? { keyGenerator: opcoes.keyGenerator } : {}),
     message: { sucesso: false, erro: "Muitas tentativas. Aguarde um pouco e tente de novo." },
   });
 }
 
+/* Na festa, os ~15 caixas e a equipe saem pela MESMA internet (mesmo IP).
+   Contar por IP bloquearia a equipe inteira; quem está logado é contado
+   pelo próprio login (token), visitantes continuam contados por IP. */
+const crypto = require("crypto");
+function chavePorLoginOuIp(req) {
+  const auth = String(req.headers.authorization || "");
+  if (auth.startsWith("Bearer ") && auth.length > 20) {
+    return "tok:" + crypto.createHash("sha256").update(auth).digest("hex").slice(0, 24);
+  }
+  return rateLimit.ipKeyGenerator(req.ip || "");
+}
+
 const limitadorLoginCliente = criarLimitador({ janelaMs: 15 * 60 * 1000, max: 8 });
 const limitadorPix = criarLimitador({ janelaMs: 5 * 60 * 1000, max: 20 });
-const limitadorAdmin = criarLimitador({ janelaMs: 60 * 1000, max: 60 });
+const limitadorAdmin = criarLimitador({ janelaMs: 60 * 1000, max: 120, keyGenerator: chavePorLoginOuIp });
+/* Caixa/retirada: cada operador tem o próprio limite (bem folgado). */
+const limitadorOperador = criarLimitador({ janelaMs: 60 * 1000, max: 300, keyGenerator: chavePorLoginOuIp });
 /* Rotas de "verificar-pagamento" são consultadas pelo PRÓPRIO navegador
    do comprador a cada 5s enquanto ele espera o Pix confirmar (pode durar
    vários minutos) — um limite apertado aqui bloquearia pagamento
@@ -197,7 +218,7 @@ function criarVerificadorDeAcesso(papeisPermitidos) {
 
       const { data: perfil, error: perfilError } = await supabase
         .from("user_profiles")
-        .select("role")
+        .select("role,nome")
         .eq("id", userData.user.id)
         .single();
 
@@ -210,6 +231,7 @@ function criarVerificadorDeAcesso(papeisPermitidos) {
 
       req.usuarioAdmin = userData.user;
       req.papelUsuario = perfil.role;
+      req.nomeUsuario = perfil.nome || userData.user.email;
       next();
 
     } catch (erro) {
@@ -510,203 +532,144 @@ app.get("/api", (req, res) => {
 ===================================================== */
 app.post("/criar-pix", limitadorPix, async (req, res) => {
   try {
-const {
-  nome: nomeBruto,
-  sobrenome: sobrenomeBruto,
-  cpf,
-  telefone,
-  quantidade,
-  horario_retirada,
-  email,
+    const {
+      nome: nomeBruto,
+      sobrenome: sobrenomeBruto,
+      cpf,
+      telefone,
+      email,
+      horario_retirada,
+      termo_aceito,
+      quantidade,
+      produto_codigo
+    } = req.body || {};
 
-  produto_codigo
-} = req.body;
+    const nome = sanitizarTexto(nomeBruto, 100);
+    const sobrenome = sanitizarTexto(sobrenomeBruto, 100);
+    const cpfLimpo = limparCPF(cpf);
+    const telefoneLimpo = limparTelefone(telefone);
 
-const nome = sanitizarTexto(nomeBruto, 100);
-const sobrenome = sanitizarTexto(sobrenomeBruto, 100);
-const cpfLimpo = limparCPF(cpf);
-const telefoneLimpo = limparTelefone(telefone);
+    if (!nome) {
+      return res.status(400).json({ sucesso: false, erro: "Informe o nome." });
+    }
 
-if (!validarCPF(cpfLimpo)) {
-  return res.status(400).json({
-    sucesso: false,
-    erro: "CPF inválido."
-  });
-}
+    if (!validarCPF(cpfLimpo)) {
+      return res.status(400).json({ sucesso: false, erro: "CPF inválido." });
+    }
 
-/* =====================================================
-   BUSCAR PRODUTO
-===================================================== */
+    /* Formato novo: itens = [{codigo, quantidade}, ...] (lista de compras).
+       Formato antigo (1 produto): produto_codigo + quantidade — aceito
+       pra não quebrar quem estiver com a página antiga aberta. */
+    const formatoNovo = Array.isArray(req.body?.itens);
+    const itensBrutos = formatoNovo
+      ? req.body.itens
+      : [{ codigo: produto_codigo, quantidade: quantidade || 1 }];
 
-const codigoProduto =
-  String(produto_codigo || "")
-    .trim()
-    .toUpperCase();
+    if (formatoNovo && termo_aceito !== true) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "É preciso aceitar as condições de retirada para continuar."
+      });
+    }
 
-if (!codigoProduto) {
+    const montagem = await vendas.montarItensDoCarrinho(supabase, itensBrutos);
+    if (montagem.erro) {
+      return res.status(montagem.status || 400).json({
+        sucesso: false,
+        erro: montagem.erro,
+        esgotado: montagem.esgotado
+      });
+    }
 
-  return res.status(400).json({
-    sucesso: false,
-    erro: "Produto não informado."
-  });
+    const { itens, total, quantidadeTotal } = montagem;
 
-}
+    if (!(total > 0)) {
+      return res.status(400).json({ sucesso: false, erro: "Total inválido." });
+    }
 
-const { data: produto, error: produtoError } =
-  await supabase
-    .from("produtos")
-    .select("*")
-    .eq("codigo", codigoProduto)
-    .single();
+    const exigeHorario = itens.some(i => i.exige_horario);
+    const horario = sanitizarTexto(horario_retirada, 20) || null;
 
-if (produtoError || !produto) {
+    if (exigeHorario && !horario) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Selecione o horário previsto para retirar o churrasco."
+      });
+    }
 
-  return res.status(404).json({
-    sucesso: false,
-    erro: "Produto não encontrado."
-  });
-}
+    /* SICREDI PIX (valor calculado aqui, com os preços do banco) */
+    const cobranca = await criarPix(total, `${nome} ${sobrenome || ""}`.trim(), cpfLimpo);
 
-const produtoTipo = produto.codigo;
+    if (!cobranca || !cobranca.txid) {
+      return res.status(502).json({ sucesso: false, erro: "Não foi possível gerar o Pix agora. Tente novamente." });
+    }
 
-const precoUnitario =
-  Number(produto.preco || 0);
+    const prefixo = itens.length === 1 ? itens[0].produto_codigo : "P";
 
-const quantidadeNumerica =
-  Number(quantidade || 1);
+    const criado = await vendas.criarPedidoComItens(supabase, {
+      nome,
+      sobrenome: sobrenome || "",
+      cpf: cpfLimpo,
+      telefone: telefoneLimpo || "nao informado",
+      email: email ? sanitizarTexto(email, 150) : null,
+      produto_tipo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
+      quantidade: quantidadeTotal,
+      valor_unitario: itens.length === 1 ? itens[0].preco_unitario : null,
+      horario_retirada: exigeHorario ? horario : null,
+      valor_total: total,
+      txid: cobranca.txid,
+      pix_copia_cola: cobranca.pixCopiaECola || null,
+      status_pagamento: "pendente",
+      status_retirada: "pendente",
+      status: "pendente",
+      origem: "site",
+      forma_pagamento: "pix",
+      termo_aceito_em: termo_aceito === true ? new Date().toISOString() : null,
+      termo_versao: termo_aceito === true ? vendas.TERMO_VERSAO : null
+    }, itens, prefixo, [{ forma: "pix", valor: total }]);
 
-const total =
-  precoUnitario * quantidadeNumerica;
+    if (criado.erro) {
+      return res.status(500).json({ sucesso: false, erro: "Erro ao salvar pedido." });
+    }
 
+    const resumo = vendas.resumoItensTexto(itens);
 
-    /* =====================================================
-       GERAR CÓDIGO OFICIAL
-    ===================================================== */
-    const anoEvento = "2027";
-    
+    return res.status(200).json({
+      sucesso: true,
+      mensagem: "PIX gerado com sucesso.",
+      txid: cobranca.txid,
+      codigo_pedido: criado.codigo_pedido,
+      itens: itens.map(i => ({
+        codigo: i.produto_codigo,
+        nome: i.produto_nome,
+        quantidade: i.quantidade,
+        preco_unitario: i.preco_unitario,
+        imagem: i.imagem,
+        exige_horario: i.exige_horario
+      })),
+      horario_retirada: exigeHorario ? horario : null,
 
-    const { data: ultimoPedido } = await supabase
-      .from("pedidos")
-      .select("id")
-      .order("id", { ascending: false })
-      .limit(1);
+      /* campos do formato antigo (telas que mostram 1 produto) */
+      produto_tipo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
+      produto_codigo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
+      produto_nome: itens.length === 1 ? itens[0].produto_nome : resumo,
+      produto_imagem: itens[0].imagem,
+      produto_descricao: itens.length === 1 ? itens[0].descricao : resumo,
+      produto_preco_unitario: itens.length === 1 ? itens[0].preco_unitario : total,
+      quantidade: quantidadeTotal,
+      total,
+      pix_copia_cola: cobranca.pixCopiaECola,
+      qr_code_base64: cobranca.qrCodeBase64
+    });
 
-    const numeroSequencial = ultimoPedido && ultimoPedido.length > 0
-      ? ultimoPedido[0].id + 1
-      : 1;
+  } catch (erro) {
+    console.error("[PIX] ERRO AO GERAR PIX:", erro);
 
-    const codigoPedido = `FPSS-${anoEvento}-${produtoTipo}-${String(numeroSequencial).padStart(6, "0")}`;
-
-
-/* =====================================================
-   SICREDI PIX
-===================================================== */
-
-const pagamento = await criarPix(
-
-  total,
-
-  `${nome} ${sobrenome || ""}`.trim(),
-
-  cpfLimpo
-
-);
-
-
-   /* =====================================================
-   SALVAR PEDIDO
-===================================================== */
-const pedidoData = {
-  nome,
-  sobrenome: sobrenome || "",
-  cpf: cpfLimpo,
-  telefone: telefoneLimpo || "nao informado",
-  email: email || null,
-
-  produto_tipo: produtoTipo,
-  
-  codigo_pedido: codigoPedido,
-
-  quantidade: quantidadeNumerica,
-  horario_retirada: horario_retirada || null,
-
-  valor_total: total,
-
-
-txid: pagamento.txid,
-
-pix_copia_cola: pagamento.pixCopiaECola || null,
-
-
-
-  status_pagamento: "pendente",
-
-status_retirada: "pendente",
-
-  /* IMPORTANTE:
-     QR/TOKEN DE RETIRADA NÃO DEVEM SER LIBERADOS AINDA.
-     SERÃO GERADOS SOMENTE APÓS CONFIRMAÇÃO DO PAGAMENTO. */
-  qr_code_retirada: null,
-  token_retirada: null,
-
-  status: "pendente"
-};
-
-const { data: pedidoSalvo, error: supabaseError } = await supabase
-  .from("pedidos")
-  .insert([pedidoData])
-  .select();
-
-if (supabaseError) {
-  console.error("[ERROR] Erro Supabase:", supabaseError);
-
-  return res.status(500).json({
-    sucesso: false,
-    erro: "Erro ao salvar pedido."
-  });
-}
-
-return res.status(200).json({
-
-    sucesso: true,
-
-    mensagem: "PIX gerado com sucesso.",
-
-    txid: pagamento.txid,
-
-    codigo_pedido: codigoPedido,
-
-    produto_tipo: produtoTipo,
-
-    produto_codigo: produto.codigo,
-
-    produto_nome: produto.nome,
-
-    produto_imagem: produto.imagem,
-    produto_descricao: produto.descricao,
-
-produto_preco_unitario: precoUnitario,
-
-    quantidade: quantidadeNumerica,
-
-    total: total,
-
-    pix_copia_cola: pagamento.pixCopiaECola,
-
-    qr_code_base64: pagamento.qrCodeBase64,
-
-    pedido: pedidoSalvo
-
-});
-
-} catch (erro) {
-  console.error("[PIX] ERRO AO GERAR PIX:", erro);
-
-  return res.status(500).json({
-    sucesso: false,
-    erro: "Erro interno ao gerar PIX."
-  });
-}
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro interno ao gerar PIX."
+    });
+  }
 });
 
 
@@ -768,127 +731,61 @@ app.post("/api/vip", async (req, res) => {
    VERIFICAR PAGAMENTO 
 ===================================================== */
 app.get("/verificar-pagamento/:txid", limitadorPolling, async (req, res) => {
-  
-  
   try {
-
     const { txid } = req.params;
-    const pagamento = await consultarPix(txid);
 
-
-
-    const statusPagamento = pagamento.status;
-
-
-    /* =========================================
-       PAGAMENTO APROVADO
-    ========================================= */
-    if (statusPagamento === "CONCLUIDA") {
-
-const { data: pedido, error: pedidoError } = await supabase
-  .from("pedidos")
-  .select("*")
-  .eq("txid", txid)
-  .single();
-
-
-
-if (pedidoError || !pedido) {
-  return res.status(404).json({
-    sucesso: false,
-    erro: "Pedido não encontrado.",
-    detalhe: pedidoError
-  });
-}
-
-      let tokenRetirada = pedido.token_retirada;
-      let qrCodeRetirada = pedido.qr_code_retirada;
-
-      /* GERAR RETIRADA SE NÃO EXISTIR */
-      if (!tokenRetirada || !qrCodeRetirada) {
-
-tokenRetirada = `RET-${pedido.codigo_pedido}-${Date.now()}`
-  .replaceAll(" ", "");
-
-        qrCodeRetirada =
-          `${pedido.codigo_pedido}|${pedido.cpf}|${tokenRetirada}`;
-
-        const { error: updateError } = await supabase
-          .from("pedidos")
-.update({
-  status_pagamento: "pago",
-  status: "pago",
-  data_pagamento: new Date(),
-  token_retirada: tokenRetirada,
-  qr_code_retirada: qrCodeRetirada
-})
-.eq("txid", txid)
-
-        if (updateError) {
-          console.error("[PEDIDO] Erro ao atualizar retirada:", updateError);
-        }
-
-      } else {
-
-        await supabase
-          .from("pedidos")
-.update({
-  status_pagamento: "pago",
-  status: "pago",
-  data_pagamento: new Date()
-})
-.eq("txid", txid)
-      }
-
-return res.json({
-  sucesso: true,
-
-  txid: txid,
-
-  status: statusPagamento,
-
-  status_interno: "pago",
-
-  created_at: pedido.created_at,
-
-  updated_at: new Date().toISOString(),
-
-  data_pagamento:
-    pedido.data_pagamento || new Date().toISOString(),
-
-  token_retirada: tokenRetirada,
-
-  qr_code_retirada: qrCodeRetirada
-});
+    if (!/^[A-Za-z0-9]{1,40}$/.test(String(txid || ""))) {
+      return res.status(400).json({ sucesso: false, erro: "Identificador inválido." });
     }
 
-    /* =========================================
-       QUALQUER STATUS NÃO APROVADO
-    ========================================= */
-    await supabase
+    const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
-.update({
-  status_pagamento: "pendente"
-})
-.eq("txid", txid)
+      .select("*")
+      .eq("txid", txid)
+      .maybeSingle();
+
+    if (pedidoError || !pedido) {
+      return res.status(404).json({ sucesso: false, erro: "Pedido não encontrado." });
+    }
+
+    /* confere no Sicredi; se pago, marca como pago e baixa o estoque
+       (uma única vez, mesmo que essa rota seja chamada várias vezes) */
+    const r = await vendas.conferirPagamentoPedido(supabase, consultarPix, pedido);
+
+    if (r.falhou) {
+      return res.status(502).json({ sucesso: false, erro: "Erro ao verificar pagamento." });
+    }
+
+    const atualizado = r.pedido;
+
+    if (atualizado.status_pagamento === "pago") {
+      return res.json({
+        sucesso: true,
+        txid,
+        status: "CONCLUIDA",
+        status_interno: "pago",
+        created_at: atualizado.created_at,
+        updated_at: new Date().toISOString(),
+        data_pagamento: atualizado.data_pagamento || new Date().toISOString(),
+        token_retirada: atualizado.token_retirada,
+        qr_code_retirada: atualizado.qr_code_retirada,
+        status_retirada: atualizado.status_retirada
+      });
+    }
 
     return res.json({
       sucesso: true,
-      txid: txid,
-      status: statusPagamento,
-      status_interno: "pendente"
+      txid,
+      status: r.statusSicredi,
+      status_interno: atualizado.status_pagamento === "cancelado" ? "cancelado" : "pendente"
     });
 
   } catch (erro) {
-
     console.error("[PIX] Erro verificar pagamento:", erro);
-
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao verificar pagamento."
-    });
+    return res.status(500).json({ sucesso: false, erro: "Erro ao verificar pagamento." });
   }
 });
+
 /* =====================================================
    RECUPERAR PIX DE PEDIDOS ANTIGOS
 ===================================================== */
@@ -936,80 +833,72 @@ app.get("/recuperar-pix/:txid", async (req, res) => {
 /* =====================================================
    CONSULTAR POR PAYMENT ID
 ===================================================== */
-app.get("/pedido/:orderId", verificarAcessoRetirada, async (req, res) => {
-  try {
-   const { orderId } = req.params;
+/* Pedido pra tela de retirada: itens + histórico de entregas. Se o Pix
+   ainda está pendente, confere no Sicredi antes (cliente pode ter pago
+   e fechado a página). */
+async function prepararPedidoRetirada(pedido) {
+  let atual = pedido;
+  if (atual.status_pagamento !== "pago" && atual.txid && !atual.reembolsado_em && atual.status !== "cancelado") {
+    const r = await vendas.conferirPagamentoPedido(supabase, consultarPix, atual);
+    atual = r.pedido;
+  }
+  await vendas.anexarItens(supabase, atual, { comEntregas: true });
+  return atual;
+}
 
-const { data, error } = await supabase
-  .from("pedidos")
-  .select("*")
-  .eq("txid", orderId)
-  .single();
+app.get("/pedido/:orderId", verificarAcessoRetirada, limitadorOperador, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("txid", orderId)
+      .maybeSingle();
 
     if (error || !data) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Pedido não encontrado."
-      });
+      return res.status(404).json({ sucesso: false, erro: "Pedido não encontrado." });
     }
 
-    return res.json({
-      sucesso: true,
-      pedido: data
-    });
+    return res.json({ sucesso: true, pedido: await prepararPedidoRetirada(data) });
 
   } catch (erro) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao consultar pedido."
-    });
+    return res.status(500).json({ sucesso: false, erro: "Erro ao consultar pedido." });
   }
 });
 
 /* =====================================================
    CONSULTAR POR CÓDIGO OFICIAL
 ===================================================== */
-app.get("/pedido/codigo/:codigoPedido", verificarAcessoRetirada, async (req, res) => {
+app.get("/pedido/codigo/:codigoPedido", verificarAcessoRetirada, limitadorOperador, async (req, res) => {
   try {
-    const { codigoPedido } = req.params;
+    const codigoPedido = String(req.params.codigoPedido || "").trim().toUpperCase();
 
     if (!codigoPedidoValido(codigoPedido)) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Código de pedido inválido."
-      });
+      return res.status(400).json({ sucesso: false, erro: "Código de pedido inválido." });
     }
 
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
       .eq("codigo_pedido", codigoPedido)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Código não encontrado."
-      });
+      return res.status(404).json({ sucesso: false, erro: "Código não encontrado." });
     }
 
-    return res.json({
-      sucesso: true,
-      pedido: data
-    });
+    return res.json({ sucesso: true, pedido: await prepararPedidoRetirada(data) });
 
   } catch (erro) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao buscar código."
-    });
+    return res.status(500).json({ sucesso: false, erro: "Erro ao buscar código." });
   }
 });
 
 /* =====================================================
    CONSULTAR POR CPF
 ===================================================== */
-app.get("/pedido/cpf/:cpf", verificarAcessoRetirada, async (req, res) => {
+app.get("/pedido/cpf/:cpf", verificarAcessoRetirada, limitadorOperador, async (req, res) => {
   try {
 
     const cpf = limparCPF(req.params.cpf);
@@ -1021,95 +910,81 @@ app.get("/pedido/cpf/:cpf", verificarAcessoRetirada, async (req, res) => {
       .order("id", { ascending: false });
 
     if (error || !data || !data.length) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "CPF não encontrado."
-      });
+      return res.status(404).json({ sucesso: false, erro: "CPF não encontrado." });
     }
 
-    return res.json({
-      sucesso: true,
-      pedidos: data,
-      total: data.length
-    });
+    await vendas.anexarItens(supabase, data);
+
+    return res.json({ sucesso: true, pedidos: data, total: data.length });
 
   } catch (erro) {
-
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro ao buscar CPF."
-    });
+    return res.status(500).json({ sucesso: false, erro: "Erro ao buscar CPF." });
   }
 });
 
 /* =====================================================
-   CONFIRMAR RETIRADA
+   CONFIRMAR RETIRADA (total ou parcial)
+   body.itens = [{ item_id, quantidade }]  -> entrega só isso
+   sem body.itens                          -> entrega tudo que falta
 ===================================================== */
-app.post("/retirada/:codigoPedido", verificarAcessoRetirada, async (req, res) => {
+app.post("/retirada/:codigoPedido", verificarAcessoRetirada, limitadorOperador, async (req, res) => {
   try {
-    const { codigoPedido } = req.params;
+    const codigoPedido = String(req.params.codigoPedido || "").trim().toUpperCase();
 
     if (!codigoPedidoValido(codigoPedido)) {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Código de pedido inválido."
-      });
+      return res.status(400).json({ sucesso: false, erro: "Código de pedido inválido." });
     }
 
     const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
       .select("*")
       .eq("codigo_pedido", codigoPedido)
-      .single();
+      .maybeSingle();
 
     if (pedidoError || !pedido) {
-      return res.status(404).json({
-        sucesso: false,
-        erro: "Pedido não encontrado."
-      });
+      return res.status(404).json({ sucesso: false, erro: "Pedido não encontrado." });
+    }
+
+    if (pedido.reembolsado_em) {
+      return res.status(400).json({ sucesso: false, erro: "Pedido reembolsado. Entrega bloqueada." });
     }
 
     if (pedido.status_pagamento !== "pago") {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Pagamento ainda não confirmado."
-      });
+      return res.status(400).json({ sucesso: false, erro: "Pagamento ainda não confirmado." });
     }
 
     if (pedido.status_retirada === "retirado") {
-      return res.status(400).json({
-        sucesso: false,
-        erro: "Pedido já retirado."
-      });
+      return res.status(400).json({ sucesso: false, erro: "Pedido já retirado." });
     }
 
-    const { data, error } = await supabase
-      .from("pedidos")
-      .update({
-        status_retirada: "retirado",
-        data_retirada: new Date()
-      })
-      .eq("codigo_pedido", codigoPedido)
-      .select();
+    const r = await vendas.registrarEntrega(
+      supabase,
+      pedido,
+      req.body?.itens,
+      { id: req.usuarioAdmin?.id, nome: req.nomeUsuario },
+      "retirada"
+    );
 
-    if (error) {
-      return res.status(500).json({
-        sucesso: false,
-        erro: "Erro ao confirmar retirada."
-      });
+    if (r.erro) {
+      return res.status(400).json({ sucesso: false, erro: r.erro });
     }
+
+    const { data: atualizado } = await supabase
+      .from("pedidos").select("*").eq("id", pedido.id).single();
+    await vendas.anexarItens(supabase, atualizado, { comEntregas: true });
 
     return res.json({
       sucesso: true,
-      mensagem: "Retirada confirmada com sucesso.",
-      pedido: data
+      mensagem: r.resultado.status_retirada === "retirado"
+        ? "Entrega concluída — pedido totalmente retirado."
+        : "Entrega parcial registrada.",
+      resultado: r.resultado,
+      pedido: atualizado
     });
 
   } catch (erro) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: "Erro interno."
-    });
+    console.error("[RETIRADA] erro:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno." });
   }
 });
 
@@ -1192,6 +1067,8 @@ app.get("/admin/pedidos", verificarAdminBackend, async (req, res) => {
       });
     }
 
+    await vendas.anexarItens(supabase, data);
+
     return res.json({
       sucesso: true,
       total: data.length,
@@ -1216,7 +1093,7 @@ app.get("/produtos", async (req, res) => {
 
     const { data, error } = await supabase
       .from("produtos")
-      .select("*")
+      .select("id,codigo,nome,descricao,preco,ativo,estoque,tipo,imagem,ordem,exige_horario")
       .eq("ativo", true)
       .order("ordem", { ascending: true });
 
@@ -1227,10 +1104,16 @@ app.get("/produtos", async (req, res) => {
       });
     }
 
+    const produtosPublicos = (data || []).map(p => ({
+      ...p,
+      disponivel: Math.max(Number(p.estoque || 0), 0),
+      esgotado: Number(p.estoque || 0) <= 0
+    }));
+
     return res.json({
       sucesso: true,
-      total: data.length,
-      produtos: data
+      total: produtosPublicos.length,
+      produtos: produtosPublicos
     });
 
   } catch (erro) {
@@ -1333,7 +1216,9 @@ app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
       estoque,
       tipo,
       imagem,
-      ordem
+      ordem,
+      exige_horario,
+      estoque_minimo
     } = req.body || {};
 
     if (!codigo || !nome) {
@@ -1351,12 +1236,20 @@ app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
       descricao: descricao ? String(descricao).trim() : null,
       preco: Number(preco || 0),
       ativo: ativo === true,
-      estoque: Number(estoque || 0),
       tipo: tipo ? String(tipo).trim() : "produto",
       imagem: imagem ? String(imagem).trim() : null,
       ordem: Number(ordem || 0),
       updated_at: new Date().toISOString()
     };
+
+    if (exige_horario !== undefined) produtoData.exige_horario = exige_horario === true || exige_horario === "true";
+    if (estoque_minimo !== undefined && estoque_minimo !== "") produtoData.estoque_minimo = Math.max(Number(estoque_minimo) || 0, 0);
+
+    /* Estoque NÃO é mais sobrescrito pela edição do produto: depois de
+       criado, só muda por Entrada/Saída/Ajuste (tela de Estoque) e pelas
+       vendas/entregas — assim fica tudo registrado no histórico. Só no
+       cadastro de um produto NOVO o valor informado vira o saldo inicial. */
+    const estoqueInicial = Math.max(Number(estoque || 0), 0);
 
     let resultado;
 
@@ -1420,10 +1313,26 @@ app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
           .insert([
             {
               ...produtoData,
+              estoque: estoqueInicial,
+              estoque_fisico: estoqueInicial,
               created_at: new Date().toISOString()
             }
           ])
           .select();
+
+        if (!resultado.error && resultado.data && resultado.data[0]) {
+          await supabase.from("estoque_movimentos").insert([{
+            produto_id: resultado.data[0].id,
+            tipo: "inicial",
+            delta_disponivel: estoqueInicial,
+            delta_fisico: estoqueInicial,
+            disponivel_apos: estoqueInicial,
+            fisico_apos: estoqueInicial,
+            motivo: "Cadastro do produto",
+            usuario_id: req.usuarioAdmin?.id || null,
+            usuario_nome: req.nomeUsuario || null
+          }]);
+        }
       }
 
     }
@@ -1685,16 +1594,24 @@ app.post("/cliente-login", limitadorLoginCliente, async (req, res) => {
       .from("produtos")
       .select("codigo,nome,imagem");
 
+    await vendas.anexarItens(supabase, data || [], { comEntregas: true });
+
     const pedidosEnriquecidos = (data || []).map(pedido => {
 
       const produto = produtos?.find(
         p => p.codigo === pedido.produto_tipo
       );
 
+      const itensDoPedido = pedido.itens || [];
+      const primeiro = itensDoPedido[0];
+      const produtoPrimeiro = primeiro ? produtos?.find(p => p.codigo === primeiro.produto_codigo) : null;
+
       return {
         ...pedido,
-        nome_produto: produto?.nome || pedido.produto_tipo,
-        imagem_produto: produto?.imagem || null
+        nome_produto: itensDoPedido.length > 1
+          ? pedido.resumo_itens
+          : (produto?.nome || primeiro?.produto_nome || pedido.produto_tipo),
+        imagem_produto: produto?.imagem || produtoPrimeiro?.imagem || null
       };
     });
 
@@ -3460,6 +3377,26 @@ app.post("/admin/lotes/:id/importar", verificarAdminBackend, uploadPlanilha.sing
   }
 });
 
+
+/* =====================================================
+   VENDAS: carrinho, estoque, caixa, reembolso (src/vendas/vendas.js)
+===================================================== */
+vendas.registrarRotasVendas(app, {
+  supabase,
+  criarPix,
+  consultarPix,
+  verificarAdminBackend,
+  verificarAcessoRetirada,
+  limitadorOperador,
+  sanitizarTexto,
+  codigoPedidoValido
+});
+
+/* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
+   (quem pagou e fechou a página antes da confirmação). */
+if (process.env.DESATIVAR_CONFERENCIA_PIX !== "1") {
+  vendas.iniciarConferenciaAutomatica(supabase, consultarPix);
+}
 
 app.listen(PORT, () => {
   console.log(`[INFO] Servidor FPSS PRO rodando na porta ${PORT}`);

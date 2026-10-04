@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const { getAccessToken, agent } = require("./auth");
 
-async function criarPix(valor, nome, cpf) {
+async function criarPix(valor, nome, cpf, opcoes = {}) {
 
     console.log("======================================");
     console.log("INICIANDO CRIAÇÃO DO PIX SICREDI");
@@ -25,7 +25,7 @@ async function criarPix(valor, nome, cpf) {
         {
 
             calendario: {
-                expiracao: 3600
+                expiracao: opcoes.expiracao || 3600
             },
 
             valor: {
@@ -34,12 +34,11 @@ async function criarPix(valor, nome, cpf) {
 
             chave: process.env.SICREDI_PIX_KEY,
 
-            solicitacaoPagador: "Pagamento FPSS 2027",
+            solicitacaoPagador: opcoes.descricao || "Pagamento FPSS 2027",
 
-            devedor: {
-                cpf,
-                nome
-            }
+            /* Venda no caixa não tem CPF do cliente: a cobrança sai sem
+               "devedor" (campo opcional na API Pix do Banco Central). */
+            ...(cpf ? { devedor: { cpf, nome } } : {})
 
         },
 
