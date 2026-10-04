@@ -43,13 +43,17 @@ async function montarItensDoCarrinho(supabase, itensBrutos, { conferirEstoque = 
     return { erro: "Sua lista de compras está vazia." };
   }
 
-  /* junta itens repetidos do mesmo produto */
+  /* junta itens repetidos do mesmo produto (e guarda o horário de
+     retirada escolhido para cada produto, quando houver) */
   const porCodigo = new Map();
+  const horarioPorCodigo = new Map();
   for (const bruto of itensBrutos) {
     const codigo = String(bruto?.codigo || bruto?.produto_codigo || "").trim().toUpperCase();
     const qtd = intPos(bruto?.quantidade);
     if (!codigo || !qtd) continue;
     porCodigo.set(codigo, (porCodigo.get(codigo) || 0) + qtd);
+    const horario = String(bruto?.horario_retirada || "").trim();
+    if (/^\d{2}:\d{2}$/.test(horario) && !horarioPorCodigo.has(codigo)) horarioPorCodigo.set(codigo, horario);
   }
 
   if (!porCodigo.size) return { erro: "Sua lista de compras está vazia." };
@@ -92,6 +96,7 @@ async function montarItensDoCarrinho(supabase, itensBrutos, { conferirEstoque = 
       preco_unitario: arred(produto.preco),
       quantidade: qtd,
       exige_horario: produto.exige_horario === true,
+      horario_retirada: produto.exige_horario === true ? (horarioPorCodigo.get(produto.codigo) || null) : null,
       imagem: produto.imagem || null,
       descricao: produto.descricao || null
     });
@@ -114,7 +119,8 @@ function itensParaSql(itens) {
     produto_nome: i.produto_nome,
     preco_unitario: i.preco_unitario,
     quantidade: i.quantidade,
-    exige_horario: i.exige_horario
+    exige_horario: i.exige_horario,
+    horario_retirada: i.horario_retirada || null
   }));
 }
 
@@ -142,7 +148,7 @@ async function anexarItens(supabase, pedidos, { comEntregas = false } = {}) {
 
   const { data: itens } = await supabase
     .from("pedido_itens")
-    .select("id,pedido_id,produto_id,produto_codigo,produto_nome,preco_unitario,quantidade,quantidade_entregue,exige_horario")
+    .select("id,pedido_id,produto_id,produto_codigo,produto_nome,preco_unitario,quantidade,quantidade_entregue,exige_horario,horario_retirada")
     .in("pedido_id", ids)
     .order("id", { ascending: true });
 

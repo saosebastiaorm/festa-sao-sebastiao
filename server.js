@@ -587,15 +587,29 @@ app.post("/criar-pix", limitadorPix, async (req, res) => {
       return res.status(400).json({ sucesso: false, erro: "Total inválido." });
     }
 
-    const exigeHorario = itens.some(i => i.exige_horario);
-    const horario = sanitizarTexto(horario_retirada, 20) || null;
-
-    if (exigeHorario && !horario) {
+    /* Horário previsto POR PRODUTO (só produtos com "exige_horario", ex.:
+       churrasco). Página antiga mandava um horário só pro pedido inteiro:
+       nesse caso ele vale para todos esses produtos. */
+    const horarioGeral = /^\d{2}:\d{2}$/.test(String(horario_retirada || "").trim())
+      ? String(horario_retirada).trim()
+      : null;
+    for (const item of itens) {
+      if (item.exige_horario && !item.horario_retirada) item.horario_retirada = horarioGeral;
+    }
+    const semHorario = itens.find(i => i.exige_horario && !i.horario_retirada);
+    if (semHorario) {
       return res.status(400).json({
         sucesso: false,
-        erro: "Selecione o horário previsto para retirar o churrasco."
+        erro: `Selecione o horário previsto para retirar: ${semHorario.produto_nome}.`
       });
     }
+    const itensComHorario = itens.filter(i => i.exige_horario);
+    const exigeHorario = itensComHorario.length > 0;
+    const horario = !exigeHorario
+      ? null
+      : itensComHorario.length === 1
+        ? itensComHorario[0].horario_retirada
+        : itensComHorario.map(i => `${i.produto_nome} ${i.horario_retirada}`).join(" · ");
 
     /* SICREDI PIX (valor calculado aqui, com os preços do banco) */
     const cobranca = await criarPix(total, `${nome} ${sobrenome || ""}`.trim(), cpfLimpo);
@@ -645,7 +659,8 @@ app.post("/criar-pix", limitadorPix, async (req, res) => {
         quantidade: i.quantidade,
         preco_unitario: i.preco_unitario,
         imagem: i.imagem,
-        exige_horario: i.exige_horario
+        exige_horario: i.exige_horario,
+        horario_retirada: i.horario_retirada || null
       })),
       horario_retirada: exigeHorario ? horario : null,
 
