@@ -3404,6 +3404,94 @@ app.post("/admin/lotes/:id/importar", verificarAdminBackend, uploadPlanilha.sing
 
 
 /* =====================================================
+   CONFERÊNCIA AUTOMÁTICA DAS CARTELAS PENDENTES (2026-10-04)
+   A cada 2 minutos consulta na Sicredi o Pix de toda cartela
+   "pendente":
+   - pago  → marca como paga (e gera a cartela digital), mesmo que
+             o cliente tenha fechado a tela antes da confirmação;
+   - não pago e reserva vencida → libera de volta pro estoque.
+   Só libera se TODAS as consultas da rodada deram certo — se a
+   Sicredi falhar, nada é liberado (melhor esperar a próxima rodada
+   do que apagar uma cartela que pode ter sido paga).
+===================================================== */
+let conferenciaCartelasRodando = false;
+
+async function conferirCartelasPendentes() {
+  if (conferenciaCartelasRodando) return { sucesso: false, erro: "Conferência já em andamento." };
+  conferenciaCartelasRodando = true;
+  const resumo = { conferidas: 0, confirmadas_pagas: 0, falhas: 0, liberacao_executada: false };
+
+  try {
+    const { data: pendentes, error } = await supabase
+      .from("cartelas")
+      .select("*")
+      .eq("status", "pendente")
+      .not("pix_id", "is", null)
+      .order("reservado_em", { ascending: true })
+      .limit(150);
+    if (error) throw error;
+
+    for (const cartela of pendentes || []) {
+      const txid = cartela.pix_id;
+      try {
+        const pagamento = await consultarPix(txid);
+        resumo.conferidas++;
+        if (!pagamento || pagamento.status !== "CONCLUIDA") continue;
+
+        const { data: atualizadas, error: erroUpdate } = await supabase
+          .from("cartelas")
+          .update({
+            status: "pago",
+            data_pagamento: new Date().toISOString(),
+            comprovante_id: `COMP-${txid}`
+          })
+          .eq("id", cartela.id)
+          .eq("status", "pendente")
+          .eq("pix_id", txid)
+          .select("*");
+        if (erroUpdate) { resumo.falhas++; console.error("[CONF-CARTELAS] erro ao marcar paga:", erroUpdate); continue; }
+        if (!atualizadas || !atualizadas.length) continue; // outra rota já confirmou
+
+        resumo.confirmadas_pagas++;
+        console.log(`[CONF-CARTELAS] cartela ${cartela.id} (${cartela.numero_chance1}) confirmada como PAGA pela conferência automática — txid=${txid}`);
+
+        const paga = atualizadas[0];
+        if (paga.tipo === "digital" && !paga.pdf_url && !cartelasDigitaisEmGeracao.has(txid)) {
+          cartelasDigitaisEmGeracao.add(txid);
+          gerarEGuardarCartelaDigital(paga, txid)
+            .catch(e => console.error("[CONF-CARTELAS] erro ao gerar cartela digital:", e))
+            .finally(() => cartelasDigitaisEmGeracao.delete(txid));
+        }
+      } catch (erroConsulta) {
+        resumo.falhas++;
+        console.error(`[CONF-CARTELAS] falha ao consultar txid=${txid}:`, erroConsulta?.response?.status || erroConsulta?.message || erroConsulta);
+      }
+    }
+
+    if (resumo.falhas === 0) {
+      const { error: erroLiberar } = await supabase.rpc("liberar_cartelas_expiradas");
+      if (erroLiberar) console.error("[CONF-CARTELAS] erro ao liberar expiradas:", erroLiberar);
+      else resumo.liberacao_executada = true;
+    } else {
+      console.warn(`[CONF-CARTELAS] ${resumo.falhas} consulta(s) falharam — liberação de expiradas adiada para a próxima rodada.`);
+    }
+
+    return { sucesso: true, ...resumo };
+  } catch (erro) {
+    console.error("[CONF-CARTELAS] erro geral:", erro);
+    return { sucesso: false, erro: "Erro ao conferir cartelas pendentes.", ...resumo };
+  } finally {
+    conferenciaCartelasRodando = false;
+  }
+}
+
+// botão "Conferir Pix pendentes" do admin de cartelas
+app.post("/admin/cartelas/conferir-pendentes", verificarAdminBackend, async (req, res) => {
+  const r = await conferirCartelasPendentes();
+  return res.status(r.sucesso ? 200 : 500).json(r);
+});
+
+/* =====================================================
    VENDAS: carrinho, estoque, caixa, reembolso (src/vendas/vendas.js)
 ===================================================== */
 vendas.registrarRotasVendas(app, {
@@ -3421,6 +3509,10 @@ vendas.registrarRotasVendas(app, {
    (quem pagou e fechou a página antes da confirmação). */
 if (process.env.DESATIVAR_CONFERENCIA_PIX !== "1") {
   vendas.iniciarConferenciaAutomatica(supabase, consultarPix);
+
+  // cartelas: primeira rodada 30s depois de subir, depois a cada 2 min
+  setTimeout(conferirCartelasPendentes, 30 * 1000);
+  setInterval(conferirCartelasPendentes, 2 * 60 * 1000);
 }
 
 app.listen(PORT, () => {
