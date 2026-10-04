@@ -108,6 +108,28 @@ async function montarItensDoCarrinho(supabase, itensBrutos, { conferirEstoque = 
   return { itens, total, quantidadeTotal };
 }
 
+function cpfValido(cpf) {
+  cpf = String(cpf || "").replace(/\D/g, "");
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+  let soma = 0;
+  for (let i = 0; i < 9; i++) soma += Number(cpf[i]) * (10 - i);
+  let d1 = (soma * 10) % 11; if (d1 === 10) d1 = 0;
+  if (d1 !== Number(cpf[9])) return false;
+  soma = 0;
+  for (let i = 0; i < 10; i++) soma += Number(cpf[i]) * (11 - i);
+  let d2 = (soma * 10) % 11; if (d2 === 10) d2 = 0;
+  return d2 === Number(cpf[10]);
+}
+
+/* Na venda do caixa: vai ficar item pendente? (entregar < comprado) */
+function vendaTemPendencia(itens, entregar) {
+  if (!Array.isArray(entregar)) return false; // sem lista = entrega tudo
+  return itens.some(i => {
+    const e = entregar.find(x => String(x?.codigo || "").trim().toUpperCase() === i.produto_codigo);
+    return !e || intPos(e.quantidade) < i.quantidade;
+  });
+}
+
 function resumoItensTexto(itens) {
   return (itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(" + ");
 }
@@ -532,11 +554,29 @@ function registrarRotasVendas(app, deps) {
     const existente = await sessaoAberta(u.id);
     if (existente) return res.json({ sucesso: true, sessao: existente, ja_aberta: true });
 
+    /* número do caixa (Caixa 1, Caixa 2...) — não pode estar aberto em outro login */
+    const numero = Math.floor(Number(req.body?.numero));
+    if (!Number.isFinite(numero) || numero < 1 || numero > 99) {
+      return res.status(400).json({ sucesso: false, erro: "Informe o número do caixa (1 a 99)." });
+    }
+    const { data: ocupado } = await supabase
+      .from("caixa_sessoes")
+      .select("id,usuario_nome")
+      .eq("status", "aberto")
+      .eq("numero", numero)
+      .maybeSingle();
+    if (ocupado) {
+      return res.status(409).json({ sucesso: false, erro: `O Caixa ${numero} já está aberto com ${ocupado.usuario_nome || "outra pessoa"}. Escolha outro número.` });
+    }
+
     const { data, error } = await supabase
       .from("caixa_sessoes")
-      .insert([{ usuario_id: u.id, usuario_nome: u.nome, usuario_email: u.email, troco_inicial: trocoInicial }])
+      .insert([{ usuario_id: u.id, usuario_nome: u.nome, usuario_email: u.email, troco_inicial: trocoInicial, numero }])
       .select()
       .single();
+    if (error && error.code === "23505") {
+      return res.status(409).json({ sucesso: false, erro: `O Caixa ${numero} acabou de ser aberto por outra pessoa. Escolha outro número.` });
+    }
     if (error) {
       console.error("[CAIXA] erro abrir:", error);
       return res.status(500).json({ sucesso: false, erro: "Erro ao abrir o caixa." });
@@ -612,7 +652,23 @@ function registrarRotasVendas(app, deps) {
       if (pg.erro) return res.status(400).json({ sucesso: false, erro: pg.erro });
       const { pagamentos, forma, valorPix, valorRecebido, troco } = pg;
 
-      const nomeCliente = sanitizarTexto(req.body?.cliente_nome, 100) || "Cliente do caixa";
+      /* dados do cliente: obrigatórios (e CPF validado) quando fica item
+         pendente — a Retirada encontra o pedido pelo CPF ou pelo código */
+      const nomeInformado = sanitizarTexto(req.body?.cliente_nome, 100);
+      const telefoneCliente = String(req.body?.cliente_telefone || "").replace(/\D/g, "");
+      const cpfCliente = String(req.body?.cliente_cpf || "").replace(/\D/g, "");
+      if (vendaTemPendencia(itens, req.body?.entregar)) {
+        if (!nomeInformado || nomeInformado.length < 3) {
+          return res.status(400).json({ sucesso: false, erro: "Vai ficar item pendente: informe o nome do cliente." });
+        }
+        if (telefoneCliente.length < 10 || telefoneCliente.length > 11) {
+          return res.status(400).json({ sucesso: false, erro: "Informe o telefone do cliente com DDD." });
+        }
+        if (!cpfValido(cpfCliente)) {
+          return res.status(400).json({ sucesso: false, erro: "CPF do cliente inválido." });
+        }
+      }
+      const nomeCliente = nomeInformado || "Cliente do caixa";
 
       let pagamento = null;
       if (valorPix > 0) {
@@ -629,8 +685,8 @@ function registrarRotasVendas(app, deps) {
       const criado = await criarPedidoComItens(supabase, {
         nome: nomeCliente,
         sobrenome: "",
-        cpf: null,
-        telefone: null,
+        cpf: cpfValido(cpfCliente) ? cpfCliente : null,
+        telefone: telefoneCliente.length >= 10 ? telefoneCliente : null,
         produto_tipo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
         quantidade: quantidadeTotal,
         valor_total: total,
