@@ -308,6 +308,26 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     res.json({ sucesso: true });
   });
 
+  // definir/corrigir o distribuidor (quem entregou) das entregas deste responsável
+  app.put("/admin/blocos/responsaveis/:id/distribuidor", ...base, async (req, res) => {
+    const id = Number(req.params.id);
+    const todas = req.body?.todas === true;
+    const { data: dist } = await supabase.from("blocos_distribuidores").select("id, nome").eq("id", Number(req.body?.distribuidor_id)).maybeSingle();
+    if (!dist) return res.status(400).json({ sucesso: false, erro: "Escolha o distribuidor na lista." });
+    const { data: resp } = await supabase.from("blocos_responsaveis").select("nome").eq("id", id).maybeSingle();
+    if (!resp) return res.status(404).json({ sucesso: false, erro: "Responsável não encontrado." });
+    let q = supabase.from("blocos_entregas").update({ distribuidor_id: dist.id, distribuidor_nome: dist.nome })
+      .eq("responsavel_id", id).neq("status", "cancelada");
+    if (!todas) q = q.is("distribuidor_id", null);
+    const { data: alteradas, error } = await q.select("id, recibo_id");
+    if (error) return falha(res, error, "Erro ao salvar o distribuidor.");
+    const recibos = [...new Set((alteradas || []).map(e => e.recibo_id).filter(Boolean))];
+    if (recibos.length) await supabase.from("blocos_recibos").update({ distribuidor_id: dist.id, distribuidor_nome: dist.nome }).in("id", recibos);
+    await historico("editar_distribuidor", `Definiu ${dist.nome} como distribuidor de ${(alteradas || []).length} entrega(s) de ${resp.nome}${todas ? " (todas)" : " (as que estavam sem distribuidor)"}`,
+      { responsavel_id: id, distribuidor_id: dist.id, todas, entregas: (alteradas || []).map(e => e.id) }, req.lancador);
+    res.json({ sucesso: true, alteradas: (alteradas || []).length });
+  });
+
   // ficha completa: entregas, cartelas, acertos
   app.get("/admin/blocos/responsaveis/:id", ...base, async (req, res) => {
     const id = Number(req.params.id);
