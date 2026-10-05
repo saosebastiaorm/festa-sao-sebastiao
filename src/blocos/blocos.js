@@ -37,7 +37,8 @@ const ERROS = {
   ACERTO_INVALIDO: "Acerto não encontrado ou já desfeito.",
   ACERTO_POSTERIOR: "Esse bloco teve outro acerto depois deste. Desfaça primeiro o mais recente.",
   CARTELA_ALTERADA: "A cartela {x} mudou depois desse acerto; não dá para desfazer automaticamente.",
-  COMUNIDADE_INVALIDA: "Comunidade não encontrada na lista."
+  COMUNIDADE_INVALIDA: "Comunidade não encontrada na lista.",
+  DISTRIBUIDOR_INVALIDO: "Escolha quem da equipe entregou os blocos (distribuidor)."
 };
 
 function traduzirErro(error) {
@@ -346,7 +347,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
         numero_final: e.blocos?.numero_final, quantidade_bloco: e.blocos?.quantidade,
         plano_nome: e.plano_nome, comissao_pct: Number(e.comissao_pct), cobra: e.cobra, preco: Number(e.preco),
         quantidade_entregue: e.quantidade_entregue, tem_bonus: e.tem_bonus, bonus_usado: e.bonus_usado,
-        status: e.status, lancador_nome: e.lancador_nome, created_at: e.created_at,
+        status: e.status, lancador_nome: e.lancador_nome, distribuidor_nome: e.distribuidor_nome || null, created_at: e.created_at,
         valor_devido: devidoPorEntrega[e.id] || 0,
         cartelas: porEntrega[e.id] || []
       })),
@@ -403,7 +404,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
       p_plano_id: Number(b.plano_id) || null,
       p_assinatura: assinatura,
       p_lancador_id: req.lancador.id,
-      p_lancador_nome: req.lancador.nome
+      p_lancador_nome: req.lancador.nome,
+      p_distribuidor_id: Number(b.distribuidor_id) || null
     });
     if (error) return falha(res, error, "Erro ao registrar a entrega.", 409);
     res.json({ sucesso: true, ...data });
@@ -449,6 +451,39 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     });
     if (error) return falha(res, error, "Erro ao desfazer o acerto.", 409);
     res.json({ sucesso: true, ...data });
+  });
+
+  /* ----------------- DISTRIBUIDORES (equipe que entrega) ----------------- */
+  app.get("/admin/blocos/distribuidores", ...base, async (req, res) => {
+    let q = supabase.from("blocos_distribuidores").select("*").order("nome");
+    if (req.query.ativos === "1") q = q.eq("ativo", true);
+    const { data, error } = await q;
+    if (error) return falha(res, error, "Erro ao carregar distribuidores.");
+    res.json({ sucesso: true, distribuidores: data || [] });
+  });
+
+  function lerDistribuidor(b) {
+    const nome = texto(b.nome, 80).replace(/\s+/g, " ");
+    if (!nome) return { erro: "Informe o nome do distribuidor." };
+    return { dados: { nome, telefone: soDigitos(b.telefone).slice(0, 13) || null, ativo: b.ativo !== false } };
+  }
+
+  app.post("/admin/blocos/distribuidores", ...base, somenteAdmin, async (req, res) => {
+    const l = lerDistribuidor(req.body || {});
+    if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
+    const { error } = await supabase.from("blocos_distribuidores").insert(l.dados);
+    if (error) return falha(res, error, error.code === "23505" ? "Já existe um distribuidor com esse nome." : "Erro ao cadastrar o distribuidor.");
+    await historico("distribuidor", `Cadastrou o distribuidor ${l.dados.nome}`, l.dados, req.lancador);
+    res.json({ sucesso: true });
+  });
+
+  app.put("/admin/blocos/distribuidores/:id", ...base, somenteAdmin, async (req, res) => {
+    const l = lerDistribuidor(req.body || {});
+    if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
+    const { error } = await supabase.from("blocos_distribuidores").update(l.dados).eq("id", Number(req.params.id));
+    if (error) return falha(res, error, error.code === "23505" ? "Já existe um distribuidor com esse nome." : "Erro ao salvar o distribuidor.");
+    await historico("distribuidor", `Alterou o distribuidor ${l.dados.nome}${l.dados.ativo ? "" : " (inativo)"}`, l.dados, req.lancador);
+    res.json({ sucesso: true });
   });
 
   /* -------------------------- COMUNIDADES -------------------------- */
@@ -540,7 +575,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     let entrega = null;
     if (c.entrega_id) {
       const { data } = await supabase.from("blocos_entregas")
-        .select("plano_nome, created_at, lancador_nome, blocos_responsaveis(id, nome, comunidade, telefone)")
+        .select("plano_nome, created_at, lancador_nome, distribuidor_nome, blocos_responsaveis(id, nome, comunidade, telefone)")
         .eq("id", c.entrega_id).maybeSingle();
       entrega = data;
     }
@@ -551,7 +586,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
       responsavel: entrega?.blocos_responsaveis || null,
       plano: entrega?.plano_nome || null,
       entregue_em: entrega?.created_at || null,
-      lancador: entrega?.lancador_nome || null
+      lancador: entrega?.lancador_nome || null,
+      distribuidor: entrega?.distribuidor_nome || null
     });
   });
 }
