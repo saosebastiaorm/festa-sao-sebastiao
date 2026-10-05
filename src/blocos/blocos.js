@@ -36,7 +36,8 @@ const ERROS = {
   VALOR_INVALIDO: "Valor pago inválido.",
   ACERTO_INVALIDO: "Acerto não encontrado ou já desfeito.",
   ACERTO_POSTERIOR: "Esse bloco teve outro acerto depois deste. Desfaça primeiro o mais recente.",
-  CARTELA_ALTERADA: "A cartela {x} mudou depois desse acerto; não dá para desfazer automaticamente."
+  CARTELA_ALTERADA: "A cartela {x} mudou depois desse acerto; não dá para desfazer automaticamente.",
+  COMUNIDADE_INVALIDA: "Comunidade não encontrada na lista."
 };
 
 function traduzirErro(error) {
@@ -49,6 +50,15 @@ function traduzirErro(error) {
 const arred = v => Math.round(Number(v || 0) * 100) / 100;
 const texto = (v, max = 200) => String(v ?? "").replace(/[<>]/g, "").trim().slice(0, max);
 const soDigitos = v => String(v ?? "").replace(/\D/g, "");
+/* número da cartela como foi digitado → id (sem o dígito verificador):
+   "24194-68" → 24194 · "2419468" → 24194 · "6793" → 6793 */
+function idCartela(v) {
+  const bruto = String(v ?? "").trim().replace(/\s/g, "");
+  const m = /^(\d+)-(\d{1,2})$/.exec(bruto);
+  if (m) return parseInt(m[1], 10);
+  if (/^\d+$/.test(bruto)) return parseInt(bruto.length > 5 ? bruto.slice(0, -2) : bruto, 10);
+  return NaN;
+}
 
 function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
 
@@ -170,8 +180,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
   app.post("/admin/blocos/faixa", ...base, somenteAdmin, async (req, res) => {
     const b = req.body || {};
     const { data, error } = await supabase.rpc("fpss_blocos_cadastrar_faixa", {
-      p_inicio: parseInt(soDigitos(b.inicio), 10),
-      p_fim: parseInt(soDigitos(b.fim), 10),
+      p_inicio: idCartela(b.inicio),
+      p_fim: idCartela(b.fim),
       p_tamanho: parseInt(b.tamanho, 10),
       p_lancador_id: req.lancador.id,
       p_lancador_nome: req.lancador.nome
@@ -213,7 +223,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
       const { data } = await supabase.from("blocos").select("*").eq("sequencial", parseInt(soDigitos(req.query.sequencial), 10)).maybeSingle();
       bloco = data;
     } else if (req.query.cartela) {
-      const n = parseInt(soDigitos(req.query.cartela), 10);
+      const n = idCartela(req.query.cartela);
       if (Number.isFinite(n)) {
         const { data: c } = await supabase.from("blocos_cartelas").select("bloco_id").eq("numero", n).maybeSingle();
         if (c) {
@@ -265,9 +275,17 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     const b = req.body || {};
     const nome = texto(b.nome, 100);
     if (!nome) return res.status(400).json({ sucesso: false, erro: "Informe o nome." });
+    let comunidadeTxt = texto(b.comunidade, 100) || null;
+    const comunidadeId = Number(b.comunidade_id) || null;
+    if (comunidadeId) {
+      const { data: com } = await supabase.from("blocos_comunidades").select("nome, local").eq("id", comunidadeId).maybeSingle();
+      if (!com) return res.status(400).json({ sucesso: false, erro: "Comunidade não encontrada na lista." });
+      comunidadeTxt = com.nome + (com.local ? " - " + com.local : "");
+    }
     const dados = {
       nome,
-      comunidade: texto(b.comunidade, 100) || null,
+      comunidade_id: comunidadeId,
+      comunidade: comunidadeTxt,
       telefone: soDigitos(b.telefone).slice(0, 13) || null,
       endereco: texto(b.endereco, 200) || null,
       observacao: texto(b.observacao, 300) || null
@@ -353,9 +371,10 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
   app.post("/admin/blocos/entregar", ...base, async (req, res) => {
     const b = req.body || {};
     const r = b.responsavel || {};
+    const comunidadeId = Number(r.comunidade_id) || null;
     const responsavel = r.id
-      ? { id: Number(r.id), comunidade: texto(r.comunidade, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) }
-      : { nome: texto(r.nome, 100), comunidade: texto(r.comunidade, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) };
+      ? { id: Number(r.id), comunidade_id: comunidadeId, comunidade: texto(r.comunidade, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) }
+      : { nome: texto(r.nome, 100), comunidade_id: comunidadeId, comunidade: texto(r.comunidade, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) };
 
     let assinatura = typeof b.assinatura === "string" ? b.assinatura : null;
     if (assinatura && (!/^data:image\/(png|jpeg);base64,/.test(assinatura) || assinatura.length > 600000)) {
@@ -424,6 +443,67 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     res.json({ sucesso: true, ...data });
   });
 
+  /* -------------------------- COMUNIDADES -------------------------- */
+  app.get("/admin/blocos/comunidades", ...base, async (req, res) => {
+    let q = supabase.from("blocos_resumo_comunidade").select("*").order("ordem");
+    const busca = texto(req.query.busca, 60).replace(/[%,()*]/g, "");
+    if (busca) q = q.or(`nome.ilike.%${busca}%,local.ilike.%${busca}%,nomes_responsaveis.ilike.%${busca}%`);
+    if (["visita", "caixa", "fechada"].includes(req.query.forma)) q = q.eq("forma", req.query.forma);
+    if (req.query.ativas === "1") q = q.eq("ativa", true);
+    const { data, error } = await q.limit(500);
+    if (error) return falha(res, error, "Erro ao carregar comunidades.");
+    res.json({ sucesso: true, comunidades: data || [] });
+  });
+
+  app.get("/admin/blocos/comunidades/:id", ...base, async (req, res) => {
+    const id = Number(req.params.id);
+    const [{ data: c }, { data: resp }] = await Promise.all([
+      supabase.from("blocos_resumo_comunidade").select("*").eq("id", id).maybeSingle(),
+      supabase.from("blocos_resumo_responsavel").select("*").eq("comunidade_id", id).order("nome")
+    ]);
+    if (!c) return res.status(404).json({ sucesso: false, erro: "Comunidade não encontrada." });
+    res.json({ sucesso: true, comunidade: c, responsaveis: resp || [] });
+  });
+
+  function lerComunidade(b) {
+    const num1 = v => Math.max(0, Math.round(Number(String(v ?? 0).replace(",", ".")) * 10) / 10 || 0);
+    const dados = {
+      nome: texto(b.nome, 100),
+      local: texto(b.local, 100) || null,
+      tipo: texto(b.tipo, 30).toLowerCase() || null,
+      forma: ["visita", "caixa", "fechada"].includes(b.forma) ? b.forma : "visita",
+      ativa: b.ativa !== false,
+      planejado: num1(b.planejado),
+      observacao: texto(b.observacao, 300) || null
+    };
+    if (!dados.nome) return { erro: "Informe o nome da comunidade." };
+    return { dados };
+  }
+
+  app.put("/admin/blocos/comunidades/:id", ...base, somenteAdmin, async (req, res) => {
+    const l = lerComunidade(req.body || {});
+    if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
+    const id = Number(req.params.id);
+    const { data: antes } = await supabase.from("blocos_comunidades").select("*").eq("id", id).maybeSingle();
+    if (!antes) return res.status(404).json({ sucesso: false, erro: "Comunidade não encontrada." });
+    const { error } = await supabase.from("blocos_comunidades").update(l.dados).eq("id", id);
+    if (error) return falha(res, error, "Erro ao salvar a comunidade.");
+    await historico("editar_comunidade", `Editou a comunidade ${antes.nome}${antes.local ? " - " + antes.local : ""} (planejado ${String(l.dados.planejado).replace(".", ",")} blocos, ${l.dados.forma}${l.dados.ativa ? "" : ", inativa"})`,
+      { id, antes, depois: l.dados }, req.lancador);
+    res.json({ sucesso: true });
+  });
+
+  app.post("/admin/blocos/comunidades", ...base, somenteAdmin, async (req, res) => {
+    const l = lerComunidade(req.body || {});
+    if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
+    const { data: ult } = await supabase.from("blocos_comunidades").select("ordem").order("ordem", { ascending: false }).limit(1);
+    l.dados.ordem = (ult?.[0]?.ordem || 0) + 1;
+    const { error } = await supabase.from("blocos_comunidades").insert(l.dados);
+    if (error) return falha(res, error, "Erro ao cadastrar a comunidade.");
+    await historico("nova_comunidade", `Cadastrou a comunidade ${l.dados.nome}${l.dados.local ? " - " + l.dados.local : ""}`, l.dados, req.lancador);
+    res.json({ sucesso: true });
+  });
+
   /* ----------------------------- PAINEL ---------------------------- */
   app.get("/admin/blocos/painel", ...base, async (req, res) => {
     const { data, error } = await supabase.rpc("fpss_blocos_painel");
@@ -443,7 +523,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
 
   /* ------------- CONFERÊNCIA (dia do sorteio): situação ------------- */
   app.get("/admin/blocos/cartela/:numero", ...base, async (req, res) => {
-    const n = parseInt(soDigitos(req.params.numero), 10);
+    const n = idCartela(req.params.numero);
     if (!Number.isFinite(n)) return res.status(400).json({ sucesso: false, erro: "Número inválido." });
     const { data: c } = await supabase.from("blocos_cartelas")
       .select("numero, status, entrega_id, atualizado_em, blocos(sequencial, numero_inicial, numero_final)")
