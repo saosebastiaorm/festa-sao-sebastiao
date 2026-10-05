@@ -206,14 +206,22 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
   app.get("/admin/blocos/catalogo", ...base, async (req, res) => {
     const de = Math.max(1, parseInt(req.query.de, 10) || 1);
     const qtd = Math.min(500, Math.max(1, parseInt(req.query.quantidade, 10) || 100));
-    let q = supabase.from("blocos_resumo_bloco").select("*").gte("sequencial", de).order("sequencial").limit(qtd);
+    // ordenação por coluna (clique no título da coluna) + páginas
+    const COLUNAS = ["sequencial", "numero_inicial", "numero_final", "quantidade", "estoque", "com_responsavel", "vendidas", "devolvidas", "responsaveis"];
+    const ordem = COLUNAS.includes(req.query.ordem) ? req.query.ordem : "sequencial";
+    const asc = req.query.dir !== "desc";
+    const pagina = Math.max(0, parseInt(req.query.pagina, 10) || 0);
+    let q = supabase.from("blocos_resumo_bloco").select("*", { count: "exact" }).gte("sequencial", de)
+      .order(ordem, { ascending: asc, nullsFirst: false });
+    if (ordem !== "sequencial") q = q.order("sequencial", { ascending: true });
+    // livre = nenhuma cartela com distribuidor nem vendida (estoque + devolvidas = todas)
     if (req.query.livres === "1") q = q.eq("com_responsavel", 0).eq("vendidas", 0);
     if (req.query.tamanho) q = q.eq("quantidade", parseInt(req.query.tamanho, 10));
-    const { data, error } = await q;
+    q = q.range(pagina * qtd, pagina * qtd + qtd - 1);
+    const { data, error, count: totalFiltro } = await q;
     if (error) return falha(res, error, "Erro ao carregar blocos.");
-    const blocos = req.query.livres === "1" ? (data || []).filter(b => b.estoque + b.devolvidas === b.quantidade) : (data || []);
     const { count } = await supabase.from("blocos").select("id", { count: "exact", head: true });
-    res.json({ sucesso: true, blocos, total_blocos: count || 0 });
+    res.json({ sucesso: true, blocos: data || [], total_blocos: count || 0, total_filtro: totalFiltro || 0, pagina, por_pagina: qtd });
   });
 
   // um bloco com todas as cartelas (pela cartela ou pelo sequencial)
