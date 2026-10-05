@@ -38,7 +38,10 @@ const ERROS = {
   ACERTO_POSTERIOR: "Esse bloco teve outro acerto depois deste. Desfaça primeiro o mais recente.",
   CARTELA_ALTERADA: "A cartela {x} mudou depois desse acerto; não dá para desfazer automaticamente.",
   COMUNIDADE_INVALIDA: "Comunidade não encontrada na lista.",
-  DISTRIBUIDOR_INVALIDO: "Escolha quem da equipe entregou os blocos (distribuidor)."
+  DISTRIBUIDOR_INVALIDO: "Escolha quem da equipe entregou os blocos (distribuidor).",
+  SEPARAR_SEM_COMUNIDADE: "Para separar blocos sem o nome de quem vai receber, escolha a comunidade (ou digite o parceiro).",
+  ENTREGA_SEPARADA: "Esse bloco ainda está só separado (não foi entregue). Confirme a entrega antes de acertar.",
+  ENTREGA_NAO_SEPARADA: "Algum desses blocos não está mais separado. Atualize a tela."
 };
 
 function traduzirErro(error) {
@@ -368,6 +371,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
         plano_nome: e.plano_nome, comissao_pct: Number(e.comissao_pct), cobra: e.cobra, preco: Number(e.preco),
         quantidade_entregue: e.quantidade_entregue, tem_bonus: e.tem_bonus, bonus_usado: e.bonus_usado,
         status: e.status, lancador_nome: e.lancador_nome, distribuidor_nome: e.distribuidor_nome || null, created_at: e.created_at,
+        separada: e.separada === true, entregue_em: e.entregue_em || null,
         valor_devido: devidoPorEntrega[e.id] || 0,
         cartelas: porEntrega[e.id] || []
       })),
@@ -409,7 +413,9 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     if (assinatura && (!/^data:image\/(png|jpeg);base64,/.test(assinatura) || assinatura.length > 600000)) {
       return res.status(400).json({ sucesso: false, erro: "Assinatura inválida. Limpe e assine de novo." });
     }
-    if (!assinatura && b.sem_assinatura !== true) {
+    const separada = b.separada === true;
+    if (separada) assinatura = null;
+    if (!separada && !assinatura && b.sem_assinatura !== true) {
       return res.status(400).json({ sucesso: false, erro: "Peça para a pessoa assinar com o dedo antes de confirmar." });
     }
 
@@ -425,9 +431,33 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
       p_assinatura: assinatura,
       p_lancador_id: req.lancador.id,
       p_lancador_nome: req.lancador.nome,
-      p_distribuidor_id: Number(b.distribuidor_id) || null
+      p_distribuidor_id: Number(b.distribuidor_id) || null,
+      p_separada: separada
     });
     if (error) return falha(res, error, "Erro ao registrar a entrega.", 409);
+    res.json({ sucesso: true, ...data });
+  });
+
+  // confirmar a entrega de blocos que estavam só separados (visita feita)
+  app.post("/admin/blocos/separacoes/confirmar", ...base, async (req, res) => {
+    const b = req.body || {};
+    const r = b.responsavel || {};
+    let assinatura = typeof b.assinatura === "string" ? b.assinatura : null;
+    if (assinatura && (!/^data:image\/(png|jpeg);base64,/.test(assinatura) || assinatura.length > 600000)) {
+      return res.status(400).json({ sucesso: false, erro: "Assinatura inválida. Limpe e assine de novo." });
+    }
+    if (!assinatura && b.sem_assinatura !== true) {
+      return res.status(400).json({ sucesso: false, erro: "Peça para a pessoa assinar com o dedo antes de confirmar." });
+    }
+    const responsavel = r.id
+      ? { id: Number(r.id), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) }
+      : { nome: texto(r.nome, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) };
+    const entregas = (Array.isArray(b.entregas) ? b.entregas : []).map(Number).filter(Number.isFinite).slice(0, 300);
+    const { data, error } = await supabase.rpc("fpss_blocos_confirmar_separacao", {
+      p_entregas: entregas, p_responsavel: responsavel, p_distribuidor_id: Number(b.distribuidor_id) || null,
+      p_assinatura: assinatura, p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
+    });
+    if (error) return falha(res, error, "Erro ao confirmar a entrega.", 409);
     res.json({ sucesso: true, ...data });
   });
 
@@ -595,7 +625,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
     let entrega = null;
     if (c.entrega_id) {
       const { data } = await supabase.from("blocos_entregas")
-        .select("plano_nome, created_at, lancador_nome, distribuidor_nome, blocos_responsaveis(id, nome, comunidade, telefone)")
+        .select("plano_nome, created_at, lancador_nome, distribuidor_nome, separada, blocos_responsaveis(id, nome, comunidade, telefone)")
         .eq("id", c.entrega_id).maybeSingle();
       entrega = data;
     }
@@ -607,7 +637,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
       plano: entrega?.plano_nome || null,
       entregue_em: entrega?.created_at || null,
       lancador: entrega?.lancador_nome || null,
-      distribuidor: entrega?.distribuidor_nome || null
+      distribuidor: entrega?.distribuidor_nome || null,
+      separada: entrega?.separada === true
     });
   });
 }

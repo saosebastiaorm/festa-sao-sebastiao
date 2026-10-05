@@ -239,6 +239,10 @@ create table if not exists public.blocos_entregas (
 );
 alter table public.blocos_entregas add column if not exists distribuidor_id bigint references public.blocos_distribuidores(id);
 alter table public.blocos_entregas add column if not exists distribuidor_nome text;
+alter table public.blocos_entregas add column if not exists separada boolean not null default false;
+alter table public.blocos_entregas add column if not exists entregue_em timestamptz;
+update public.blocos_entregas set entregue_em = created_at where entregue_em is null and not separada;
+alter table public.blocos_responsaveis add column if not exists provisorio boolean not null default false;
 alter table public.blocos_recibos  add column if not exists distribuidor_id bigint references public.blocos_distribuidores(id);
 alter table public.blocos_recibos  add column if not exists distribuidor_nome text;
 create index if not exists blocos_entregas_resp_idx on public.blocos_entregas (responsavel_id);
@@ -426,9 +430,13 @@ $$;
 --    p_blocos: [{bloco_id, cartelas:[numeros]}]
 -- ---------------------------------------------------------------------
 drop function if exists public.fpss_blocos_entregar(jsonb, jsonb, bigint, text, uuid, text);
+drop function if exists public.fpss_blocos_entregar(jsonb, jsonb, bigint, text, uuid, text, bigint);
+-- p_separada = true: blocos SEPARADOS para levar (ainda não entregues).
+-- Nesse caso não precisa de nome/telefone/assinatura: se não vier o nome,
+-- os blocos ficam com "A definir – <comunidade>" até confirmar na visita.
 create or replace function public.fpss_blocos_entregar(
   p_responsavel jsonb, p_blocos jsonb, p_plano_id bigint, p_assinatura text,
-  p_lancador_id uuid, p_lancador_nome text, p_distribuidor_id bigint
+  p_lancador_id uuid, p_lancador_nome text, p_distribuidor_id bigint, p_separada boolean default false
 ) returns jsonb
 language plpgsql as $$
 declare
@@ -437,9 +445,12 @@ declare
   v_entrega bigint; v_entregas jsonb := '[]'::jsonb; v_total int := 0; v_ruim int; v_resp_nome text;
   v_com public.blocos_comunidades%rowtype; v_com_txt text;
   v_dist public.blocos_distribuidores%rowtype;
+  v_sep boolean := coalesce(p_separada, false);
 begin
-  select * into v_dist from public.blocos_distribuidores where id = p_distribuidor_id and ativo;
-  if v_dist.id is null then raise exception 'DISTRIBUIDOR_INVALIDO'; end if;
+  if p_distribuidor_id is not null then
+    select * into v_dist from public.blocos_distribuidores where id = p_distribuidor_id and ativo;
+  end if;
+  if v_dist.id is null and not v_sep then raise exception 'DISTRIBUIDOR_INVALIDO'; end if;
 
   -- comunidade escolhida na lista (opcional); o texto livre continua valendo para parceiros
   if nullif(p_responsavel->>'comunidade_id', '') is not null then
@@ -467,8 +478,19 @@ begin
     where id = v_resp_id
     returning nome into v_resp_nome;
     if v_resp_nome is null then raise exception 'RESPONSAVEL_INVALIDO'; end if;
+  elsif coalesce(trim(p_responsavel->>'nome'), '') = '' then
+    -- sem nome: só para blocos separados de uma comunidade/parceiro
+    if not v_sep then raise exception 'RESPONSAVEL_SEM_NOME'; end if;
+    if v_com_txt is null then raise exception 'SEPARAR_SEM_COMUNIDADE'; end if;
+    select id, nome into v_resp_id, v_resp_nome from public.blocos_responsaveis
+     where provisorio and coalesce(comunidade_id, -1) = coalesce(v_com.id, -1) and comunidade = v_com_txt
+     order by id limit 1;
+    if v_resp_id is null then
+      insert into public.blocos_responsaveis (nome, comunidade, comunidade_id, provisorio, criado_por_nome)
+      values ('A definir – ' || v_com_txt, v_com_txt, v_com.id, true, p_lancador_nome)
+      returning id, nome into v_resp_id, v_resp_nome;
+    end if;
   else
-    if coalesce(trim(p_responsavel->>'nome'), '') = '' then raise exception 'RESPONSAVEL_SEM_NOME'; end if;
     insert into public.blocos_responsaveis (nome, comunidade, comunidade_id, telefone, endereco, criado_por_nome)
     values (trim(p_responsavel->>'nome'), v_com_txt, v_com.id,
             nullif(trim(p_responsavel->>'telefone'), ''), nullif(trim(p_responsavel->>'endereco'), ''), p_lancador_nome)
@@ -476,7 +498,8 @@ begin
   end if;
 
   insert into public.blocos_recibos (responsavel_id, assinatura, lancador_id, lancador_nome, distribuidor_id, distribuidor_nome)
-  values (v_resp_id, p_assinatura, p_lancador_id, p_lancador_nome, v_dist.id, v_dist.nome) returning id into v_recibo;
+  values (v_resp_id, case when v_sep then null else p_assinatura end, p_lancador_id, p_lancador_nome, v_dist.id, v_dist.nome)
+  returning id into v_recibo;
 
   for v_item in select * from jsonb_array_elements(p_blocos) loop
     select * into v_bloco from public.blocos where id = (v_item->>'bloco_id')::bigint;
@@ -494,11 +517,11 @@ begin
 
     insert into public.blocos_entregas (bloco_id, responsavel_id, recibo_id, plano_id, plano_nome, comissao_pct, cobra,
                                         preco, quantidade_entregue, tem_bonus, bonus_usado, lancador_id, lancador_nome,
-                                        distribuidor_id, distribuidor_nome)
+                                        distribuidor_id, distribuidor_nome, separada, entregue_em)
     values (v_bloco.id, v_resp_id, v_recibo, v_plano.id, v_plano.nome, v_plano.comissao_pct, v_plano.cobra,
             v_cfg.preco_cartela, array_length(v_nums, 1),
             (v_bloco.quantidade = v_cfg.tamanho_com_bonus and array_length(v_nums, 1) = v_cfg.tamanho_com_bonus),
-            true, p_lancador_id, p_lancador_nome, v_dist.id, v_dist.nome)
+            true, p_lancador_id, p_lancador_nome, v_dist.id, v_dist.nome, v_sep, case when v_sep then null else now() end)
     returning id into v_entrega;
 
     update public.blocos_cartelas set status = 'com_responsavel', entrega_id = v_entrega, atualizado_em = now()
@@ -510,11 +533,82 @@ begin
   end loop;
 
   insert into public.blocos_historico (acao, descricao, dados, lancador_id, lancador_nome)
-  values ('entrega', format('%s entregou %s cartelas (%s bloco(s)) para %s — %s', v_dist.nome, v_total, jsonb_array_length(v_entregas), v_resp_nome, v_plano.nome),
-          jsonb_build_object('recibo_id', v_recibo, 'responsavel_id', v_resp_id, 'entregas', v_entregas),
+  values (case when v_sep then 'separacao' else 'entrega' end,
+          case when v_sep
+            then format('Separou %s cartelas (%s bloco(s)) para %s — %s (ainda não entregues)', v_total, jsonb_array_length(v_entregas), v_resp_nome, v_plano.nome)
+            else format('%s entregou %s cartelas (%s bloco(s)) para %s — %s', v_dist.nome, v_total, jsonb_array_length(v_entregas), v_resp_nome, v_plano.nome) end,
+          jsonb_build_object('recibo_id', v_recibo, 'responsavel_id', v_resp_id, 'entregas', v_entregas, 'separada', v_sep),
           p_lancador_id, p_lancador_nome);
 
-  return jsonb_build_object('recibo_id', v_recibo, 'responsavel_id', v_resp_id, 'cartelas', v_total, 'entregas', v_entregas);
+  return jsonb_build_object('recibo_id', v_recibo, 'responsavel_id', v_resp_id, 'cartelas', v_total, 'entregas', v_entregas, 'separada', v_sep);
+end;
+$$;
+
+-- CONFIRMAR A ENTREGA de blocos separados (visita feita): informa quem
+-- recebeu (cadastro existente ou novo), quem entregou e a assinatura.
+create or replace function public.fpss_blocos_confirmar_separacao(
+  p_entregas bigint[], p_responsavel jsonb, p_distribuidor_id bigint, p_assinatura text,
+  p_lancador_id uuid, p_lancador_nome text
+) returns jsonb
+language plpgsql as $$
+declare
+  v_dist public.blocos_distribuidores%rowtype; v_origem public.blocos_responsaveis%rowtype;
+  v_resp_id bigint; v_resp_nome text; v_recibo bigint; v_qtd int; v_cartelas int;
+begin
+  select * into v_dist from public.blocos_distribuidores where id = p_distribuidor_id and ativo;
+  if v_dist.id is null then raise exception 'DISTRIBUIDOR_INVALIDO'; end if;
+  if p_entregas is null or array_length(p_entregas, 1) is null then raise exception 'SEM_BLOCOS'; end if;
+
+  perform 1 from public.blocos_entregas where id = any(p_entregas) for update;
+  if exists (select 1 from public.blocos_entregas where id = any(p_entregas) and (not separada or status <> 'ativa')) then
+    raise exception 'ENTREGA_NAO_SEPARADA';
+  end if;
+  if (select count(distinct responsavel_id) from public.blocos_entregas where id = any(p_entregas)) <> 1 then
+    raise exception 'ENTREGA_INVALIDA';
+  end if;
+  select r.* into v_origem from public.blocos_responsaveis r
+    join public.blocos_entregas e on e.responsavel_id = r.id where e.id = p_entregas[1];
+
+  if nullif(p_responsavel->>'id', '') is not null then
+    v_resp_id := (p_responsavel->>'id')::bigint;
+    update public.blocos_responsaveis set
+      telefone = coalesce(nullif(trim(p_responsavel->>'telefone'), ''), telefone),
+      endereco = coalesce(nullif(trim(p_responsavel->>'endereco'), ''), endereco),
+      comunidade = coalesce(comunidade, v_origem.comunidade),
+      comunidade_id = coalesce(comunidade_id, v_origem.comunidade_id)
+    where id = v_resp_id and not provisorio
+    returning nome into v_resp_nome;
+    if v_resp_nome is null then raise exception 'RESPONSAVEL_INVALIDO'; end if;
+  else
+    if coalesce(trim(p_responsavel->>'nome'), '') = '' then raise exception 'RESPONSAVEL_SEM_NOME'; end if;
+    insert into public.blocos_responsaveis (nome, comunidade, comunidade_id, telefone, endereco, criado_por_nome)
+    values (trim(p_responsavel->>'nome'), v_origem.comunidade, v_origem.comunidade_id,
+            nullif(trim(p_responsavel->>'telefone'), ''), nullif(trim(p_responsavel->>'endereco'), ''), p_lancador_nome)
+    returning id, nome into v_resp_id, v_resp_nome;
+  end if;
+
+  insert into public.blocos_recibos (responsavel_id, assinatura, lancador_id, lancador_nome, distribuidor_id, distribuidor_nome)
+  values (v_resp_id, p_assinatura, p_lancador_id, p_lancador_nome, v_dist.id, v_dist.nome) returning id into v_recibo;
+
+  update public.blocos_entregas set responsavel_id = v_resp_id, recibo_id = v_recibo, separada = false, entregue_em = now(),
+         distribuidor_id = v_dist.id, distribuidor_nome = v_dist.nome
+   where id = any(p_entregas);
+  get diagnostics v_qtd = row_count;
+  select coalesce(sum(quantidade_entregue), 0) into v_cartelas from public.blocos_entregas where id = any(p_entregas);
+
+  -- o "A definir" some quando não tiver mais nada
+  if v_origem.provisorio and v_origem.id <> v_resp_id
+     and not exists (select 1 from public.blocos_entregas where responsavel_id = v_origem.id)
+     and not exists (select 1 from public.blocos_acertos where responsavel_id = v_origem.id) then
+    delete from public.blocos_recibos where responsavel_id = v_origem.id;
+    delete from public.blocos_responsaveis where id = v_origem.id;
+  end if;
+
+  insert into public.blocos_historico (acao, descricao, dados, lancador_id, lancador_nome)
+  values ('confirmar_separacao', format('%s entregou %s bloco(s) separados (%s cartelas) para %s', v_dist.nome, v_qtd, v_cartelas, v_resp_nome),
+          jsonb_build_object('recibo_id', v_recibo, 'responsavel_id', v_resp_id, 'entregas', p_entregas), p_lancador_id, p_lancador_nome);
+
+  return jsonb_build_object('recibo_id', v_recibo, 'responsavel_id', v_resp_id, 'blocos', v_qtd, 'cartelas', v_cartelas);
 end;
 $$;
 
@@ -575,6 +669,7 @@ begin
     if v_e.id is null or v_e.responsavel_id <> p_responsavel_id or v_e.status = 'cancelada' then
       raise exception 'ENTREGA_INVALIDA';
     end if;
+    if v_e.separada then raise exception 'ENTREGA_SEPARADA'; end if;
 
     select count(*) into v_v0 from public.blocos_cartelas where entrega_id = v_e.id and status = 'vendida';
     v_b0 := v_e.bonus_usado;
@@ -692,7 +787,9 @@ select r.id, r.nome, r.comunidade, r.telefone, r.endereco, r.created_at,
   coalesce(a.pago, 0)            as valor_pago,
   coalesce(a.devido, 0) - coalesce(a.pago, 0) as saldo,
   a.ultimo_acerto,
-  r.comunidade_id
+  r.comunidade_id,
+  r.provisorio,
+  coalesce(e.separados, 0)       as blocos_separados
 from public.blocos_responsaveis r
 left join (
   select e.responsavel_id,
@@ -704,7 +801,8 @@ left join (
   group by e.responsavel_id
 ) c on c.responsavel_id = r.id
 left join (
-  select responsavel_id, sum(quantidade_entregue) as entregues, count(distinct bloco_id) as blocos, max(created_at) as ultima_entrega
+  select responsavel_id, sum(quantidade_entregue) as entregues, count(distinct bloco_id) as blocos, max(created_at) as ultima_entrega,
+         count(*) filter (where separada) as separados
   from public.blocos_entregas where status <> 'cancelada' group by responsavel_id
 ) e on e.responsavel_id = r.id
 left join (
@@ -726,11 +824,13 @@ select c.id, c.ordem, c.nome, c.local, c.tipo, c.forma, c.ativa,
   coalesce(a.pago, 0)              as valor_pago,
   coalesce(a.devido, 0) - coalesce(a.pago, 0) as saldo,
   coalesce(r.qtd, 0)               as responsaveis,
-  r.nomes                          as nomes_responsaveis
+  r.nomes                          as nomes_responsaveis,
+  coalesce(e.separados, 0)         as blocos_separados
 from public.blocos_comunidades c
 left join (select comunidade_id, count(*) qtd, string_agg(nome, ', ' order by nome) nomes
-             from public.blocos_responsaveis where comunidade_id is not null group by comunidade_id) r on r.comunidade_id = c.id
-left join (select rr.comunidade_id, count(*) blocos, sum(e.quantidade_entregue) cartelas
+             from public.blocos_responsaveis where comunidade_id is not null and not provisorio group by comunidade_id) r on r.comunidade_id = c.id
+left join (select rr.comunidade_id, count(*) filter (where not e.separada) blocos, sum(e.quantidade_entregue) filter (where not e.separada) cartelas,
+                  count(*) filter (where e.separada) separados
              from public.blocos_entregas e join public.blocos_responsaveis rr on rr.id = e.responsavel_id
             where e.status <> 'cancelada' and rr.comunidade_id is not null group by rr.comunidade_id) e on e.comunidade_id = c.id
 left join (select rr.comunidade_id,
@@ -769,7 +869,8 @@ language sql stable as $$
         'estoque', count(*) filter (where status = 'estoque'),
         'com_responsavel', count(*) filter (where status = 'com_responsavel'),
         'vendidas', count(*) filter (where status = 'vendida'),
-        'devolvidas', count(*) filter (where status = 'devolvida')
+        'devolvidas', count(*) filter (where status = 'devolvida'),
+        'separadas', (select coalesce(sum(quantidade_entregue), 0) from public.blocos_entregas where separada and status = 'ativa')
       ) from public.blocos_cartelas),
     'blocos', (select jsonb_build_object(
         'total', count(*),
