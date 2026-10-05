@@ -10,6 +10,7 @@ const { buscarLoteAtivo, valorEmReais } = require("./src/services/cartelas/lotes
 const { normalizarNumeroDigitado } = require("./src/services/cartelas/dv");
 const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const vendas = require("./src/vendas/vendas");
+const { registrarRotasBlocos } = require("./src/blocos/blocos");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -1712,7 +1713,7 @@ app.get("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
     const { data, error } = await supabase
       .from("user_profiles")
-      .select("id, nome, email, role, created_at")
+      .select("id, nome, email, role, acesso_blocos, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -1747,7 +1748,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
   try {
 
-    const { nome, email, password, role } = req.body || {};
+    const { nome, email, password, role, acesso_blocos } = req.body || {};
 
     if (!nome || !email || !password) {
       return res.status(400).json({
@@ -1790,7 +1791,8 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
         id: novoUsuario.user.id,
         nome: String(nome).trim(),
         email: emailNormalizado,
-        role: roleFinal
+        role: roleFinal,
+        acesso_blocos: acesso_blocos === true
       }]);
 
     if (perfilError) {
@@ -1834,7 +1836,7 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
   try {
 
     const { id } = req.params;
-    const { nome, role } = req.body || {};
+    const { nome, role, acesso_blocos } = req.body || {};
 
     if (!nome) {
       return res.status(400).json({
@@ -1856,7 +1858,8 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
       .from("user_profiles")
       .update({
         nome: String(nome).trim(),
-        role: roleFinal
+        role: roleFinal,
+        acesso_blocos: acesso_blocos === true
       })
       .eq("id", id);
 
@@ -3504,6 +3507,11 @@ vendas.registrarRotasVendas(app, {
   sanitizarTexto,
   codigoPedidoValido
 });
+
+/* =====================================================
+   DISTRIBUIÇÃO DE BLOCOS DE CARTELAS (src/blocos/blocos.js)
+===================================================== */
+registrarRotasBlocos(app, { supabase, limitadorOperador });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */
