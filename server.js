@@ -1544,6 +1544,118 @@ app.post("/admin/upload-imagem", verificarAdminBackend, upload.single("imagem"),
   }
 });
 
+/* =====================================================
+   ADMIN PARCEIROS (patrocinadores) — listar, salvar,
+   excluir e enviar logo. Tudo pelo servidor (service_role),
+   como Produtos: a tela não grava mais direto no Supabase
+   (as regras de RLS/Storage do navegador barravam
+   "new row violates row-level security policy").
+===================================================== */
+const COTAS_PARCEIRO = ["diamante", "rubi", "ouro", "prata", "bronze"];
+
+function montarParceiro(body) {
+  const b = body || {};
+  const cota = String(b.cota || "bronze").toLowerCase();
+  const logo = String(b.logo_url || "").trim();
+  if (!COTAS_PARCEIRO.includes(cota)) return { erro: "Cota inválida." };
+  if (!logo) return { erro: "Envie a logo do parceiro antes de salvar." };
+  return {
+    dados: {
+      nome: String(b.nome || "").trim().slice(0, 120) || "Parceiro",
+      cota,
+      link: String(b.link || "").trim().slice(0, 500) || null,
+      ordem: parseInt(b.ordem, 10) || 0,
+      ativo: b.ativo === true || b.ativo === "true",
+      logo_url: logo
+    }
+  };
+}
+
+app.get("/admin/parceiros", verificarAdminBackend, async (req, res) => {
+  const { data, error } = await supabase
+    .from("parceiros").select("*")
+    .order("ordem", { ascending: true }).order("created_at", { ascending: true });
+  if (error) {
+    console.error("[PARCEIROS] ERRO LISTAR:", error);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao carregar parceiros." });
+  }
+  return res.json({ sucesso: true, parceiros: data || [] });
+});
+
+app.post("/admin/parceiros", verificarAdminBackend, async (req, res) => {
+  const m = montarParceiro(req.body);
+  if (m.erro) return res.status(400).json({ sucesso: false, erro: m.erro });
+  const { data, error } = await supabase.from("parceiros").insert(m.dados).select().single();
+  if (error) {
+    console.error("[PARCEIROS] ERRO INSERIR:", error);
+    return res.status(500).json({ sucesso: false, erro: error.message });
+  }
+  return res.json({ sucesso: true, parceiro: data });
+});
+
+app.put("/admin/parceiros/:id", verificarAdminBackend, async (req, res) => {
+  const m = montarParceiro(req.body);
+  if (m.erro) return res.status(400).json({ sucesso: false, erro: m.erro });
+  const { data, error } = await supabase.from("parceiros")
+    .update(m.dados).eq("id", req.params.id).select();
+  if (error) {
+    console.error("[PARCEIROS] ERRO ATUALIZAR:", error);
+    return res.status(500).json({ sucesso: false, erro: error.message });
+  }
+  if (!data || data.length === 0) return res.status(404).json({ sucesso: false, erro: "Parceiro não encontrado." });
+  return res.json({ sucesso: true, parceiro: data[0] });
+});
+
+app.delete("/admin/parceiros/:id", verificarAdminBackend, async (req, res) => {
+  const { data, error } = await supabase.from("parceiros")
+    .delete().eq("id", req.params.id).select("id,logo_url");
+  if (error) {
+    console.error("[PARCEIROS] ERRO EXCLUIR:", error);
+    return res.status(500).json({ sucesso: false, erro: error.message });
+  }
+  if (!data || data.length === 0) return res.status(404).json({ sucesso: false, erro: "Parceiro não encontrado." });
+
+  /* apaga a logo do Storage (se for do bucket "parceiros"); falha aqui não desfaz a exclusão */
+  try {
+    const marca = "/storage/v1/object/public/parceiros/";
+    const url = String(data[0].logo_url || "");
+    const i = url.indexOf(marca);
+    if (i >= 0) {
+      const arquivo = decodeURIComponent(url.slice(i + marca.length).split("?")[0]);
+      if (arquivo) await supabase.storage.from("parceiros").remove([arquivo]);
+    }
+  } catch (e) {
+    console.error("[PARCEIROS] AVISO: não apagou a logo do Storage:", e.message);
+  }
+  return res.json({ sucesso: true });
+});
+
+app.post("/admin/parceiros/logo", verificarAdminBackend, upload.single("logo"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ sucesso: false, erro: "Nenhuma imagem enviada." });
+
+    // WebP mantém o fundo transparente das logos; máx. 800px no lado maior
+    const buffer = await sharp(req.file.buffer)
+      .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer();
+
+    const arquivo = `parceiro-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+    const { error } = await supabase.storage.from("parceiros")
+      .upload(arquivo, buffer, { contentType: "image/webp", cacheControl: "3600", upsert: false });
+    if (error) {
+      console.error("[PARCEIROS] ERRO UPLOAD:", error);
+      return res.status(500).json({ sucesso: false, erro: error.message });
+    }
+    const { data } = supabase.storage.from("parceiros").getPublicUrl(arquivo);
+    return res.json({ sucesso: true, logo_url: data.publicUrl });
+  } catch (erro) {
+    console.error("[PARCEIROS] ERRO INTERNO UPLOAD:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Não foi possível processar a imagem. Use PNG, JPG ou WebP." });
+  }
+});
+
+
 
 
 /* =====================================================
