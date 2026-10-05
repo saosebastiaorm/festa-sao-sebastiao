@@ -482,13 +482,14 @@ function registrarRotasVendas(app, deps) {
     criarPix,
     consultarPix,
     verificarAdminBackend,
+    exigirPagina,
     verificarAcessoRetirada,
     limitadorOperador,
     sanitizarTexto,
     codigoPedidoValido
   } = deps;
 
-  /* Caixa: admin e padrão (cada um com o próprio login) */
+  /* Caixa: quem tem a tela "Caixa" liberada no perfil (cada um com o próprio login) */
   const acessoCaixa = [verificarAcessoRetirada, limitadorOperador];
 
   function usuarioDaReq(req) {
@@ -832,7 +833,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* ----------------------- ADMIN: ESTOQUE ------------------------- */
-  app.get("/admin/estoque", verificarAdminBackend, async (req, res) => {
+  app.get("/admin/estoque", exigirPagina("produtos"), async (req, res) => {
     const { data, error } = await supabase
       .from("produtos")
       .select("id,codigo,nome,imagem,preco,ativo,estoque,estoque_fisico,estoque_minimo,exige_horario,ordem")
@@ -855,7 +856,7 @@ function registrarRotasVendas(app, deps) {
     });
   });
 
-  app.post("/admin/estoque/movimentar", verificarAdminBackend, async (req, res) => {
+  app.post("/admin/estoque/movimentar", exigirPagina("produtos"), async (req, res) => {
     const u = usuarioDaReq(req);
     const tipo = String(req.body?.tipo || "");
     const quantidade = Math.floor(Number(req.body?.quantidade));
@@ -875,7 +876,7 @@ function registrarRotasVendas(app, deps) {
     return res.json({ sucesso: true, resultado: data });
   });
 
-  app.get("/admin/estoque/historico", verificarAdminBackend, async (req, res) => {
+  app.get("/admin/estoque/historico", exigirPagina("produtos"), async (req, res) => {
     let consulta = supabase
       .from("estoque_movimentos")
       .select("id,produto_id,tipo,delta_disponivel,delta_fisico,disponivel_apos,fisico_apos,motivo,pedido_id,usuario_nome,created_at")
@@ -888,7 +889,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* ----------------------- ADMIN: CAIXAS -------------------------- */
-  app.get("/admin/caixas", verificarAdminBackend, async (req, res) => {
+  app.get("/admin/caixas", exigirPagina("caixas"), async (req, res) => {
     const { data: sessoes, error } = await supabase
       .from("caixa_sessoes")
       .select("*")
@@ -935,7 +936,7 @@ function registrarRotasVendas(app, deps) {
     return res.json({ sucesso: true, caixas: resultado });
   });
 
-  app.get("/admin/caixas/:id", verificarAdminBackend, async (req, res) => {
+  app.get("/admin/caixas/:id", exigirPagina("caixas"), async (req, res) => {
     const { data: sessao } = await supabase.from("caixa_sessoes").select("*").eq("id", Number(req.params.id)).maybeSingle();
     if (!sessao) return res.status(404).json({ sucesso: false, erro: "Caixa não encontrado." });
     const resumo = await resumoSessaoCaixa(supabase, sessao);
@@ -943,7 +944,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* ----------------------- ADMIN: PEDIDOS ------------------------- */
-  app.post("/admin/pedidos/:id/verificar-pagamento", verificarAdminBackend, async (req, res) => {
+  app.post("/admin/pedidos/:id/verificar-pagamento", exigirPagina("pedidos"), async (req, res) => {
     const { data: pedido } = await supabase.from("pedidos").select("*").eq("id", Number(req.params.id)).maybeSingle();
     if (!pedido) return res.status(404).json({ sucesso: false, erro: "Pedido não encontrado." });
     if (!pedido.txid) return res.json({ sucesso: true, pago: pedido.status_pagamento === "pago", mensagem: "Pedido sem Pix." });
@@ -952,7 +953,7 @@ function registrarRotasVendas(app, deps) {
     return res.json({ sucesso: true, pago: r.pedido.status_pagamento === "pago", status_sicredi: r.statusSicredi });
   });
 
-  app.post("/admin/pedidos/:id/reembolsar", verificarAdminBackend, async (req, res) => {
+  app.post("/admin/pedidos/:id/reembolsar", exigirPagina("reembolso"), async (req, res) => {
     const u = usuarioDaReq(req);
     const motivo = sanitizarTexto(req.body?.motivo, 300);
     if (!motivo) return res.status(400).json({ sucesso: false, erro: "Informe o motivo do reembolso." });
@@ -966,7 +967,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* histórico completo de um pedido (itens + entregas) pro admin */
-  app.get("/admin/pedidos/:id/detalhe", verificarAdminBackend, async (req, res) => {
+  app.get("/admin/pedidos/:id/detalhe", exigirPagina("pedidos"), async (req, res) => {
     const { data: pedido } = await supabase.from("pedidos").select("*").eq("id", Number(req.params.id)).maybeSingle();
     if (!pedido) return res.status(404).json({ sucesso: false, erro: "Pedido não encontrado." });
     await anexarItens(supabase, pedido, { comEntregas: true });

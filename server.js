@@ -176,23 +176,90 @@ const supabase = createClient(
 );
 
 /* =====================================================
-   MIDDLEWARE DE ACESSO ADMIN
-   Confere se quem está chamando a rota é mesmo um usuário
-   autenticado com o papel certo, antes de deixar passar. Usa a
-   service_role key (já configurada em SUPABASE_KEY) pra validar
-   o token e consultar o perfil do usuário.
+   MIDDLEWARE DE ACESSO ADMIN — PERFIS DE ACESSO
+   Confere se quem chama a rota é um usuário autenticado e se o
+   perfil dele pode abrir aquela tela. Usa a service_role key
+   (SUPABASE_KEY) pra validar o token e consultar o perfil.
 
-   Fábrica — recebe quais papéis (user_profiles.role) podem passar.
-   "admin" sozinho pras telas sensíveis (Lotes, Usuários, Produtos,
-   Cartelas, Dashboard, Pedidos, Parceiros); ["admin","padrao"] só
-   nas rotas operacionais de Retirada/Leitor, pra dar acesso a um
-   funcionário no dia do evento sem precisar dar acesso total de
-   administrador. Definida logo no topo (antes de qualquer rota)
-   porque, diferente de "function", "const" não é hoisted — uma
-   rota registrada mais acima no arquivo travaria o servidor inteiro
-   ao tentar usar essa constante antes dela existir.
+   Papéis (user_profiles.role):
+     admin       → tudo, sempre (inclusive Usuários e os perfis)
+     padrao      → só as telas marcadas para "Padrão"
+     voluntario  → só as telas marcadas para "Voluntário"
+   As telas de cada perfil ficam na tabela perfis_acesso e o
+   administrador marca/desmarca na tela Usuários → Perfis de acesso.
+   Usuários (e a própria configuração dos perfis) é sempre só admin,
+   pra ninguém conseguir se dar mais acesso.
+
+   Definido logo no topo (antes de qualquer rota) porque "const"
+   não é hoisted.
 ===================================================== */
-function criarVerificadorDeAcesso(papeisPermitidos) {
+const PAGINAS_ADMIN = [
+  { chave: "central",   nome: "Admin Central",            pagina: "/admin/dashboard.html" },
+  { chave: "dashboard", nome: "Dashboard",                pagina: "/admin/dashboard-metricas.html" },
+  { chave: "pedidos",   nome: "Pedidos",                  pagina: "/admin/pedidos.html" },
+  { chave: "reembolso", nome: "Pedidos — reembolsar",     pagina: null },
+  { chave: "cartelas",  nome: "Cartelas",                 pagina: "/admin/cartelas.html" },
+  { chave: "blocos",    nome: "Blocos (distribuição)",    pagina: "/admin/blocos.html" },
+  { chave: "caixa",     nome: "Caixa (vender)",           pagina: "/admin/caixa.html" },
+  { chave: "caixas",    nome: "Caixas (conferência)",     pagina: "/admin/caixas.html" },
+  { chave: "retirada",  nome: "Retirada",                 pagina: "/admin/retirada.html" },
+  { chave: "leitor",    nome: "Leitor",                   pagina: "/admin/leitor.html" },
+  { chave: "produtos",  nome: "Produtos (preço e estoque)", pagina: "/admin/produtos.html" },
+  { chave: "parceiros", nome: "Parceiros",                pagina: "/admin/parceiros.html" },
+  { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" }
+];
+const CHAVES_PAGINAS = PAGINAS_ADMIN.map(p => p.chave);
+const PAPEIS_EQUIPE = ["padrao", "voluntario"];
+const PAPEIS_VALIDOS = ["admin", ...PAPEIS_EQUIPE];
+
+/* Se o SQL dos perfis ainda não foi rodado, mantém o acesso antigo
+   da equipe (Caixa, Retirada e Leitor) — nunca libera a mais. */
+const PERFIS_SEM_TABELA = {
+  padrao: ["caixa", "retirada", "leitor"],
+  voluntario: ["caixa", "retirada", "leitor"]
+};
+
+let cachePerfis = { em: 0, dados: null };
+
+function limparCachePerfis() {
+  cachePerfis = { em: 0, dados: null };
+}
+
+async function lerPerfisAcesso() {
+  if (cachePerfis.dados && Date.now() - cachePerfis.em < 30000) return cachePerfis.dados;
+  const { data, error } = await supabase.from("perfis_acesso").select("papel,paginas");
+  let dados;
+  if (error) {
+    console.error("[ACESSO] perfis_acesso indisponível (rodou o SQL 2026-10-05b?):", error.message);
+    dados = PERFIS_SEM_TABELA;
+  } else {
+    dados = { padrao: [], voluntario: [] };
+    (data || []).forEach(r => {
+      if (PAPEIS_EQUIPE.includes(r.papel)) {
+        dados[r.papel] = (r.paginas || []).filter(k => CHAVES_PAGINAS.includes(k));
+      }
+    });
+  }
+  cachePerfis = { em: Date.now(), dados };
+  return dados;
+}
+
+/* telas liberadas para um usuário (perfil + "acesso_blocos" individual) */
+async function paginasDoUsuario(perfil) {
+  if (!perfil) return [];
+  if (perfil.role === "admin") return CHAVES_PAGINAS.slice();
+  if (!PAPEIS_EQUIPE.includes(perfil.role)) return [];
+  const perfis = await lerPerfisAcesso();
+  const lista = (perfis[perfil.role] || []).slice();
+  if (perfil.acesso_blocos === true && !lista.includes("blocos")) lista.push("blocos");
+  return lista;
+}
+
+/* Fábrica de verificador.
+   paginas = []          → só administrador
+   paginas = ["a","b"]   → admin ou quem tem qualquer uma dessas telas
+   paginas = "*"         → qualquer usuário da equipe logado (admin, padrão, voluntário) */
+function criarVerificadorDeAcesso(paginas) {
   return async function (req, res, next) {
 
     try {
@@ -219,20 +286,34 @@ function criarVerificadorDeAcesso(papeisPermitidos) {
 
       const { data: perfil, error: perfilError } = await supabase
         .from("user_profiles")
-        .select("role,nome")
+        .select("*")
         .eq("id", userData.user.id)
         .single();
 
-      if (perfilError || !perfil || !papeisPermitidos.includes(perfil.role)) {
+      if (perfilError || !perfil || !PAPEIS_VALIDOS.includes(perfil.role)) {
         return res.status(403).json({
           sucesso: false,
           erro: "Acesso restrito."
         });
       }
 
+      const liberadas = await paginasDoUsuario(perfil);
+      const admin = perfil.role === "admin";
+      const permitido = admin ||
+        paginas === "*" ||
+        (Array.isArray(paginas) && paginas.some(p => liberadas.includes(p)));
+
+      if (!permitido) {
+        return res.status(403).json({
+          sucesso: false,
+          erro: "Seu perfil não tem acesso a esta função. Peça a um administrador."
+        });
+      }
+
       req.usuarioAdmin = userData.user;
       req.papelUsuario = perfil.role;
       req.nomeUsuario = perfil.nome || userData.user.email;
+      req.paginasUsuario = liberadas;
       next();
 
     } catch (erro) {
@@ -249,8 +330,14 @@ function criarVerificadorDeAcesso(papeisPermitidos) {
 
 }
 
-const verificarAdminBackend = criarVerificadorDeAcesso(["admin"]);
-const verificarAcessoRetirada = criarVerificadorDeAcesso(["admin", "padrao"]);
+function exigirPagina(...paginas) {
+  return criarVerificadorDeAcesso(paginas);
+}
+
+const verificarAdminBackend = criarVerificadorDeAcesso([]);
+const verificarEquipeLogada = criarVerificadorDeAcesso("*");
+const verificarAcessoRetirada = exigirPagina("retirada", "leitor");
+const verificarAcessoCaixa = exigirPagina("caixa");
 
 /* =====================================================
    TESTE TOKEN SICREDI
@@ -1007,7 +1094,7 @@ app.post("/retirada/:codigoPedido", verificarAcessoRetirada, limitadorOperador, 
 /* =====================================================
    DASHBOARD ADMIN
 ===================================================== */
-app.get("/admin/dashboard", verificarAdminBackend, async (req, res) => {
+app.get("/admin/dashboard", exigirPagina("dashboard"), async (req, res) => {
   try {
     const { data: pedidos, error } = await supabase
       .from("pedidos")
@@ -1069,7 +1156,7 @@ app.get("/admin/dashboard", verificarAdminBackend, async (req, res) => {
 /* =====================================================
    LISTA ADMIN PEDIDOS
 ===================================================== */
-app.get("/admin/pedidos", verificarAdminBackend, async (req, res) => {
+app.get("/admin/pedidos", exigirPagina("pedidos"), async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("pedidos")
@@ -1182,7 +1269,7 @@ const codigo =
 /* =====================================================
    ADMIN PRODUTOS - LISTAR TODOS
 ===================================================== */
-app.get("/admin/produtos", verificarAdminBackend, async (req, res) => {
+app.get("/admin/produtos", exigirPagina("produtos"), async (req, res) => {
   try {
 
     const { data, error } = await supabase
@@ -1218,7 +1305,7 @@ app.get("/admin/produtos", verificarAdminBackend, async (req, res) => {
 /* =====================================================
    ADMIN PRODUTOS - CRIAR / ATUALIZAR
 ===================================================== */
-app.post("/admin/produtos", verificarAdminBackend, async (req, res) => {
+app.post("/admin/produtos", exigirPagina("produtos"), async (req, res) => {
   
   try {
 
@@ -1383,7 +1470,7 @@ if (!resultado || resultado.error) {
 /* =====================================================
    ADMIN PRODUTOS - EXCLUIR
 ===================================================== */
-app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
+app.delete("/admin/produtos/:id", exigirPagina("produtos"), async (req, res) => {
 
   try {
 
@@ -1477,7 +1564,7 @@ app.delete("/admin/produtos/:id", verificarAdminBackend, async (req, res) => {
 /* =====================================================
    ADMIN UPLOAD IMAGEM PRODUTO
 ===================================================== */
-app.post("/admin/upload-imagem", verificarAdminBackend, upload.single("imagem"), async (req, res) => {
+app.post("/admin/upload-imagem", exigirPagina("produtos"), upload.single("imagem"), async (req, res) => {
   try {
 
     if (!req.file) {
@@ -1571,7 +1658,7 @@ function montarParceiro(body) {
   };
 }
 
-app.get("/admin/parceiros", verificarAdminBackend, async (req, res) => {
+app.get("/admin/parceiros", exigirPagina("parceiros"), async (req, res) => {
   const { data, error } = await supabase
     .from("parceiros").select("*")
     .order("ordem", { ascending: true }).order("created_at", { ascending: true });
@@ -1582,7 +1669,7 @@ app.get("/admin/parceiros", verificarAdminBackend, async (req, res) => {
   return res.json({ sucesso: true, parceiros: data || [] });
 });
 
-app.post("/admin/parceiros", verificarAdminBackend, async (req, res) => {
+app.post("/admin/parceiros", exigirPagina("parceiros"), async (req, res) => {
   const m = montarParceiro(req.body);
   if (m.erro) return res.status(400).json({ sucesso: false, erro: m.erro });
   const { data, error } = await supabase.from("parceiros").insert(m.dados).select().single();
@@ -1593,7 +1680,7 @@ app.post("/admin/parceiros", verificarAdminBackend, async (req, res) => {
   return res.json({ sucesso: true, parceiro: data });
 });
 
-app.put("/admin/parceiros/:id", verificarAdminBackend, async (req, res) => {
+app.put("/admin/parceiros/:id", exigirPagina("parceiros"), async (req, res) => {
   const m = montarParceiro(req.body);
   if (m.erro) return res.status(400).json({ sucesso: false, erro: m.erro });
   const { data, error } = await supabase.from("parceiros")
@@ -1606,7 +1693,7 @@ app.put("/admin/parceiros/:id", verificarAdminBackend, async (req, res) => {
   return res.json({ sucesso: true, parceiro: data[0] });
 });
 
-app.delete("/admin/parceiros/:id", verificarAdminBackend, async (req, res) => {
+app.delete("/admin/parceiros/:id", exigirPagina("parceiros"), async (req, res) => {
   const { data, error } = await supabase.from("parceiros")
     .delete().eq("id", req.params.id).select("id,logo_url");
   if (error) {
@@ -1630,7 +1717,7 @@ app.delete("/admin/parceiros/:id", verificarAdminBackend, async (req, res) => {
   return res.json({ sucesso: true });
 });
 
-app.post("/admin/parceiros/logo", verificarAdminBackend, upload.single("logo"), async (req, res) => {
+app.post("/admin/parceiros/logo", exigirPagina("parceiros"), upload.single("logo"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ sucesso: false, erro: "Nenhuma imagem enviada." });
 
@@ -1817,6 +1904,67 @@ app.get("/sicredi/teste-consulta/:txid", limitadorAdmin, async (req, res) => {
 
 
 /* =====================================================
+   ACESSO DO USUÁRIO LOGADO — telas liberadas pro perfil dele
+   (o painel usa pra montar o menu e barrar telas não liberadas)
+===================================================== */
+app.get("/admin/acesso", verificarEquipeLogada, (req, res) => {
+  return res.json({
+    sucesso: true,
+    papel: req.papelUsuario,
+    nome: req.nomeUsuario,
+    paginas: req.paginasUsuario || []
+  });
+});
+
+/* =====================================================
+   PERFIS DE ACESSO — telas de Padrão e Voluntário (só admin)
+===================================================== */
+app.get("/admin/perfis", verificarAdminBackend, async (req, res) => {
+  const { data, error } = await supabase
+    .from("perfis_acesso").select("papel,paginas,atualizado_em,atualizado_por");
+  if (error) {
+    console.error("[ACESSO] ERRO LER PERFIS:", error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Tabela de perfis não encontrada. Rode no Supabase o SQL 2026-10-05b-perfis-de-acesso.sql."
+    });
+  }
+  const perfis = {};
+  PAPEIS_EQUIPE.forEach(p => { perfis[p] = { paginas: [], atualizado_em: null, atualizado_por: null }; });
+  (data || []).forEach(r => {
+    if (perfis[r.papel]) perfis[r.papel] = {
+      paginas: (r.paginas || []).filter(k => CHAVES_PAGINAS.includes(k)),
+      atualizado_em: r.atualizado_em,
+      atualizado_por: r.atualizado_por
+    };
+  });
+  return res.json({ sucesso: true, paginas: PAGINAS_ADMIN, perfis });
+});
+
+app.put("/admin/perfis/:papel", verificarAdminBackend, async (req, res) => {
+  const papel = String(req.params.papel || "");
+  if (!PAPEIS_EQUIPE.includes(papel)) {
+    return res.status(400).json({ sucesso: false, erro: "Perfil inválido." });
+  }
+  const recebidas = Array.isArray(req.body?.paginas) ? req.body.paginas.map(String) : null;
+  if (!recebidas) return res.status(400).json({ sucesso: false, erro: "Envie a lista de telas." });
+  const paginas = CHAVES_PAGINAS.filter(k => recebidas.includes(k));
+
+  const { error } = await supabase.from("perfis_acesso").upsert({
+    papel,
+    paginas,
+    atualizado_em: new Date().toISOString(),
+    atualizado_por: req.nomeUsuario
+  }, { onConflict: "papel" });
+  if (error) {
+    console.error("[ACESSO] ERRO SALVAR PERFIL:", error);
+    return res.status(500).json({ sucesso: false, erro: error.message });
+  }
+  limparCachePerfis();
+  return res.json({ sucesso: true, papel, paginas });
+});
+
+/* =====================================================
    ADMIN USUÁRIOS — LISTAR
 ===================================================== */
 app.get("/admin/usuarios", verificarAdminBackend, async (req, res) => {
@@ -1876,7 +2024,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
       });
     }
 
-    const roleFinal = role === "admin" ? "admin" : "padrao";
+    const roleFinal = PAPEIS_VALIDOS.includes(role) ? role : "voluntario";
 
     const emailNormalizado = String(email).trim().toLowerCase();
 
@@ -1957,7 +2105,7 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
       });
     }
 
-    const roleFinal = role === "admin" ? "admin" : "padrao";
+    const roleFinal = PAPEIS_VALIDOS.includes(role) ? role : "voluntario";
 
     if (id === req.usuarioAdmin.id && roleFinal !== "admin") {
       return res.status(400).json({
@@ -2875,7 +3023,7 @@ app.get("/cartelas/verificar-pagamento/:txid", limitadorPolling, async (req, res
    Usado na conferência do sorteio (qual número foi
    sorteado, quem pagou e quando).
 ===================================================== */
-app.get("/admin/cartelas/buscar/:numero", verificarAdminBackend, async (req, res) => {
+app.get("/admin/cartelas/buscar/:numero", exigirPagina("cartelas"), async (req, res) => {
   try {
 
     const { numero } = req.params;
@@ -3065,7 +3213,7 @@ async function listarLotesCartelas() {
 /* =====================================================================
    ADMIN — LISTAR CARTELAS (filtro por lote, padrão: todos)
 ===================================================================== */
-app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
+app.get("/admin/cartelas", exigirPagina("cartelas"), async (req, res) => {
   try {
 
     const filtros = filtrosCartelasDaQuery(req.query);
@@ -3121,7 +3269,7 @@ app.get("/admin/cartelas", verificarAdminBackend, async (req, res) => {
    paginação — todas as linhas que baterem com o filtro, não só a página
    visível na tela.
 ===================================================================== */
-app.get("/admin/cartelas/exportar", verificarAdminBackend, async (req, res) => {
+app.get("/admin/cartelas/exportar", exigirPagina("cartelas"), async (req, res) => {
   try {
 
     const filtros = filtrosCartelasDaQuery(req.query);
@@ -3194,7 +3342,7 @@ app.get("/admin/cartelas/exportar", verificarAdminBackend, async (req, res) => {
    usa contagens no banco, sem baixar as linhas (o Supabase limita a
    1.000 linhas por consulta).
 ===================================================================== */
-app.get("/admin/cartelas/resumo", verificarAdminBackend, async (req, res) => {
+app.get("/admin/cartelas/resumo", exigirPagina("cartelas"), async (req, res) => {
   try {
 
     const base = filtrosCartelasDaQuery({ lote: req.query.lote });
@@ -3270,7 +3418,7 @@ const uploadPlanilha = multer({
 const CHAVE_LOTE_VALIDA = /^[a-z0-9][a-z0-9_-]{2,49}$/;
 
 /* ===== LISTAR LOTES (com contagem ao vivo de disponíveis/pendentes/pagas) ===== */
-app.get("/admin/lotes", verificarAdminBackend, async (req, res) => {
+app.get("/admin/lotes", exigirPagina("lotes"), async (req, res) => {
   try {
 
     const { data: lotes, error } = await supabase
@@ -3310,7 +3458,7 @@ app.get("/admin/lotes", verificarAdminBackend, async (req, res) => {
 });
 
 /* ===== CRIAR LOTE (só metadados — nenhuma cartela ainda) ===== */
-app.post("/admin/lotes", verificarAdminBackend, async (req, res) => {
+app.post("/admin/lotes", exigirPagina("lotes"), async (req, res) => {
   try {
 
     const { chave, tipo, descricao, valor_centavos, quantidade_total } = req.body || {};
@@ -3370,7 +3518,7 @@ app.post("/admin/lotes", verificarAdminBackend, async (req, res) => {
 });
 
 /* ===== ATIVAR LOTE (desativa qualquer outro do mesmo tipo) ===== */
-app.post("/admin/lotes/:id/ativar", verificarAdminBackend, async (req, res) => {
+app.post("/admin/lotes/:id/ativar", exigirPagina("lotes"), async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -3410,7 +3558,7 @@ app.post("/admin/lotes/:id/ativar", verificarAdminBackend, async (req, res) => {
 });
 
 /* ===== DESATIVAR LOTE ===== */
-app.post("/admin/lotes/:id/desativar", verificarAdminBackend, async (req, res) => {
+app.post("/admin/lotes/:id/desativar", exigirPagina("lotes"), async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -3447,7 +3595,7 @@ app.post("/admin/lotes/:id/desativar", verificarAdminBackend, async (req, res) =
    A gravação é uma única inserção (todas as linhas de uma vez), que no
    Postgres é atômica: ou entra tudo, ou não entra nada.
 ===================================================================== */
-app.post("/admin/lotes/:id/importar", verificarAdminBackend, uploadPlanilha.single("planilha"), async (req, res) => {
+app.post("/admin/lotes/:id/importar", exigirPagina("lotes"), uploadPlanilha.single("planilha"), async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -3601,7 +3749,7 @@ async function conferirCartelasPendentes() {
 }
 
 // botão "Conferir Pix pendentes" do admin de cartelas
-app.post("/admin/cartelas/conferir-pendentes", verificarAdminBackend, async (req, res) => {
+app.post("/admin/cartelas/conferir-pendentes", exigirPagina("cartelas"), async (req, res) => {
   const r = await conferirCartelasPendentes();
   return res.status(r.sucesso ? 200 : 500).json(r);
 });
@@ -3614,7 +3762,8 @@ vendas.registrarRotasVendas(app, {
   criarPix,
   consultarPix,
   verificarAdminBackend,
-  verificarAcessoRetirada,
+  exigirPagina,
+  verificarAcessoRetirada: verificarAcessoCaixa,
   limitadorOperador,
   sanitizarTexto,
   codigoPedidoValido
@@ -3623,7 +3772,7 @@ vendas.registrarRotasVendas(app, {
 /* =====================================================
    DISTRIBUIÇÃO DE BLOCOS DE CARTELAS (src/blocos/blocos.js)
 ===================================================== */
-registrarRotasBlocos(app, { supabase, limitadorOperador });
+registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */

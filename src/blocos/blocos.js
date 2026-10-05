@@ -64,7 +64,9 @@ function idCartela(v) {
   return NaN;
 }
 
-function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
+function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS }) {
+
+  const papeisValidos = PAPEIS_VALIDOS || ["admin", "padrao", "voluntario"];
 
   /* ------------------------- AUTENTICAÇÃO -------------------------- */
   async function exigirAcessoBlocos(req, res, next) {
@@ -75,12 +77,19 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador }) {
       if (eu || !u?.user) return res.status(401).json({ sucesso: false, erro: "Sessão inválida ou expirada. Faça login novamente." });
       const { data: perfil } = await supabase
         .from("user_profiles").select("*").eq("id", u.user.id).maybeSingle();
-      if (!perfil || !["admin", "padrao"].includes(perfil.role)) {
+      if (!perfil || !papeisValidos.includes(perfil.role)) {
         return res.status(403).json({ sucesso: false, erro: "Acesso restrito." });
       }
       const admin = perfil.role === "admin";
-      if (!admin && perfil.acesso_blocos !== true) {
-        return res.status(403).json({ sucesso: false, erro: "Seu usuário não tem acesso à Distribuição de Blocos. Peça a um administrador para liberar na tela Usuários." });
+      if (!admin) {
+        /* Blocos liberado pelo perfil (Usuários → Perfis de acesso) ou
+           individualmente (acesso_blocos). A consulta de uma cartela
+           também serve à tela Cartelas (Conferência rápida). */
+        const liberadas = paginasDoUsuario ? await paginasDoUsuario(perfil) : (perfil.acesso_blocos === true ? ["blocos"] : []);
+        const consultaCartela = req.method === "GET" && req.path.startsWith("/admin/blocos/cartela/");
+        if (!liberadas.includes("blocos") && !(consultaCartela && liberadas.includes("cartelas"))) {
+          return res.status(403).json({ sucesso: false, erro: "Seu usuário não tem acesso à Distribuição de Blocos. Peça a um administrador para liberar na tela Usuários." });
+        }
       }
       req.lancador = { id: u.user.id, nome: perfil.nome || u.user.email, admin };
       next();
