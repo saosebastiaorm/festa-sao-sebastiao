@@ -281,6 +281,82 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   /* ------------------------- RESPONSÁVEIS -------------------------- */
+  /* Blocos SEPARADOS (ainda não entregues), agrupados por quem vai receber.
+     Usado pela aba "Separadas" para achar e confirmar a entrega na visita. */
+  app.get("/admin/blocos/separadas", ...base, async (req, res) => {
+    const busca = texto(req.query.busca, 60).toLowerCase();
+    const { data, error } = await supabase
+      .from("blocos_entregas")
+      .select("id, created_at, lancador_nome, distribuidor_nome, plano_nome, quantidade_entregue, responsavel_id, blocos(sequencial, numero_inicial, numero_final), blocos_responsaveis(id, nome, comunidade, comunidade_id, telefone, provisorio)")
+      .eq("separada", true)
+      .eq("status", "ativa")
+      .order("created_at", { ascending: true })
+      .limit(5000);
+    if (error) return falha(res, error, "Erro ao carregar os blocos separados.");
+
+    const grupos = new Map();
+    (data || []).forEach(e => {
+      const r = e.blocos_responsaveis || {};
+      const id = e.responsavel_id;
+      if (!grupos.has(id)) {
+        grupos.set(id, {
+          responsavel_id: id,
+          nome: r.nome || "",
+          comunidade: r.comunidade || "",
+          comunidade_id: r.comunidade_id || null,
+          telefone: r.telefone || "",
+          provisorio: r.provisorio === true,
+          blocos: 0, cartelas: 0,
+          separado_em: e.created_at, ultimo_em: e.created_at,
+          lancadores: new Set(), planos: new Set(),
+          faixas: []
+        });
+      }
+      const g = grupos.get(id);
+      g.blocos += 1;
+      g.cartelas += Number(e.quantidade_entregue || 0);
+      if (e.created_at < g.separado_em) g.separado_em = e.created_at;
+      if (e.created_at > g.ultimo_em) g.ultimo_em = e.created_at;
+      if (e.lancador_nome) g.lancadores.add(e.lancador_nome);
+      if (e.plano_nome) g.planos.add(e.plano_nome);
+      g.faixas.push({
+        entrega_id: e.id,
+        sequencial: e.blocos?.sequencial ?? null,
+        numero_inicial: e.blocos?.numero_inicial ?? null,
+        numero_final: e.blocos?.numero_final ?? null,
+        quantidade: e.quantidade_entregue
+      });
+    });
+
+    let lista = [...grupos.values()].map(g => ({
+      ...g,
+      lancadores: [...g.lancadores],
+      planos: [...g.planos],
+      faixas: g.faixas.sort((a, b) => (a.numero_inicial || 0) - (b.numero_inicial || 0))
+    }));
+    if (busca) {
+      const dig = soDigitos(busca);
+      const nCartela = /\d/.test(busca) ? idCartela(busca) : NaN;
+      lista = lista.filter(g =>
+        g.nome.toLowerCase().includes(busca) ||
+        g.comunidade.toLowerCase().includes(busca) ||
+        (dig && String(g.telefone || "").includes(dig)) ||
+        (dig && g.faixas.some(f => String(f.sequencial) === dig ||
+          (Number.isFinite(nCartela) && nCartela >= f.numero_inicial && nCartela <= f.numero_final)))
+      );
+    }
+    lista.sort((a, b) => (a.comunidade || a.nome).localeCompare(b.comunidade || b.nome, "pt-BR"));
+    res.json({
+      sucesso: true,
+      grupos: lista,
+      totais: {
+        grupos: lista.length,
+        blocos: lista.reduce((s, g) => s + g.blocos, 0),
+        cartelas: lista.reduce((s, g) => s + g.cartelas, 0)
+      }
+    });
+  });
+
   app.get("/admin/blocos/responsaveis", ...base, async (req, res) => {
     const busca = texto(req.query.busca, 60).replace(/[%,()*]/g, "");
     let q = supabase.from("blocos_resumo_responsavel").select("*");
