@@ -11,6 +11,7 @@ const { normalizarNumeroDigitado } = require("./src/services/cartelas/dv");
 const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const vendas = require("./src/vendas/vendas");
 const { registrarRotasBlocos } = require("./src/blocos/blocos");
+const { registrarRotasOrigens } = require("./src/origens/origens");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -206,17 +207,27 @@ const PAGINAS_ADMIN = [
   { chave: "leitor",    nome: "Leitor",                   pagina: "/admin/leitor.html" },
   { chave: "produtos",  nome: "Produtos (preço e estoque)", pagina: "/admin/produtos.html" },
   { chave: "parceiros", nome: "Parceiros",                pagina: "/admin/parceiros.html" },
-  { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" }
+  { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
+  { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" }
 ];
 const CHAVES_PAGINAS = PAGINAS_ADMIN.map(p => p.chave);
-const PAPEIS_EQUIPE = ["padrao", "voluntario"];
+const PAPEIS_EQUIPE = ["padrao", "voluntario", "operador_caixa", "equipe_bingo"];
+const NOMES_PAPEIS = {
+  admin: "Administrador",
+  padrao: "Padrão",
+  voluntario: "Voluntário",
+  operador_caixa: "Operador de Caixa",
+  equipe_bingo: "Equipe do Bingo"
+};
 const PAPEIS_VALIDOS = ["admin", ...PAPEIS_EQUIPE];
 
 /* Se o SQL dos perfis ainda não foi rodado, mantém o acesso antigo
    da equipe (Caixa, Retirada e Leitor) — nunca libera a mais. */
 const PERFIS_SEM_TABELA = {
   padrao: ["caixa", "retirada", "leitor"],
-  voluntario: ["caixa", "retirada", "leitor"]
+  voluntario: ["caixa", "retirada", "leitor"],
+  operador_caixa: ["caixa", "retirada", "leitor"],
+  equipe_bingo: []
 };
 
 let cachePerfis = { em: 0, dados: null };
@@ -233,7 +244,8 @@ async function lerPerfisAcesso() {
     console.error("[ACESSO] perfis_acesso indisponível (rodou o SQL 2026-10-05b?):", error.message);
     dados = PERFIS_SEM_TABELA;
   } else {
-    dados = { padrao: [], voluntario: [] };
+    dados = {};
+    PAPEIS_EQUIPE.forEach(p => { dados[p] = []; });
     (data || []).forEach(r => {
       if (PAPEIS_EQUIPE.includes(r.papel)) {
         dados[r.papel] = (r.paginas || []).filter(k => CHAVES_PAGINAS.includes(k));
@@ -244,11 +256,16 @@ async function lerPerfisAcesso() {
   return dados;
 }
 
-/* telas liberadas para um usuário (perfil + "acesso_blocos" individual) */
+/* telas liberadas para um usuário:
+   - acesso personalizado (user_profiles.paginas_personalizadas) → exatamente essas;
+   - senão as telas do perfil (+ "acesso_blocos" antigo, se marcado) */
 async function paginasDoUsuario(perfil) {
   if (!perfil) return [];
   if (perfil.role === "admin") return CHAVES_PAGINAS.slice();
   if (!PAPEIS_EQUIPE.includes(perfil.role)) return [];
+  if (Array.isArray(perfil.paginas_personalizadas)) {
+    return perfil.paginas_personalizadas.filter(k => CHAVES_PAGINAS.includes(k));
+  }
   const perfis = await lerPerfisAcesso();
   const lista = (perfis[perfil.role] || []).slice();
   if (perfil.acesso_blocos === true && !lista.includes("blocos")) lista.push("blocos");
@@ -1938,7 +1955,12 @@ app.get("/admin/perfis", verificarAdminBackend, async (req, res) => {
       atualizado_por: r.atualizado_por
     };
   });
-  return res.json({ sucesso: true, paginas: PAGINAS_ADMIN, perfis });
+  return res.json({
+    sucesso: true,
+    paginas: PAGINAS_ADMIN,
+    papeis: PAPEIS_EQUIPE.map(p => ({ papel: p, nome: NOMES_PAPEIS[p] || p })),
+    perfis
+  });
 });
 
 app.put("/admin/perfis/:papel", verificarAdminBackend, async (req, res) => {
@@ -1964,6 +1986,18 @@ app.put("/admin/perfis/:papel", verificarAdminBackend, async (req, res) => {
   return res.json({ sucesso: true, papel, paginas });
 });
 
+/* acesso personalizado vindo da tela Usuários: lista de telas ou null
+   (null = usa o perfil). Administrador não tem personalização. */
+function limparPaginasPersonalizadas(valor, papel, acessoBlocosAntigo) {
+  if (papel === "admin") return null;
+  if (!Array.isArray(valor)) {
+    // compatibilidade com a tela antiga (caixinha "Blocos só para este usuário")
+    if (acessoBlocosAntigo === true) return null;
+    return null;
+  }
+  return CHAVES_PAGINAS.filter(k => valor.map(String).includes(k));
+}
+
 /* =====================================================
    ADMIN USUÁRIOS — LISTAR
 ===================================================== */
@@ -1973,7 +2007,7 @@ app.get("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
     const { data, error } = await supabase
       .from("user_profiles")
-      .select("id, nome, email, role, acesso_blocos, created_at")
+      .select("id, nome, email, role, acesso_blocos, paginas_personalizadas, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -1985,7 +2019,8 @@ app.get("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
     return res.json({
       sucesso: true,
-      usuarios: data
+      usuarios: data,
+      papeis: [{ papel: "admin", nome: NOMES_PAPEIS.admin }].concat(PAPEIS_EQUIPE.map(p => ({ papel: p, nome: NOMES_PAPEIS[p] || p })))
     });
 
   } catch (erro) {
@@ -2008,7 +2043,7 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 
   try {
 
-    const { nome, email, password, role, acesso_blocos } = req.body || {};
+    const { nome, email, password, role, acesso_blocos, paginas_personalizadas } = req.body || {};
 
     if (!nome || !email || !password) {
       return res.status(400).json({
@@ -2052,7 +2087,8 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
         nome: String(nome).trim(),
         email: emailNormalizado,
         role: roleFinal,
-        acesso_blocos: acesso_blocos === true
+        acesso_blocos: false,
+        paginas_personalizadas: limparPaginasPersonalizadas(paginas_personalizadas, roleFinal, acesso_blocos)
       }]);
 
     if (perfilError) {
@@ -2096,7 +2132,7 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
   try {
 
     const { id } = req.params;
-    const { nome, role, acesso_blocos } = req.body || {};
+    const { nome, role, acesso_blocos, paginas_personalizadas } = req.body || {};
 
     if (!nome) {
       return res.status(400).json({
@@ -2119,7 +2155,8 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
       .update({
         nome: String(nome).trim(),
         role: roleFinal,
-        acesso_blocos: acesso_blocos === true
+        acesso_blocos: false,
+        paginas_personalizadas: limparPaginasPersonalizadas(paginas_personalizadas, roleFinal, acesso_blocos)
       })
       .eq("id", id);
 
@@ -3773,6 +3810,11 @@ vendas.registrarRotasVendas(app, {
    DISTRIBUIÇÃO DE BLOCOS DE CARTELAS (src/blocos/blocos.js)
 ===================================================== */
 registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS });
+
+/* =====================================================
+   ORIGEM DAS VISITAS (parcerias, Instagram…) — src/origens/origens.js
+===================================================== */
+registrarRotasOrigens(app, { supabase, exigirPagina, criarLimitador });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */
