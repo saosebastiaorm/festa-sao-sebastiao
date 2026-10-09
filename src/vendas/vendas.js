@@ -957,6 +957,11 @@ function registrarRotasVendas(app, deps) {
     const u = usuarioDaReq(req);
     const motivo = sanitizarTexto(req.body?.motivo, 300);
     if (!motivo) return res.status(400).json({ sucesso: false, erro: "Informe o motivo do reembolso." });
+    // pedido já retirado por completo não pode mais ser reembolsado
+    const { data: ped } = await supabase.from("pedidos").select("status_retirada").eq("id", Number(req.params.id)).maybeSingle();
+    if (ped && ped.status_retirada === "retirado") {
+      return res.status(400).json({ sucesso: false, erro: "Este pedido já foi retirado por completo e não pode mais ser reembolsado." });
+    }
     const { data, error } = await supabase.rpc("fpss_reembolsar_pedido", {
       p_pedido_id: Number(req.params.id),
       p_motivo: motivo,

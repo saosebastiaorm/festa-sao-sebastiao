@@ -166,7 +166,10 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const comissao = arred(String(b.comissao_pct ?? 0).replace(",", "."));
     if (!nome) return { erro: "Informe o nome do plano." };
     if (comissao < 0 || comissao > 100) return { erro: "Comissão deve ser de 0 a 100%." };
-    return { dados: { nome, comissao_pct: comissao, cobra: b.cobra !== false, ativo: b.ativo !== false, descricao: texto(b.descricao, 200) || null } };
+    const dados = { nome, comissao_pct: comissao, cobra: b.cobra !== false, ativo: b.ativo !== false, descricao: texto(b.descricao, 200) || null };
+    // envia as 2 cartas da visita? (coluna criada no SQL 2026-10-09-plano-envia-carta.sql)
+    if (b.envia_carta !== undefined) dados.envia_carta = b.envia_carta === true;
+    return { dados };
   }
 
   app.post("/admin/blocos/planos", ...base, somenteAdmin, async (req, res) => {
