@@ -187,6 +187,9 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const p = lerPlano(req.body || {});
     if (p.erro) return res.status(400).json({ sucesso: false, erro: p.erro });
     const { error } = await supabase.from("blocos_planos").update(p.dados).eq("id", Number(req.params.id));
+    if (error && /envia_carta/.test(error.message || "")) {
+      return res.status(400).json({ sucesso: false, erro: "Falta rodar no Supabase o SQL 2026-10-09-plano-envia-carta.sql (coluna Carta?)." });
+    }
     if (error) return falha(res, error, "Erro ao salvar plano.");
     await historico("plano", `Alterou o plano ${p.dados.nome} (${p.dados.comissao_pct}%${p.dados.ativo ? "" : ", desativado"}) — vale para as próximas entregas`, p.dados, req.lancador);
     res.json({ sucesso: true });
