@@ -226,7 +226,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const de = Math.max(1, parseInt(req.query.de, 10) || 1);
     const qtd = Math.min(500, Math.max(1, parseInt(req.query.quantidade, 10) || 100));
     // ordenação por coluna (clique no título da coluna) + páginas
-    const COLUNAS = ["sequencial", "numero_inicial", "numero_final", "quantidade", "estoque", "com_responsavel", "vendidas", "devolvidas", "responsaveis", "comunidades"];
+    const COLUNAS = ["sequencial", "numero_inicial", "numero_final", "quantidade", "estoque", "com_responsavel", "vendidas", "devolvidas", "responsaveis", "comunidades", "distribuidores", "lancadores", "planos"];
     const ordem = COLUNAS.includes(req.query.ordem) ? req.query.ordem : "sequencial";
     const asc = req.query.dir !== "desc";
     const pagina = Math.max(0, parseInt(req.query.pagina, 10) || 0);
@@ -236,6 +236,28 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     // livre = nenhuma cartela com distribuidor nem vendida (estoque + devolvidas = todas)
     if (req.query.livres === "1") q = q.eq("com_responsavel", 0).eq("vendidas", 0);
     if (req.query.tamanho) q = q.eq("quantidade", parseInt(req.query.tamanho, 10));
+    /* ---- filtros da tela Blocos cadastrados ---- */
+    const ate = parseInt(req.query.ate, 10);
+    if (Number.isFinite(ate) && ate >= de) q = q.lte("sequencial", ate);
+    if (req.query.cartela) {
+      const n = idCartela(req.query.cartela);
+      if (Number.isFinite(n)) q = q.lte("numero_inicial", n).gte("numero_final", n);
+    }
+    const comSem = (campo, v) => { if (v === "com") q = q.gt(campo, 0); else if (v === "sem") q = q.eq(campo, 0); };
+    comSem("estoque", req.query.estoque);
+    comSem("vendidas", req.query.vendidas);
+    comSem("devolvidas", req.query.devolvidas);
+    comSem("com_responsavel", req.query.com_responsavel);
+    const contem = (campo, v) => {
+      const t = texto(v, 60).replace(/[%,()*]/g, "");
+      if (t === "-") q = q.is(campo, null);           // "-" = sem ninguém
+      else if (t) q = q.ilike(campo, `%${t}%`);
+    };
+    contem("responsaveis", req.query.responsavel);
+    contem("comunidades", req.query.comunidade);
+    contem("distribuidores", req.query.distribuidor);
+    contem("lancadores", req.query.lancador);
+    contem("planos", req.query.plano);
     q = q.range(pagina * qtd, pagina * qtd + qtd - 1);
     const { data, error, count: totalFiltro } = await q;
     if (error) return falha(res, error, "Erro ao carregar blocos.");
