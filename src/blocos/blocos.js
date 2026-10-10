@@ -226,7 +226,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const de = Math.max(1, parseInt(req.query.de, 10) || 1);
     const qtd = Math.min(500, Math.max(1, parseInt(req.query.quantidade, 10) || 100));
     // ordenação por coluna (clique no título da coluna) + páginas
-    const COLUNAS = ["sequencial", "numero_inicial", "numero_final", "quantidade", "estoque", "com_responsavel", "vendidas", "devolvidas", "responsaveis"];
+    const COLUNAS = ["sequencial", "numero_inicial", "numero_final", "quantidade", "estoque", "com_responsavel", "vendidas", "devolvidas", "responsaveis", "comunidades"];
     const ordem = COLUNAS.includes(req.query.ordem) ? req.query.ordem : "sequencial";
     const asc = req.query.dir !== "desc";
     const pagina = Math.max(0, parseInt(req.query.pagina, 10) || 0);
