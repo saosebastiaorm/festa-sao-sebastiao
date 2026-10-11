@@ -1215,11 +1215,11 @@ function txtFiltro(v) {
 /* cada relatório: chave de permissão, função SQL e como ler os filtros da URL */
 const RELATORIOS = {
   caixa:        { chave: "rel_caixa",        fn: "fpss_relatorio_caixa",        datas: true,  f: q => ({ p_operador: txtFiltro(q.operador), p_status: txtFiltro(q.status) }) },
-  pedidos:      { chave: "rel_pedidos",      fn: "fpss_relatorio_pedidos",      datas: true,  f: q => ({ p_situacao: txtFiltro(q.situacao), p_origem: txtFiltro(q.origem), p_forma: txtFiltro(q.forma), p_produto: txtFiltro(q.produto) }) },
+  pedidos:      { chave: "rel_pedidos",      fn: "fpss_relatorio_pedidos",      datas: true,  f: q => ({ p_situacao: txtFiltro(q.situacao), p_origem: txtFiltro(q.origem), p_forma: txtFiltro(q.forma), p_produto: txtFiltro(q.produto), p_busca: txtFiltro(q.busca) }) },
   produtos:     { chave: "rel_produtos",     fn: "fpss_relatorio_produtos",     datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_origem: txtFiltro(q.origem) }) },
-  retirada:     { chave: "rel_retirada",     fn: "fpss_relatorio_retirada",     datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_entregador: txtFiltro(q.entregador) }) },
+  retirada:     { chave: "rel_retirada",     fn: "fpss_relatorio_retirada",     datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_entregador: txtFiltro(q.entregador), p_busca: txtFiltro(q.busca) }) },
   estoque:      { chave: "rel_estoque",      fn: "fpss_relatorio_estoque",      datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_tipo: txtFiltro(q.tipo) }) },
-  cartelas:     { chave: "rel_cartelas",     fn: "fpss_relatorio_cartelas",     datas: true,  f: q => ({ p_tipo: txtFiltro(q.tipo), p_status: txtFiltro(q.status) || "pago", p_lote: txtFiltro(q.lote), p_via: txtFiltro(q.via) }) },
+  cartelas:     { chave: "rel_cartelas",     fn: "fpss_relatorio_cartelas",     datas: true,  f: q => ({ p_tipo: txtFiltro(q.tipo), p_status: txtFiltro(q.status) || "pago", p_lote: txtFiltro(q.lote), p_via: txtFiltro(q.via), p_busca: txtFiltro(q.busca) }) },
   lotes:        { chave: "rel_lotes",        fn: "fpss_relatorio_lotes",        datas: false, f: q => ({ p_tipo: txtFiltro(q.tipo), p_so_com_disponiveis: q.so_disponiveis === "1" }) },
   blocos:       { chave: "rel_blocos",       fn: "fpss_relatorio_blocos",       datas: true,  f: q => ({ p_so_saldo: q.so_saldo === "1", p_comunidade: txtFiltro(q.comunidade), p_responsavel: txtFiltro(q.responsavel), p_forma: txtFiltro(q.forma) }) },
   distribuicao: { chave: "rel_distribuicao", fn: "fpss_relatorio_distribuicao", datas: true,  f: q => ({ p_comunidade: txtFiltro(q.comunidade), p_distribuidor: txtFiltro(q.distribuidor), p_status: txtFiltro(q.status) }) },
