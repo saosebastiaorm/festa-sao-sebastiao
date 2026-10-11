@@ -208,7 +208,8 @@ const PAGINAS_ADMIN = [
   { chave: "produtos",  nome: "Produtos (preço e estoque)", pagina: "/admin/produtos.html" },
   { chave: "parceiros", nome: "Parceiros",                pagina: "/admin/parceiros.html" },
   { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
-  { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" }
+  { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" },
+  { chave: "relatorios", nome: "Relatórios para impressão", pagina: "/admin/relatorios.html" }
 ];
 const CHAVES_PAGINAS = PAGINAS_ADMIN.map(p => p.chave);
 const PAPEIS_EQUIPE = ["padrao", "voluntario", "operador_caixa", "equipe_bingo"];
@@ -1169,6 +1170,51 @@ app.get("/admin/dashboard", exigirPagina("dashboard"), async (req, res) => {
     });
   }
 });
+
+/* painel geral: caixa (dinheiro/pix/cartão), cartelas e blocos
+   (função fpss_dashboard_geral — SQL 2026-10-11d) */
+app.get("/admin/dashboard/geral", exigirPagina("dashboard"), async (req, res) => {
+  try {
+    const { data, error } = await supabase.rpc("fpss_dashboard_geral");
+    if (error || !data) {
+      console.error("[DASHBOARD] geral:", error?.message);
+      return res.status(500).json({ sucesso: false, erro: "Erro ao carregar o painel geral (rode o SQL 2026-10-11d)." });
+    }
+    return res.json({ sucesso: true, ...data });
+  } catch (erro) {
+    return res.status(500).json({ sucesso: false, erro: "Erro interno dashboard." });
+  }
+});
+
+/* =====================================================
+   RELATÓRIOS PARA IMPRESSÃO (SQL 2026-10-11e) — tela "relatorios"
+===================================================== */
+function dataRelatorio(v, padrao) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(v || "")) ? String(v) : padrao;
+}
+function hojeRondonia() {
+  return new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+}
+async function rodarRelatorio(req, res, funcao, extra) {
+  try {
+    const hoje = hojeRondonia();
+    const de = dataRelatorio(req.query.de, "2026-01-01");
+    const ate = dataRelatorio(req.query.ate, hoje);
+    if (de > ate) return res.status(400).json({ sucesso: false, erro: "A data inicial é depois da final." });
+    const { data, error } = await supabase.rpc(funcao, { p_de: de, p_ate: ate, ...(extra || {}) });
+    if (error || !data) {
+      console.error("[RELATORIO]", funcao, error?.message);
+      return res.status(500).json({ sucesso: false, erro: "Erro ao gerar o relatório (rodou os SQLs 2026-10-11b a 11e?)." });
+    }
+    return res.json({ sucesso: true, gerado_em: new Date().toISOString(), ...data });
+  } catch (e) {
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao gerar o relatório." });
+  }
+}
+app.get("/admin/relatorios/caixa", exigirPagina("relatorios"), (req, res) => rodarRelatorio(req, res, "fpss_relatorio_caixa"));
+app.get("/admin/relatorios/cartelas", exigirPagina("relatorios"), (req, res) => rodarRelatorio(req, res, "fpss_relatorio_cartelas"));
+app.get("/admin/relatorios/blocos", exigirPagina("relatorios"), (req, res) =>
+  rodarRelatorio(req, res, "fpss_relatorio_blocos", { p_so_saldo: req.query.so_saldo === "1" }));
 
 /* =====================================================
    LISTA ADMIN PEDIDOS

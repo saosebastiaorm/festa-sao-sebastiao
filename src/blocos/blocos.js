@@ -459,6 +459,16 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
         .eq("responsavel_id", id).order("created_at", { ascending: false })
     ]);
 
+    /* formas de pagamento de cada acerto (se a tabela ainda não existe, segue sem) */
+    const pagamentosPorAcerto = {};
+    try {
+      const acIds = (acertos || []).map(a => a.id);
+      if (acIds.length) {
+        const { data: pgs, error: ep } = await supabase.from("blocos_acerto_pagamentos").select("acerto_id, forma, valor").in("acerto_id", acIds);
+        if (!ep) (pgs || []).forEach(p => { (pagamentosPorAcerto[p.acerto_id] = pagamentosPorAcerto[p.acerto_id] || []).push({ forma: p.forma, valor: Number(p.valor) }); });
+      }
+    } catch (e) { /* ignora */ }
+
     const ids = (entregas || []).map(e => e.id);
     let cartelas = [];
     if (ids.length) {
@@ -493,6 +503,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
         vendidas: a.vendidas, devolvidas: a.devolvidas,
         valor_bruto: Number(a.valor_bruto), valor_comissao: Number(a.valor_comissao),
         valor_devido: Number(a.valor_devido), valor_pago: Number(a.valor_pago),
+        pagamentos: pagamentosPorAcerto[a.id] || [],
         observacao: a.observacao, desfeito: a.desfeito, desfeito_por_nome: a.desfeito_por_nome, desfeito_em: a.desfeito_em,
         itens: (a.blocos_acerto_itens || []).map(i => ({
           entrega_id: i.entrega_id, vendidas: i.vendidas, devolvidas: i.devolvidas,
@@ -595,7 +606,22 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       if (typeof i.bonus_usado === "boolean") item.bonus_usado = i.bonus_usado;
       return item;
     });
-    const valorPago = arred(String(b.valor_pago ?? 0).replace(",", "."));
+    /* pagamentos do acerto: [{forma, valor, detalhe?}] — o valor pago é a soma */
+    const formasPag = ["dinheiro", "pix", "cartao_debito", "cartao_credito", "pix_site"];
+    let pagamentos = null;
+    if (Array.isArray(b.pagamentos)) {
+      pagamentos = [];
+      for (const p of b.pagamentos.slice(0, 10)) {
+        const valor = arred(String(p?.valor ?? 0).replace(",", "."));
+        if (!(valor > 0)) continue;
+        if (!formasPag.includes(p?.forma)) return res.status(400).json({ sucesso: false, erro: "Forma de pagamento inválida." });
+        const det = Array.isArray(p?.detalhe) ? p.detalhe.slice(0, 500).map(n => Number(n)).filter(Number.isFinite) : null;
+        pagamentos.push({ forma: p.forma, valor, detalhe: det && det.length ? { cartelas: det } : null });
+      }
+    }
+    const valorPago = pagamentos
+      ? arred(pagamentos.reduce((s, p) => s + p.valor, 0))
+      : arred(String(b.valor_pago ?? 0).replace(",", "."));
     const { data, error } = await supabase.rpc("fpss_blocos_acertar", {
       p_responsavel_id: Number(b.responsavel_id),
       p_itens: itens,
@@ -605,7 +631,29 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       p_lancador_nome: req.lancador.nome
     });
     if (error) return falha(res, error, "Erro ao registrar o acerto.", 409);
-    res.json({ sucesso: true, ...data });
+    let aviso = null;
+    if (pagamentos && pagamentos.length) {
+      const { error: ep } = await supabase.from("blocos_acerto_pagamentos")
+        .insert(pagamentos.map(p => ({ acerto_id: data.acerto_id, forma: p.forma, valor: p.valor, detalhe: p.detalhe })));
+      if (ep) {
+        console.error("[BLOCOS] pagamentos do acerto:", ep.message);
+        aviso = "Acerto registrado, mas não foi possível gravar as formas de pagamento (rode o SQL 2026-10-11c).";
+      }
+    }
+    res.json({ sucesso: true, ...data, aviso });
+  });
+
+  /* cartelas dos blocos que já constam PAGAS no site (cruzamento com o Pix) */
+  app.post("/admin/blocos/cartelas-pagas", ...base, async (req, res) => {
+    const numeros = [...new Set((Array.isArray(req.body?.numeros) ? req.body.numeros : [])
+      .slice(0, 3000).map(n => parseInt(n, 10)).filter(Number.isFinite))];
+    if (!numeros.length) return res.json({ sucesso: true, pagas: [] });
+    const { data, error } = await supabase.rpc("fpss_blocos_cartelas_pagas", { p_numeros: numeros });
+    if (error) {
+      console.error("[BLOCOS] cartelas pagas:", error.message);
+      return res.json({ sucesso: true, pagas: [], aviso: "Cruzamento indisponível (rode o SQL 2026-10-11c)." });
+    }
+    res.json({ sucesso: true, pagas: data || [] });
   });
 
   app.post("/admin/blocos/acertos/:id/desfazer", ...base, async (req, res) => {

@@ -146,6 +146,23 @@ function itensParaSql(itens) {
   }));
 }
 
+/* grava débito/crédito de cada parte em cartão (coluna pedido_pagamentos.cartao_tipo;
+   SQL 2026-10-11b). Não mexe na função do banco: atualiza as linhas na ordem em que foram criadas. */
+async function gravarTipoCartao(supabase, pedidoId, pagamentos) {
+  try {
+    const comTipo = (pagamentos || []).filter(p => p.forma === "cartao" && p.cartao_tipo);
+    if (!comTipo.length) return;
+    const { data: linhas, error } = await supabase
+      .from("pedido_pagamentos").select("id,forma").eq("pedido_id", pedidoId).order("id", { ascending: true });
+    if (error) { console.error("[CAIXA] tipo do cartão:", error.message); return; }
+    const linhasCartao = (linhas || []).filter(l => l.forma === "cartao");
+    for (let i = 0; i < linhasCartao.length && i < comTipo.length; i++) {
+      const { error: e2 } = await supabase.from("pedido_pagamentos").update({ cartao_tipo: comTipo[i].cartao_tipo }).eq("id", linhasCartao[i].id);
+      if (e2) { console.error("[CAIXA] tipo do cartão:", e2.message); return; }
+    }
+  } catch (e) { console.error("[CAIXA] tipo do cartão:", e.message); }
+}
+
 async function criarPedidoComItens(supabase, pedido, itens, prefixo, pagamentos) {
   const { data, error } = await supabase.rpc("fpss_criar_pedido", {
     p_pedido: pedido,
@@ -157,6 +174,7 @@ async function criarPedidoComItens(supabase, pedido, itens, prefixo, pagamentos)
     console.error("[VENDAS] ERRO fpss_criar_pedido:", error);
     return { erro: "Erro ao salvar pedido." };
   }
+  await gravarTipoCartao(supabase, data.id, pagamentos);
   return { id: data.id, codigo_pedido: data.codigo_pedido };
 }
 
@@ -367,7 +385,7 @@ function montarPagamentosCaixa(body, total) {
   if (body?.forma_pagamento === "misto" || Array.isArray(body?.pagamentos)) {
     brutos = Array.isArray(body?.pagamentos) ? body.pagamentos : [];
   } else if (formasValidas.includes(body?.forma_pagamento)) {
-    brutos = [{ forma: body.forma_pagamento, valor: total, valor_recebido: body.valor_recebido }];
+    brutos = [{ forma: body.forma_pagamento, valor: total, valor_recebido: body.valor_recebido, cartao_tipo: body.cartao_tipo }];
   } else {
     return { erro: "Escolha a forma de pagamento." };
   }
@@ -379,6 +397,11 @@ function montarPagamentosCaixa(body, total) {
     if (!formasValidas.includes(forma)) return { erro: "Forma de pagamento inválida." };
     if (!(valor > 0)) return { erro: "Cada pagamento precisa ter valor maior que zero." };
     const linha = { forma, valor, valor_recebido: null, troco: null };
+    if (forma === "cartao") {
+      const tipo = String(b?.cartao_tipo || "").toLowerCase();
+      if (!["debito", "credito"].includes(tipo)) return { erro: "Informe se o cartão é débito ou crédito." };
+      linha.cartao_tipo = tipo;
+    }
     if (forma === "dinheiro") {
       const recebido = b?.valor_recebido === undefined || b?.valor_recebido === null || b?.valor_recebido === ""
         ? valor
@@ -434,11 +457,14 @@ async function resumoSessaoCaixa(supabase, sessao) {
      cada parte na sua forma); venda sem linhas usa a forma do pedido */
   let linhasPagamento = [];
   if (pagas.length) {
-    const { data } = await supabase
+    let r = await supabase
       .from("pedido_pagamentos")
-      .select("pedido_id,forma,valor")
+      .select("pedido_id,forma,valor,cartao_tipo")
       .in("pedido_id", pagas.map(v => v.id));
-    linhasPagamento = data || [];
+    if (r.error) { /* coluna cartao_tipo ainda não criada */
+      r = await supabase.from("pedido_pagamentos").select("pedido_id,forma,valor").in("pedido_id", pagas.map(v => v.id));
+    }
+    linhasPagamento = r.data || [];
   }
   const comLinhas = new Set(linhasPagamento.map(l => l.pedido_id));
   const soma = forma => arred(
@@ -449,6 +475,9 @@ async function resumoSessaoCaixa(supabase, sessao) {
   const totalDinheiro = soma("dinheiro");
   const totalPix = soma("pix");
   const totalCartao = soma("cartao");
+  const cartaoPorTipo = tipo => arred(linhasPagamento.filter(l => l.forma === "cartao" && l.cartao_tipo === tipo).reduce((s, l) => s + Number(l.valor || 0), 0));
+  const cartaoDebito = cartaoPorTipo("debito");
+  const cartaoCredito = cartaoPorTipo("credito");
   const sangrias = arred((movimentos || []).filter(m => m.tipo === "sangria").reduce((s, m) => s + Number(m.valor), 0));
   const suprimentos = arred((movimentos || []).filter(m => m.tipo === "suprimento").reduce((s, m) => s + Number(m.valor), 0));
   const dinheiroEsperado = arred(Number(sessao.troco_inicial || 0) + totalDinheiro + suprimentos - sangrias);
@@ -462,6 +491,9 @@ async function resumoSessaoCaixa(supabase, sessao) {
       dinheiro: totalDinheiro,
       pix: totalPix,
       cartao: totalCartao,
+      cartao_debito: cartaoDebito,
+      cartao_credito: cartaoCredito,
+      cartao_sem_tipo: arred(totalCartao - cartaoDebito - cartaoCredito),
       geral: arred(totalDinheiro + totalPix + totalCartao),
       sangrias,
       suprimentos,
