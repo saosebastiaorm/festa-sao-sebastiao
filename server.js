@@ -2496,6 +2496,7 @@ app.post("/cartelas/consultar-pagamento", limitadorConsultaCartela, async (req, 
     return res.json({
       sucesso: true,
       encontrada: true,
+      numero: normalizado,
       situacao,
       pago_em: situacao === "paga" ? c.data_pagamento : null
     });
