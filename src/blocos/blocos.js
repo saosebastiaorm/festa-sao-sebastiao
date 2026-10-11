@@ -20,7 +20,7 @@ const ERROS = {
   FAIXA_INVALIDA: "Faixa inválida. Confira o número inicial, o final e o tamanho do bloco.",
   FAIXA_GRANDE_DEMAIS: "Faixa grande demais de uma vez (máximo 60 mil cartelas).",
   FAIXA_JA_CADASTRADA: "Essa faixa já tem cartela cadastrada (a partir da cartela {x}).",
-  BLOCOS_COM_MOVIMENTO: "Não dá para excluir: algum desses blocos já foi entregue.",
+  BLOCOS_COM_MOVIMENTO: "Não dá para excluir: algum desses blocos está em nome de alguém (separado, entregue ou acertado). Cancele a entrega primeiro e tente de novo.",
   PLANO_INVALIDO: "Escolha o plano.",
   SEM_BLOCOS: "Escolha pelo menos um bloco.",
   RESPONSAVEL_INVALIDO: "Responsável não encontrado.",
