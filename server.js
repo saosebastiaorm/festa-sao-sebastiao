@@ -209,8 +209,21 @@ const PAGINAS_ADMIN = [
   { chave: "parceiros", nome: "Parceiros",                pagina: "/admin/parceiros.html" },
   { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
   { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" },
-  { chave: "relatorios", nome: "Relatórios para impressão", pagina: "/admin/relatorios.html" }
+  { chave: "rel_caixa",        nome: "Relatório — Vendas do caixa",            pagina: null },
+  { chave: "rel_pedidos",      nome: "Relatório — Pedidos (site e caixa)",     pagina: null },
+  { chave: "rel_produtos",     nome: "Relatório — Produtos vendidos",          pagina: null },
+  { chave: "rel_retirada",     nome: "Relatório — Retiradas",                  pagina: null },
+  { chave: "rel_estoque",      nome: "Relatório — Estoque",                    pagina: null },
+  { chave: "rel_cartelas",     nome: "Relatório — Cartelas",                   pagina: null },
+  { chave: "rel_lotes",        nome: "Relatório — Lotes de cartelas",          pagina: null },
+  { chave: "rel_blocos",       nome: "Relatório — Blocos (prestação de contas)", pagina: null },
+  { chave: "rel_distribuicao", nome: "Relatório — Blocos (distribuição)",      pagina: null },
+  { chave: "rel_origens",      nome: "Relatório — Origem das visitas",         pagina: null },
+  { chave: "rel_parceiros",    nome: "Relatório — Parceiros",                  pagina: null }
 ];
+/* a tela "Relatórios" aparece para quem tem qualquer relatório liberado */
+const CHAVES_RELATORIOS = ["rel_caixa", "rel_pedidos", "rel_produtos", "rel_retirada", "rel_estoque", "rel_cartelas",
+  "rel_lotes", "rel_blocos", "rel_distribuicao", "rel_origens", "rel_parceiros"];
 const CHAVES_PAGINAS = PAGINAS_ADMIN.map(p => p.chave);
 const PAPEIS_EQUIPE = ["padrao", "voluntario", "operador_caixa", "equipe_bingo"];
 const NOMES_PAPEIS = {
@@ -1195,26 +1208,64 @@ function dataRelatorio(v, padrao) {
 function hojeRondonia() {
   return new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
 }
-async function rodarRelatorio(req, res, funcao, extra) {
+function txtFiltro(v) {
+  const t = String(v == null ? "" : v).trim().slice(0, 80);
+  return t === "" ? null : t;
+}
+/* cada relatório: chave de permissão, função SQL e como ler os filtros da URL */
+const RELATORIOS = {
+  caixa:        { chave: "rel_caixa",        fn: "fpss_relatorio_caixa",        datas: true,  f: q => ({ p_operador: txtFiltro(q.operador), p_status: txtFiltro(q.status) }) },
+  pedidos:      { chave: "rel_pedidos",      fn: "fpss_relatorio_pedidos",      datas: true,  f: q => ({ p_situacao: txtFiltro(q.situacao), p_origem: txtFiltro(q.origem), p_forma: txtFiltro(q.forma), p_produto: txtFiltro(q.produto) }) },
+  produtos:     { chave: "rel_produtos",     fn: "fpss_relatorio_produtos",     datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_origem: txtFiltro(q.origem) }) },
+  retirada:     { chave: "rel_retirada",     fn: "fpss_relatorio_retirada",     datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_entregador: txtFiltro(q.entregador) }) },
+  estoque:      { chave: "rel_estoque",      fn: "fpss_relatorio_estoque",      datas: true,  f: q => ({ p_produto: txtFiltro(q.produto), p_tipo: txtFiltro(q.tipo) }) },
+  cartelas:     { chave: "rel_cartelas",     fn: "fpss_relatorio_cartelas",     datas: true,  f: q => ({ p_tipo: txtFiltro(q.tipo), p_status: txtFiltro(q.status) || "pago", p_lote: txtFiltro(q.lote), p_via: txtFiltro(q.via) }) },
+  lotes:        { chave: "rel_lotes",        fn: "fpss_relatorio_lotes",        datas: false, f: q => ({ p_tipo: txtFiltro(q.tipo), p_so_com_disponiveis: q.so_disponiveis === "1" }) },
+  blocos:       { chave: "rel_blocos",       fn: "fpss_relatorio_blocos",       datas: true,  f: q => ({ p_so_saldo: q.so_saldo === "1", p_comunidade: txtFiltro(q.comunidade), p_responsavel: txtFiltro(q.responsavel), p_forma: txtFiltro(q.forma) }) },
+  distribuicao: { chave: "rel_distribuicao", fn: "fpss_relatorio_distribuicao", datas: true,  f: q => ({ p_comunidade: txtFiltro(q.comunidade), p_distribuidor: txtFiltro(q.distribuidor), p_status: txtFiltro(q.status) }) },
+  origens:      { chave: "rel_origens",      fn: "fpss_relatorio_origens",      datas: true,  f: q => ({ p_origem: txtFiltro(q.origem), p_meio: txtFiltro(q.meio) }) },
+  parceiros:    { chave: "rel_parceiros",    fn: "fpss_relatorio_parceiros",    datas: false, f: q => ({ p_ativo: txtFiltro(q.ativo), p_cota: txtFiltro(q.cota) }) },
+  usuarios:     { chave: null,               fn: "fpss_relatorio_usuarios",     datas: false, f: q => ({ p_papel: txtFiltro(q.papel) }) }   // só administrador
+};
+
+async function rodarRelatorio(req, res, def) {
   try {
-    const hoje = hojeRondonia();
-    const de = dataRelatorio(req.query.de, "2026-01-01");
-    const ate = dataRelatorio(req.query.ate, hoje);
-    if (de > ate) return res.status(400).json({ sucesso: false, erro: "A data inicial é depois da final." });
-    const { data, error } = await supabase.rpc(funcao, { p_de: de, p_ate: ate, ...(extra || {}) });
-    if (error || !data) {
-      console.error("[RELATORIO]", funcao, error?.message);
-      return res.status(500).json({ sucesso: false, erro: "Erro ao gerar o relatório (rodou os SQLs 2026-10-11b a 11e?)." });
+    const params = def.f(req.query || {});
+    if (def.datas) {
+      const hoje = hojeRondonia();
+      const de = dataRelatorio(req.query.de, "2026-01-01");
+      const ate = dataRelatorio(req.query.ate, hoje);
+      if (de > ate) return res.status(400).json({ sucesso: false, erro: "A data inicial é depois da final." });
+      params.p_de = de; params.p_ate = ate;
     }
-    return res.json({ sucesso: true, gerado_em: new Date().toISOString(), ...data });
+    const { data, error } = await supabase.rpc(def.fn, params);
+    if (error || !data) {
+      console.error("[RELATORIO]", def.fn, error?.message);
+      return res.status(500).json({ sucesso: false, erro: "Erro ao gerar o relatório (rodou o SQL 2026-10-12-relatorios-completos?)." });
+    }
+    return res.json({ sucesso: true, gerado_em: new Date().toISOString(), por: req.nomeUsuario || null, ...data });
   } catch (e) {
     return res.status(500).json({ sucesso: false, erro: "Erro interno ao gerar o relatório." });
   }
 }
-app.get("/admin/relatorios/caixa", exigirPagina("relatorios"), (req, res) => rodarRelatorio(req, res, "fpss_relatorio_caixa"));
-app.get("/admin/relatorios/cartelas", exigirPagina("relatorios"), (req, res) => rodarRelatorio(req, res, "fpss_relatorio_cartelas"));
-app.get("/admin/relatorios/blocos", exigirPagina("relatorios"), (req, res) =>
-  rodarRelatorio(req, res, "fpss_relatorio_blocos", { p_so_saldo: req.query.so_saldo === "1" }));
+
+/* listas das caixinhas de filtro (operadores, produtos, lotes...) */
+app.get("/admin/relatorios/opcoes", exigirPagina(...CHAVES_RELATORIOS), async (req, res) => {
+  const { data, error } = await supabase.rpc("fpss_relatorio_opcoes");
+  if (error) {
+    console.error("[RELATORIO] opcoes:", error.message);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao carregar os filtros (rodou o SQL 2026-10-12-relatorios-completos?)." });
+  }
+  const liberados = (req.papelUsuario === "admin")
+    ? Object.keys(RELATORIOS)
+    : Object.keys(RELATORIOS).filter(t => RELATORIOS[t].chave && (req.paginasUsuario || []).includes(RELATORIOS[t].chave));
+  return res.json({ sucesso: true, opcoes: data, relatorios: liberados });
+});
+
+Object.entries(RELATORIOS).forEach(([tipo, def]) => {
+  const guarda = def.chave ? exigirPagina(def.chave) : verificarAdminBackend;
+  app.get("/admin/relatorios/" + tipo, guarda, (req, res) => rodarRelatorio(req, res, def));
+});
 
 /* =====================================================
    LISTA ADMIN PEDIDOS
@@ -1975,9 +2026,16 @@ app.get("/admin/acesso", verificarEquipeLogada, (req, res) => {
     sucesso: true,
     papel: req.papelUsuario,
     nome: req.nomeUsuario,
-    paginas: req.paginasUsuario || []
+    paginas: comTelaRelatorios(req.paginasUsuario || [], req.papelUsuario)
   });
 });
+
+function comTelaRelatorios(paginas, papel) {
+  const lista = paginas.slice();
+  const tem = papel === "admin" || CHAVES_RELATORIOS.some(k => lista.includes(k));
+  if (tem && !lista.includes("relatorios")) lista.push("relatorios");
+  return lista;
+}
 
 /* =====================================================
    PERFIS DE ACESSO — telas de Padrão e Voluntário (só admin)
@@ -2392,6 +2450,58 @@ app.post("/cartelas/validar-numero", async (req, res) => {
       sucesso: false,
       erro: "Erro interno ao validar a cartela."
     });
+  }
+});
+
+/* =====================================================
+   CARTELAS — CONSULTAR SE FOI PAGA (público)
+   Devolve SÓ a situação (paga / aguardando / em aberto) e a data do
+   pagamento. Nada de nome, CPF ou valor: detalhes só em "Meus pedidos".
+===================================================== */
+const limitadorConsultaCartela = criarLimitador({ janelaMs: 5 * 60 * 1000, max: 30 });
+
+app.post("/cartelas/consultar-pagamento", limitadorConsultaCartela, async (req, res) => {
+  try {
+    const bruto = String(req.body?.numero || "").trim();
+    if (!bruto || bruto.length > 20 || !/^[0-9A-Za-z\-\s]+$/.test(bruto)) {
+      return res.status(400).json({ sucesso: false, erro: "Informe o número impresso na cartela. Exemplo: 24194-68" });
+    }
+    const digitado = bruto.replace(/\s+/g, "");
+    const normalizado = normalizarNumeroDigitado(digitado);
+    const termos = [...new Set([digitado, normalizado].filter(Boolean))];
+
+    // reservas de Pix vencidas (mais de 1h) voltam a "em aberto"
+    await supabase.rpc("liberar_cartelas_expiradas");
+
+    const filtro = termos.flatMap(t => [`numero_chance1.eq.${t}`, `numero_chance2.eq.${t}`]).join(",");
+    const { data: lista, error } = await supabase
+      .from("cartelas")
+      .select("status,data_pagamento,tipo")
+      .or(filtro)
+      .limit(2);
+
+    if (error) {
+      console.error("[CARTELAS] ERRO CONSULTAR PAGAMENTO:", error.message);
+      return res.status(500).json({ sucesso: false, erro: "Não foi possível consultar agora. Tente novamente." });
+    }
+    const c = (lista || [])[0];
+    if (!c) {
+      return res.json({ sucesso: true, encontrada: false });
+    }
+    let situacao = "em_aberto";
+    if (c.status === "pago") situacao = "paga";
+    else if (c.status === "pendente") situacao = "aguardando_pagamento";
+    else if (c.status === "cancelado") situacao = "cancelada";
+
+    return res.json({
+      sucesso: true,
+      encontrada: true,
+      situacao,
+      pago_em: situacao === "paga" ? c.data_pagamento : null
+    });
+  } catch (erro) {
+    console.error("[CARTELAS] ERRO INTERNO CONSULTAR PAGAMENTO:", erro);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao consultar." });
   }
 });
 
