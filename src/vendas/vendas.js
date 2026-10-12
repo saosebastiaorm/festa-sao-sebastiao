@@ -975,6 +975,49 @@ function registrarRotasVendas(app, deps) {
     return res.json({ sucesso: true, ...resumo });
   });
 
+  /* administrador fecha o caixa de outra pessoa (operador esqueceu aberto, etc.) */
+  app.post("/admin/caixas/:id/fechar", exigirPagina("caixas"), async (req, res) => {
+    const adm = usuarioDaReq(req);
+    const { data: sessao } = await supabase.from("caixa_sessoes").select("*").eq("id", Number(req.params.id)).maybeSingle();
+    if (!sessao) return res.status(404).json({ sucesso: false, erro: "Caixa não encontrado." });
+    if (sessao.status !== "aberto") return res.status(400).json({ sucesso: false, erro: "Este caixa já está fechado." });
+
+    const obs = sanitizarTexto(req.body?.observacao, 500);
+    if (!obs || obs.length < 3) return res.status(400).json({ sucesso: false, erro: "Informe o motivo do fechamento." });
+
+    const contadoInformado = !(req.body?.dinheiro_contado === undefined || req.body?.dinheiro_contado === null || req.body?.dinheiro_contado === "");
+    if (contadoInformado && !(Number(req.body.dinheiro_contado) >= 0)) {
+      return res.status(400).json({ sucesso: false, erro: "Valor contado inválido." });
+    }
+
+    const resumo = await resumoSessaoCaixa(supabase, sessao);
+    if (resumo.totais.pendentes_pix > 0 && req.body?.forcar !== true) {
+      return res.status(409).json({
+        sucesso: false,
+        erro: `Existem ${resumo.totais.pendentes_pix} venda(s) Pix aguardando pagamento neste caixa. Fechar mesmo assim?`,
+        pendentes_pix: resumo.totais.pendentes_pix
+      });
+    }
+
+    const contado = contadoInformado ? arred(req.body.dinheiro_contado) : null;
+    const { data, error } = await supabase.from("caixa_sessoes").update({
+      status: "fechado",
+      fechado_em: new Date().toISOString(),
+      dinheiro_contado: contado,
+      dinheiro_esperado: resumo.totais.dinheiro_esperado,
+      diferenca: contado === null ? null : arred(contado - resumo.totais.dinheiro_esperado),
+      total_dinheiro: resumo.totais.dinheiro,
+      total_pix: resumo.totais.pix,
+      total_cartao: resumo.totais.cartao,
+      observacao_fechamento: obs,
+      fechado_por_admin_nome: adm.nome,
+      fechado_por_admin_email: adm.email
+    }).eq("id", sessao.id).eq("status", "aberto").select().maybeSingle();
+    if (error) return res.status(500).json({ sucesso: false, erro: "Erro ao fechar o caixa." });
+    if (!data) return res.status(409).json({ sucesso: false, erro: "O caixa foi fechado por outra pessoa agora há pouco." });
+    return res.json({ sucesso: true, sessao: data, totais: resumo.totais });
+  });
+
   /* ----------------------- ADMIN: PEDIDOS ------------------------- */
   app.post("/admin/pedidos/:id/verificar-pagamento", exigirPagina("pedidos"), async (req, res) => {
     const { data: pedido } = await supabase.from("pedidos").select("*").eq("id", Number(req.params.id)).maybeSingle();
