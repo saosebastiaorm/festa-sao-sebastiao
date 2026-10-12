@@ -12,6 +12,7 @@ const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const vendas = require("./src/vendas/vendas");
 const { registrarRotasBlocos } = require("./src/blocos/blocos");
 const { registrarRotasOrigens } = require("./src/origens/origens");
+const { registrarRotasVendedores } = require("./src/vendedores/vendedores");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -207,6 +208,7 @@ const PAGINAS_ADMIN = [
   { chave: "leitor",    nome: "Leitor",                   pagina: "/admin/leitor.html" },
   { chave: "produtos",  nome: "Produtos (preço e estoque)", pagina: "/admin/produtos.html" },
   { chave: "parceiros", nome: "Parceiros",                pagina: "/admin/parceiros.html" },
+  { chave: "vendedores", nome: "Vendedores de cartela",      pagina: "/admin/vendedores.html" },
   { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
   { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" },
   { chave: "rel_caixa",        nome: "Relatório — Vendas do caixa",            pagina: null },
@@ -3972,6 +3974,11 @@ registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEI
    ORIGEM DAS VISITAS (parcerias, Instagram…) — src/origens/origens.js
 ===================================================== */
 registrarRotasOrigens(app, { supabase, exigirPagina, criarLimitador });
+
+/* =====================================================
+   VENDEDORES DE CARTELA (cadastro + documentos privados) — src/vendedores/vendedores.js
+===================================================== */
+registrarRotasVendedores(app, { supabase, exigirPagina, criarLimitador, validarCPF, sanitizarTexto, multer, sharp });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */
