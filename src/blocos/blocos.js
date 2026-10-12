@@ -169,6 +169,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const dados = { nome, comissao_pct: comissao, cobra: b.cobra !== false, ativo: b.ativo !== false, descricao: texto(b.descricao, 200) || null };
     // envia as 2 cartas da visita? (coluna criada no SQL 2026-10-09-plano-envia-carta.sql)
     if (b.envia_carta !== undefined) dados.envia_carta = b.envia_carta === true;
+    // exige cadastro de vendedor para entregar neste plano (SQL 2026-10-12f-plano-exige-cadastro.sql)
+    if (b.exige_cadastro !== undefined) dados.exige_cadastro = b.exige_cadastro === true;
     return { dados };
   }
 
@@ -189,6 +191,9 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const { error } = await supabase.from("blocos_planos").update(p.dados).eq("id", Number(req.params.id));
     if (error && /envia_carta/.test(error.message || "")) {
       return res.status(400).json({ sucesso: false, erro: "Falta rodar no Supabase o SQL 2026-10-09-plano-envia-carta.sql (coluna Carta?)." });
+    }
+    if (error && /exige_cadastro/.test(error.message || "")) {
+      return res.status(400).json({ sucesso: false, erro: "Falta rodar no Supabase o SQL 2026-10-12f-plano-exige-cadastro.sql (coluna Cadastro?)." });
     }
     if (error) return falha(res, error, "Erro ao salvar plano.");
     await historico("plano", `Alterou o plano ${p.dados.nome} (${p.dados.comissao_pct}%${p.dados.ativo ? "" : ", desativado"}) — vale para as próximas entregas`, p.dados, req.lancador);
@@ -385,6 +390,20 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     });
   });
 
+  /* vendedores cadastrados (para planos que exigem cadastro) + quem já está ligado a qual responsável */
+  app.get("/admin/blocos/vendedores", ...base, async (req, res) => {
+    const { data, error } = await supabase.from("vendedores_cartela")
+      .select("id,nome,cpf,telefone,doc_identificacao_path,comprovante_residencia_path").eq("ativo", true).order("nome").limit(1000);
+    if (error) return res.json({ sucesso: true, vendedores: [], vinculos: {}, aviso: "Falta rodar o SQL de vendedores." });
+    const { data: lig } = await supabase.from("blocos_responsaveis").select("id,vendedor_id").not("vendedor_id", "is", null);
+    const vinculos = {};
+    (lig || []).forEach(l => { vinculos[l.id] = l.vendedor_id; });
+    res.json({ sucesso: true, vinculos, vendedores: (data || []).map(v => ({
+      id: v.id, nome: v.nome, cpf_fim: String(v.cpf || "").slice(-3), telefone: v.telefone,
+      docs_ok: !!(v.doc_identificacao_path && v.comprovante_residencia_path)
+    })) });
+  });
+
   app.get("/admin/blocos/responsaveis", ...base, async (req, res) => {
     const busca = texto(req.query.busca, 60).replace(/[%,()*]/g, "");
     let q = supabase.from("blocos_resumo_responsavel").select("*");
@@ -529,7 +548,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     const b = req.body || {};
     const r = b.responsavel || {};
     const comunidadeId = Number(r.comunidade_id) || null;
-    const responsavel = r.id
+    let responsavel = r.id
       ? { id: Number(r.id), comunidade_id: comunidadeId, comunidade: texto(r.comunidade, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) }
       : { nome: texto(r.nome, 100), comunidade_id: comunidadeId, comunidade: texto(r.comunidade, 100), telefone: soDigitos(r.telefone).slice(0, 13), endereco: texto(r.endereco, 200) };
 
@@ -548,6 +567,32 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       cartelas: (Array.isArray(x.cartelas) ? x.cartelas : []).map(n => parseInt(n, 10)).filter(Number.isFinite).slice(0, 1000)
     }));
 
+    /* plano que exige cadastro: a pessoa precisa estar em "Vendedores de cartela" */
+    let vendedorLigar = null;
+    {
+      const { data: plano } = await supabase.from("blocos_planos").select("*").eq("id", Number(b.plano_id) || 0).maybeSingle();
+      if (plano && plano.exige_cadastro) {
+        const MSG = `O plano "${plano.nome}" exige cadastro de vendedor. Cadastre a pessoa em Vendedores de cartela e escolha o vendedor aqui.`;
+        let vendedorId = Number(b.vendedor_id) || null;
+        let jaLigado = false;
+        if (responsavel.id) {
+          const { data: rr } = await supabase.from("blocos_responsaveis").select("vendedor_id").eq("id", responsavel.id).maybeSingle();
+          if (rr && rr.vendedor_id) { vendedorId = rr.vendedor_id; jaLigado = true; }
+        }
+        if (!vendedorId) return res.status(409).json({ sucesso: false, erro: MSG });
+        const { data: vend } = await supabase.from("vendedores_cartela").select("id,nome,ativo").eq("id", vendedorId).maybeSingle();
+        if (!vend || !vend.ativo) return res.status(409).json({ sucesso: false, erro: "Esse vendedor não está cadastrado ou está inativo. " + MSG });
+        if (responsavel.id && !jaLigado) {
+          const { error: eLig } = await supabase.from("blocos_responsaveis").update({ vendedor_id: vendedorId }).eq("id", responsavel.id);
+          if (eLig) return res.status(409).json({ sucesso: false, erro: eLig.code === "23505" ? `${vend.nome} já está ligado a outro cadastro de responsável. Busque o cadastro dele pelo nome.` : "Não foi possível ligar o vendedor ao responsável." });
+        } else if (!responsavel.id) {
+          const { data: existente } = await supabase.from("blocos_responsaveis").select("id").eq("vendedor_id", vendedorId).maybeSingle();
+          if (existente) responsavel = { id: existente.id, comunidade_id: comunidadeId, comunidade: responsavel.comunidade, telefone: responsavel.telefone, endereco: responsavel.endereco };
+          else vendedorLigar = vendedorId;
+        }
+      }
+    }
+
     const { data, error } = await supabase.rpc("fpss_blocos_entregar", {
       p_responsavel: responsavel,
       p_blocos: blocos,
@@ -559,6 +604,10 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       p_separada: separada
     });
     if (error) return falha(res, error, "Erro ao registrar a entrega.", 409);
+    if (vendedorLigar && data && data.responsavel_id) {
+      const { error: eLig } = await supabase.from("blocos_responsaveis").update({ vendedor_id: vendedorLigar }).eq("id", data.responsavel_id);
+      if (eLig) console.error("[BLOCOS] não ligou o vendedor ao responsável:", eLig.message);
+    }
     res.json({ sucesso: true, ...data });
   });
 
