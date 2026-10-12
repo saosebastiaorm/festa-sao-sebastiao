@@ -393,15 +393,23 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   /* vendedores cadastrados (para planos que exigem cadastro) + quem já está ligado a qual responsável */
   app.get("/admin/blocos/vendedores", ...base, async (req, res) => {
     const { data, error } = await supabase.from("vendedores_cartela")
-      .select("id,nome,cpf,telefone,doc_identificacao_path,comprovante_residencia_path").eq("ativo", true).order("nome").limit(1000);
+      .select("id,nome,cpf,telefone,endereco,bairro,cidade,uf,doc_identificacao_path,comprovante_residencia_path").eq("ativo", true).order("nome").limit(1000);
     if (error) return res.json({ sucesso: true, vendedores: [], vinculos: {}, aviso: "Falta rodar o SQL de vendedores." });
     const { data: lig } = await supabase.from("blocos_responsaveis").select("id,vendedor_id").not("vendedor_id", "is", null);
     const vinculos = {};
     (lig || []).forEach(l => { vinculos[l.id] = l.vendedor_id; });
     res.json({ sucesso: true, vinculos, vendedores: (data || []).map(v => ({
       id: v.id, nome: v.nome, cpf_fim: String(v.cpf || "").slice(-3), telefone: v.telefone,
+      endereco: [v.endereco, v.bairro, [v.cidade, v.uf].filter(Boolean).join("/")].filter(Boolean).join(", "),
       docs_ok: !!(v.doc_identificacao_path && v.comprovante_residencia_path)
     })) });
+  });
+
+  /* parceiros ativos (plano de parceria: escolher o parceiro cadastrado) */
+  app.get("/admin/blocos/parceiros", ...base, async (req, res) => {
+    const { data, error } = await supabase.from("parceiros").select("id,nome,cota").eq("ativo", true).order("nome").limit(500);
+    if (error) return falha(res, error, "Erro ao carregar parceiros.");
+    res.json({ sucesso: true, parceiros: data || [] });
   });
 
   app.get("/admin/blocos/responsaveis", ...base, async (req, res) => {
