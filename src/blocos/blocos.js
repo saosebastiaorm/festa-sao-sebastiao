@@ -666,6 +666,29 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, ...data });
   });
 
+  /* corrigir a data em que a entrega foi feita (entregas já lançadas) */
+  app.post("/admin/blocos/entregas/:id/data", ...base, async (req, res) => {
+    const d = lerDataEntrega(req.body?.data_entrega);
+    if (!d.ok || req.body?.data_entrega === undefined || req.body?.data_entrega === "") {
+      return res.status(400).json({ sucesso: false, erro: "Informe uma data de entrega válida (não pode ser futura)." });
+    }
+    const id = Number(req.params.id);
+    const { data: ent, error: e1 } = await supabase.from("blocos_entregas")
+      .select("id, recibo_id, separada, status, entregue_em, created_at").eq("id", id).maybeSingle();
+    if (e1 || !ent) return res.status(404).json({ sucesso: false, erro: "Entrega não encontrada." });
+    if (ent.separada || ent.status === "cancelada") {
+      return res.status(409).json({ sucesso: false, erro: "Só dá para corrigir a data de entregas já feitas (não separadas nem canceladas)." });
+    }
+    const novaData = d.iso || new Date().toISOString();
+    let q = supabase.from("blocos_entregas").update({ entregue_em: novaData }).eq("separada", false).neq("status", "cancelada");
+    q = (req.body?.todas_do_recibo === true && ent.recibo_id) ? q.eq("recibo_id", ent.recibo_id) : q.eq("id", id);
+    const { data: alt, error } = await q.select("id");
+    if (error) return falha(res, error, "Erro ao corrigir a data da entrega.", 409);
+    await historico("data_entrega", `Data da entrega corrigida para ${String(req.body.data_entrega).split("-").reverse().join("/")} (${(alt || []).length} bloco(s))`,
+      { entregas: (alt || []).map(x => x.id), de: ent.entregue_em || ent.created_at, para: novaData }, req.lancador);
+    res.json({ sucesso: true, alteradas: (alt || []).length });
+  });
+
   app.post("/admin/blocos/entregas/:id/cancelar", ...base, async (req, res) => {
     const { data, error } = await supabase.rpc("fpss_blocos_cancelar_entrega", {
       p_entrega_id: Number(req.params.id), p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
