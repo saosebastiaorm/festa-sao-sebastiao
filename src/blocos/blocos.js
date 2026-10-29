@@ -52,6 +52,18 @@ function traduzirErro(error) {
 }
 
 const arred = v => Math.round(Number(v || 0) * 100) / 100;
+/* data em que a entrega foi feita (YYYY-MM-DD). Hoje ou vazio = usa a hora do lançamento.
+   Passada = grava ao meio-dia de Rondônia. Futura ou inválida = erro. */
+function lerDataEntrega(v) {
+  if (v === undefined || v === null || v === "") return { ok: true, iso: null };
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
+  if (!m) return { ok: false };
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  if (d.getUTCFullYear() !== +m[1] || d.getUTCMonth() !== +m[2] - 1 || d.getUTCDate() !== +m[3]) return { ok: false };
+  const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Porto_Velho" });
+  if (String(v) > hoje || m[1] < "2026") return { ok: false };
+  return { ok: true, iso: String(v) === hoje ? null : `${v}T12:00:00-04:00` };
+}
 const texto = (v, max = 200) => String(v ?? "").replace(/[<>]/g, "").trim().slice(0, max);
 const soDigitos = v => String(v ?? "").replace(/\D/g, "");
 /* número da cartela como foi digitado → id (sem o dígito verificador):
@@ -554,6 +566,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   /* ---------------------------- ENTREGA ---------------------------- */
   app.post("/admin/blocos/entregar", ...base, async (req, res) => {
     const b = req.body || {};
+    const dEnt = lerDataEntrega(b.data_entrega);
+    if (!dEnt.ok) return res.status(400).json({ sucesso: false, erro: "Data da entrega inválida (não pode ser futura)." });
     const r = b.responsavel || {};
     const comunidadeId = Number(r.comunidade_id) || null;
     let responsavel = r.id
@@ -612,6 +626,10 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       p_separada: separada
     });
     if (error) return falha(res, error, "Erro ao registrar a entrega.", 409);
+    if (dEnt.iso && !separada && data && data.recibo_id) {
+      const { error: eD } = await supabase.from("blocos_entregas").update({ entregue_em: dEnt.iso }).eq("recibo_id", data.recibo_id);
+      if (eD) console.error("[BLOCOS] não gravou a data da entrega:", eD.message);
+    }
     if (vendedorLigar && data && data.responsavel_id) {
       const { error: eLig } = await supabase.from("blocos_responsaveis").update({ vendedor_id: vendedorLigar }).eq("id", data.responsavel_id);
       if (eLig) console.error("[BLOCOS] não ligou o vendedor ao responsável:", eLig.message);
@@ -622,6 +640,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   // confirmar a entrega de blocos que estavam só separados (visita feita)
   app.post("/admin/blocos/separacoes/confirmar", ...base, async (req, res) => {
     const b = req.body || {};
+    const dEnt = lerDataEntrega(b.data_entrega);
+    if (!dEnt.ok) return res.status(400).json({ sucesso: false, erro: "Data da entrega inválida (não pode ser futura)." });
     const r = b.responsavel || {};
     let assinatura = typeof b.assinatura === "string" ? b.assinatura : null;
     if (assinatura && (!/^data:image\/(png|jpeg);base64,/.test(assinatura) || assinatura.length > 600000)) {
@@ -639,6 +659,10 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       p_assinatura: assinatura, p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
     });
     if (error) return falha(res, error, "Erro ao confirmar a entrega.", 409);
+    if (dEnt.iso && entregas.length) {
+      const { error: eD } = await supabase.from("blocos_entregas").update({ entregue_em: dEnt.iso }).in("id", entregas);
+      if (eD) console.error("[BLOCOS] não gravou a data da entrega:", eD.message);
+    }
     res.json({ sucesso: true, ...data });
   });
 
@@ -843,7 +867,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     let entrega = null;
     if (c.entrega_id) {
       const { data } = await supabase.from("blocos_entregas")
-        .select("plano_nome, created_at, lancador_nome, distribuidor_nome, separada, blocos_responsaveis(id, nome, comunidade, telefone)")
+        .select("plano_nome, created_at, entregue_em, lancador_nome, distribuidor_nome, separada, blocos_responsaveis(id, nome, comunidade, telefone)")
         .eq("id", c.entrega_id).maybeSingle();
       entrega = data;
     }
@@ -853,7 +877,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       bloco: c.blocos,
       responsavel: entrega?.blocos_responsaveis || null,
       plano: entrega?.plano_nome || null,
-      entregue_em: entrega?.created_at || null,
+      entregue_em: entrega?.entregue_em || entrega?.created_at || null,
       lancador: entrega?.lancador_nome || null,
       distribuidor: entrega?.distribuidor_nome || null,
       separada: entrega?.separada === true
