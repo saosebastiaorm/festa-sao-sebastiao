@@ -454,6 +454,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       endereco: texto(b.endereco, 200) || null,
       observacao: texto(b.observacao, 300) || null
     };
+    if (b.funcao !== undefined) dados.funcao = texto(b.funcao, 60) || null;
     const id = Number(req.params.id);
     const { data: antes } = await supabase.from("blocos_responsaveis").select("*").eq("id", id).maybeSingle();
     if (!antes) return res.status(404).json({ sucesso: false, erro: "Responsável não encontrado." });
@@ -490,7 +491,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     if (!resumo) return res.status(404).json({ sucesso: false, erro: "Responsável não encontrado." });
 
     const [{ data: dadosResp }, { data: entregas }, { data: acertos }] = await Promise.all([
-      supabase.from("blocos_responsaveis").select("observacao").eq("id", id).maybeSingle(),
+      supabase.from("blocos_responsaveis").select("observacao, funcao").eq("id", id).maybeSingle()
+        .then(async x => x.error ? await supabase.from("blocos_responsaveis").select("observacao").eq("id", id).maybeSingle() : x),
       supabase.from("blocos_entregas")
         .select("*, blocos(sequencial, numero_inicial, numero_final, quantidade)")
         .eq("responsavel_id", id).neq("status", "cancelada").order("id"),
@@ -525,7 +527,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
 
     res.json({
       sucesso: true,
-      responsavel: { ...resumo, observacao: dadosResp?.observacao || null },
+      responsavel: { ...resumo, observacao: dadosResp?.observacao || null, funcao: dadosResp?.funcao || null },
       entregas: (entregas || []).map(e => ({
         id: e.id, bloco_id: e.bloco_id, recibo_id: e.recibo_id,
         sequencial: e.blocos?.sequencial, numero_inicial: e.blocos?.numero_inicial,
@@ -562,6 +564,14 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       .eq("recibo_id", data.id).order("id");
     res.json({ sucesso: true, recibo: data, entregas: entregas || [] });
   });
+
+  /* função (cargo) de quem recebeu: só grava se foi informada; não derruba a entrega se a coluna ainda não existe */
+  async function gravarFuncao(responsavelId, funcao) {
+    const f = texto(funcao, 60);
+    if (!responsavelId || !f) return;
+    const { error } = await supabase.from("blocos_responsaveis").update({ funcao: f }).eq("id", Number(responsavelId));
+    if (error) console.error("[BLOCOS] não gravou a função (rode o SQL 2026-10-31-funcao-responsavel.sql):", error.message);
+  }
 
   /* ---------------------------- ENTREGA ---------------------------- */
   app.post("/admin/blocos/entregar", ...base, async (req, res) => {
@@ -630,6 +640,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       const { error: eD } = await supabase.from("blocos_entregas").update({ entregue_em: dEnt.iso }).eq("recibo_id", data.recibo_id);
       if (eD) console.error("[BLOCOS] não gravou a data da entrega:", eD.message);
     }
+    await gravarFuncao(data && data.responsavel_id, r.funcao);
     if (vendedorLigar && data && data.responsavel_id) {
       const { error: eLig } = await supabase.from("blocos_responsaveis").update({ vendedor_id: vendedorLigar }).eq("id", data.responsavel_id);
       if (eLig) console.error("[BLOCOS] não ligou o vendedor ao responsável:", eLig.message);
@@ -659,6 +670,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       p_assinatura: assinatura, p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
     });
     if (error) return falha(res, error, "Erro ao confirmar a entrega.", 409);
+    await gravarFuncao(data && data.responsavel_id, r.funcao);
     if (dEnt.iso && entregas.length) {
       const { error: eD } = await supabase.from("blocos_entregas").update({ entregue_em: dEnt.iso }).in("id", entregas);
       if (eD) console.error("[BLOCOS] não gravou a data da entrega:", eD.message);
