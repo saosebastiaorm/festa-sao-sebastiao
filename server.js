@@ -1230,7 +1230,8 @@ const RELATORIOS = {
   blocos:       { chave: "rel_blocos",       fn: "fpss_relatorio_blocos",       datas: true,  f: q => ({ p_so_saldo: q.so_saldo === "1", p_comunidade: txtFiltro(q.comunidade), p_responsavel: txtFiltro(q.responsavel), p_forma: txtFiltro(q.forma) }) },
   distribuicao: { chave: "rel_distribuicao", fn: "fpss_relatorio_distribuicao", datas: true,  f: q => ({ p_comunidade: txtFiltro(q.comunidade), p_distribuidor: txtFiltro(q.distribuidor), p_status: txtFiltro(q.status) }) },
   origens:      { chave: "rel_origens",      fn: "fpss_relatorio_origens",      datas: true,  f: q => ({ p_origem: txtFiltro(q.origem), p_meio: txtFiltro(q.meio) }) },
-  parceiros:    { chave: "rel_parceiros",    fn: "fpss_relatorio_parceiros",    datas: false, f: q => ({ p_ativo: txtFiltro(q.ativo), p_cota: txtFiltro(q.cota) }) },
+  parceiros:    { chave: "rel_parceiros",    fn: "fpss_relatorio_parceiros",    datas: false, f: q => ({ p_ativo: txtFiltro(q.ativo), p_cota: txtFiltro(q.cota), ...(txtFiltro(q.situacao) ? { p_situacao: txtFiltro(q.situacao) } : {}) }) },
+  comunidades:  { chave: "rel_distribuicao", fn: "fpss_relatorio_comunidades",  datas: false, f: q => ({ p_ativa: txtFiltro(q.ativa), ...(txtFiltro(q.situacao) ? { p_situacao: txtFiltro(q.situacao) } : {}) }) },
   usuarios:     { chave: null,               fn: "fpss_relatorio_usuarios",     datas: false, f: q => ({ p_papel: txtFiltro(q.papel) }) }   // só administrador
 };
 
