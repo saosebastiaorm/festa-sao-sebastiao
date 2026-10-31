@@ -14,6 +14,7 @@ const { registrarRotasBlocos } = require("./src/blocos/blocos");
 const { registrarRotasOrigens } = require("./src/origens/origens");
 const { registrarRotasVendedores } = require("./src/vendedores/vendedores");
 const { registrarRotasEnquetes } = require("./src/enquetes/enquetes");
+const { registrarRotasContatos } = require("./src/contatos/contatos");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -211,6 +212,7 @@ const PAGINAS_ADMIN = [
   { chave: "parceiros", nome: "Parceiros",                pagina: "/admin/parceiros.html" },
   { chave: "vendedores", nome: "Vendedores de cartela",      pagina: "/admin/vendedores.html" },
   { chave: "enquetes",  nome: "Enquetes e Grupo VIP",     pagina: "/admin/enquetes.html" },
+  { chave: "contatos",  nome: "Contatos (WhatsApp)",      pagina: "/admin/contatos.html" },
   { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
   { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" },
   { chave: "rel_caixa",        nome: "Relatório — Vendas do caixa",            pagina: null },
@@ -3984,6 +3986,7 @@ registrarRotasVendedores(app, { supabase, exigirPagina, criarLimitador, validarC
 
 /* ENQUETES e GRUPO VIP (leitura no admin) — src/enquetes/enquetes.js */
 registrarRotasEnquetes(app, { supabase, exigirPagina, criarLimitador });
+registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */
