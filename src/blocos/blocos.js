@@ -887,7 +887,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
      quando, quem entregou, quem recebeu (nome, telefone, endereço, comunidade), assinatura,
      acertos e o histórico (cancelamentos etc.). */
   app.get("/admin/blocos/localizar", ...base, async (req, res) => {
-    const termo = texto(req.query.q, 40);
+    const termo = texto(req.query.q, 40).replace(/bloco/i, "").trim();
     if (!termo) return res.status(400).json({ sucesso: false, erro: "Digite o número da cartela (ex.: 24194-68) ou o sequencial do bloco." });
     let bloco = null, cartelaBuscada = null;
     const bruto = termo.replace(/\s/g, "");
