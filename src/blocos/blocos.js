@@ -701,6 +701,47 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, alteradas: (alt || []).length });
   });
 
+  /* trocar o plano de uma entrega já lançada (ex.: lançaram como Pastorais, era Normal).
+     Mantém assinatura, data, recibo e cartelas; muda plano, comissão e se cobra.
+     Não permite se a entrega já tem acerto lançado (o valor devido mudaria) — desfaça o acerto antes. */
+  app.post("/admin/blocos/entregas/:id/plano", ...base, async (req, res) => {
+    const id = Number(req.params.id);
+    const { data: plano } = await supabase.from("blocos_planos").select("*").eq("id", Number(req.body?.plano_id)).eq("ativo", true).maybeSingle();
+    if (!plano) return res.status(400).json({ sucesso: false, erro: "Escolha um plano válido." });
+    const { data: ent, error: e1 } = await supabase.from("blocos_entregas")
+      .select("id, recibo_id, status, plano_nome, comissao_pct, cobra, responsavel_id, blocos(sequencial)").eq("id", id).maybeSingle();
+    if (e1 || !ent) return res.status(404).json({ sucesso: false, erro: "Entrega não encontrada." });
+    let alvos = [ent];
+    if (req.body?.todas_do_recibo === true && ent.recibo_id) {
+      const { data } = await supabase.from("blocos_entregas")
+        .select("id, recibo_id, status, plano_nome, comissao_pct, cobra, responsavel_id, blocos(sequencial)").eq("recibo_id", ent.recibo_id).neq("status", "cancelada");
+      alvos = data || [ent];
+    }
+    alvos = alvos.filter(a => a.status !== "cancelada" && a.plano_nome !== plano.nome);
+    if (!alvos.length) return res.status(409).json({ sucesso: false, erro: "Esse bloco já está nesse plano (ou foi cancelado)." });
+    const ids = alvos.map(a => a.id);
+
+    const { data: itens } = await supabase.from("blocos_acerto_itens")
+      .select("entrega_id, blocos_acertos(desfeito)").in("entrega_id", ids);
+    const comAcerto = (itens || []).filter(i => i.blocos_acertos && i.blocos_acertos.desfeito === false).map(i => i.entrega_id);
+    if (comAcerto.length) {
+      const seqs = alvos.filter(a => comAcerto.includes(a.id)).map(a => a.blocos?.sequencial).filter(Boolean).join(", ");
+      return res.status(409).json({ sucesso: false, erro: `O bloco ${seqs} já tem acerto lançado. Desfaça o acerto (na ficha da pessoa) antes de trocar o plano.` });
+    }
+    if (plano.exige_cadastro) {
+      const { data: rr } = await supabase.from("blocos_responsaveis").select("vendedor_id").eq("id", alvos[0].responsavel_id).maybeSingle();
+      if (!rr || !rr.vendedor_id) return res.status(409).json({ sucesso: false, erro: `O plano "${plano.nome}" exige cadastro de vendedor. Cadastre a pessoa em Vendedores de cartela e ligue ao responsável antes.` });
+    }
+    const { error } = await supabase.from("blocos_entregas")
+      .update({ plano_id: plano.id, plano_nome: plano.nome, comissao_pct: plano.comissao_pct, cobra: plano.cobra }).in("id", ids);
+    if (error) return falha(res, error, "Erro ao trocar o plano.", 409);
+    await historico("trocar_plano",
+      `Trocou o plano de ${alvos.length} bloco(s) (${alvos.map(a => a.blocos?.sequencial).filter(Boolean).join(", ")}): de ${[...new Set(alvos.map(a => a.plano_nome))].join(" / ")} para ${plano.nome}`,
+      { entregas: ids, entrega_id: ids[0], de: alvos.map(a => ({ id: a.id, plano: a.plano_nome, comissao_pct: a.comissao_pct, cobra: a.cobra })), para: { id: plano.id, plano: plano.nome, comissao_pct: plano.comissao_pct, cobra: plano.cobra } },
+      req.lancador);
+    res.json({ sucesso: true, alteradas: ids.length });
+  });
+
   app.post("/admin/blocos/entregas/:id/cancelar", ...base, async (req, res) => {
     const { data, error } = await supabase.rpc("fpss_blocos_cancelar_entrega", {
       p_entrega_id: Number(req.params.id), p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
