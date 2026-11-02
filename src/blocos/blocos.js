@@ -881,6 +881,90 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, ...data });
   });
 
+  /* ---------------- LOCALIZAR BLOCO (investigação) ----------------
+     Pelo número de qualquer cartela do bloco (ex.: 24194-68) ou pelo sequencial do bloco:
+     devolve o bloco, TODAS as entregas já lançadas nele (inclusive canceladas), quem lançou,
+     quando, quem entregou, quem recebeu (nome, telefone, endereço, comunidade), assinatura,
+     acertos e o histórico (cancelamentos etc.). */
+  app.get("/admin/blocos/localizar", ...base, async (req, res) => {
+    const termo = texto(req.query.q, 40);
+    if (!termo) return res.status(400).json({ sucesso: false, erro: "Digite o número da cartela (ex.: 24194-68) ou o sequencial do bloco." });
+    let bloco = null, cartelaBuscada = null;
+    const bruto = termo.replace(/\s/g, "");
+    const pareceCartela = /^\d{1,5}-\d{1,2}$/.test(bruto) || /^\d{6,7}$/.test(bruto);
+    if (pareceCartela) {
+      const n = idCartela(bruto);
+      if (Number.isFinite(n)) {
+        const { data: c } = await supabase.from("blocos_cartelas").select("numero, status, entrega_id, atualizado_em, bloco_id").eq("numero", n).maybeSingle();
+        if (c) {
+          cartelaBuscada = c;
+          const { data } = await supabase.from("blocos").select("*").eq("id", c.bloco_id).maybeSingle();
+          bloco = data;
+        }
+      }
+    } else if (/^\d+$/.test(bruto)) {
+      /* número curto: pode ser o sequencial do bloco ou o início do número da cartela */
+      const { data } = await supabase.from("blocos").select("*").eq("sequencial", parseInt(bruto, 10)).maybeSingle();
+      bloco = data;
+      if (!bloco) {
+        const { data: c } = await supabase.from("blocos_cartelas").select("numero, status, entrega_id, atualizado_em, bloco_id").eq("numero", parseInt(bruto, 10)).maybeSingle();
+        if (c) { cartelaBuscada = c; const { data: b } = await supabase.from("blocos").select("*").eq("id", c.bloco_id).maybeSingle(); bloco = b; }
+      }
+    }
+    if (!bloco) return res.status(404).json({ sucesso: false, erro: "Bloco não encontrado. Confira o número da cartela (ex.: 24194-68) ou o sequencial do bloco." });
+
+    const [{ data: cartelas }, { data: entregas }] = await Promise.all([
+      supabase.from("blocos_cartelas").select("numero, status, entrega_id").eq("bloco_id", bloco.id).order("numero"),
+      supabase.from("blocos_entregas")
+        .select("id, status, separada, plano_nome, quantidade_entregue, tem_bonus, preco, comissao_pct, created_at, entregue_em, lancador_nome, distribuidor_nome, recibo_id, responsavel_id, blocos_responsaveis(id, nome, comunidade, telefone, endereco, provisorio, created_at, criado_por_nome)")
+        .eq("bloco_id", bloco.id).order("id")
+    ]);
+    const ents = entregas || [];
+    const entIds = ents.map(e => e.id);
+    const reciboIds = [...new Set(ents.map(e => e.recibo_id).filter(Boolean))];
+
+    let recibos = [], itens = [], hist = [];
+    if (reciboIds.length) {
+      const { data } = await supabase.from("blocos_recibos").select("id, created_at, lancador_nome, distribuidor_nome, assinatura").in("id", reciboIds);
+      recibos = data || [];
+    }
+    if (entIds.length) {
+      const { data } = await supabase.from("blocos_acerto_itens")
+        .select("entrega_id, vendidas, devolvidas, blocos_acertos(id, created_at, lancador_nome, valor_pago, valor_devido, desfeito, desfeito_por_nome)")
+        .in("entrega_id", entIds);
+      itens = data || [];
+      const [h1, h2] = await Promise.all([
+        supabase.from("blocos_historico").select("id, acao, descricao, lancador_nome, created_at").in("dados->>entrega_id", entIds.map(String)).order("created_at"),
+        reciboIds.length ? supabase.from("blocos_historico").select("id, acao, descricao, lancador_nome, created_at").in("dados->>recibo_id", reciboIds.map(String)).order("created_at") : Promise.resolve({ data: [] })
+      ]);
+      const vistos = new Set();
+      hist = [...(h1.data || []), ...(h2.data || [])].filter(x => !vistos.has(x.id) && vistos.add(x.id)).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    }
+    const reciboPor = Object.fromEntries(recibos.map(r => [r.id, r]));
+    const cont = {};
+    (cartelas || []).forEach(c => { cont[c.status] = (cont[c.status] || 0) + 1; });
+    const entregaAtual = cartelaBuscada && cartelaBuscada.entrega_id ? cartelaBuscada.entrega_id : null;
+
+    res.json({
+      sucesso: true,
+      bloco,
+      cartela_buscada: cartelaBuscada ? { numero: cartelaBuscada.numero, status: cartelaBuscada.status, entrega_id: entregaAtual, atualizado_em: cartelaBuscada.atualizado_em } : null,
+      contagem: cont,
+      entregas: ents.map(e => {
+        const r = reciboPor[e.recibo_id] || null;
+        return {
+          id: e.id, status: e.status, separada: e.separada === true, atual: e.id === entregaAtual,
+          plano_nome: e.plano_nome, quantidade: e.quantidade_entregue, preco: e.preco, comissao_pct: e.comissao_pct,
+          lancado_em: e.created_at, entregue_em: e.entregue_em, lancador_nome: e.lancador_nome, distribuidor_nome: e.distribuidor_nome,
+          responsavel: e.blocos_responsaveis || null,
+          recibo: r ? { id: r.id, em: r.created_at, lancador_nome: r.lancador_nome, distribuidor_nome: r.distribuidor_nome, assinatura: r.assinatura || null } : null,
+          acertos: itens.filter(i => i.entrega_id === e.id && i.blocos_acertos).map(i => ({ ...i.blocos_acertos, vendidas: i.vendidas, devolvidas: i.devolvidas }))
+        };
+      }),
+      historico: hist
+    });
+  });
+
   app.get("/admin/blocos/historico", ...base, async (req, res) => {
     const limite = Math.min(500, parseInt(req.query.limite, 10) || 100);
     let q = supabase.from("blocos_historico").select("id, acao, descricao, lancador_nome, created_at")
