@@ -8,6 +8,7 @@
 function registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador }) {
   const acesso = exigirPagina("contatos");
   const limite = criarLimitador({ janelaMs: 60 * 1000, max: 30 });
+  const limiteEnvio = criarLimitador({ janelaMs: 60 * 1000, max: 150 });
 
   /* telefone brasileiro → só dígitos com 55; null se não der para usar */
   function normalizar(v) {
@@ -75,6 +76,35 @@ function registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador })
         primeiro_registro: c.primeiro ? new Date(c.primeiro).toISOString() : null, ultimo_registro: c.ultimo ? new Date(c.ultimo).toISOString() : null }))
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     res.json({ sucesso: true, total: contatos.length, sem_telefone_valido: semTelefoneValido, avisos, contatos });
+  });
+
+  /* ---- Envio de aviso um a um: marca quem já recebeu cada aviso (campanha) ---- */
+  const limparCampanha = v => String(v ?? "").trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+
+  app.get("/admin/contatos/envios", limiteEnvio, acesso, async (req, res) => {
+    const campanha = limparCampanha(req.query.campanha);
+    if (!campanha) return res.status(400).json({ sucesso: false, erro: "Informe o nome do aviso." });
+    const r = await lerTudo("contatos_envios", "telefone, enviado_em, enviado_por", q => q.eq("campanha", campanha));
+    if (r.erro) {
+      console.error("[CONTATOS] envios", r.erro);
+      return res.json({ sucesso: true, envios: [], aviso: "Controle de envios ainda não está ativo no servidor (rode o SQL 2026-11-02-contatos-envios.sql). Por enquanto a marcação fica só neste aparelho." });
+    }
+    res.json({ sucesso: true, envios: r.linhas });
+  });
+
+  app.post("/admin/contatos/envios", limiteEnvio, acesso, async (req, res) => {
+    const campanha = limparCampanha(req.body?.campanha);
+    const telefone = normalizar(req.body?.telefone);
+    if (!campanha || !telefone) return res.status(400).json({ sucesso: false, erro: "Aviso ou telefone inválido." });
+    if (req.body?.enviado === false) {
+      const { error } = await supabase.from("contatos_envios").delete().eq("campanha", campanha).eq("telefone", telefone);
+      if (error) { console.error("[CONTATOS] envios", error.message); return res.status(500).json({ sucesso: false, erro: "Não foi possível desmarcar." }); }
+      return res.json({ sucesso: true });
+    }
+    const quem = String(req.nomeUsuario || req.usuarioAdmin?.email || "").slice(0, 100) || null;
+    const { error } = await supabase.from("contatos_envios").upsert({ campanha, telefone, enviado_em: new Date().toISOString(), enviado_por: quem }, { onConflict: "campanha,telefone" });
+    if (error) { console.error("[CONTATOS] envios", error.message); return res.status(500).json({ sucesso: false, erro: "Não foi possível marcar como enviado." }); }
+    res.json({ sucesso: true });
   });
 }
 
