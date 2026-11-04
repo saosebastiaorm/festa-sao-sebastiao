@@ -7,6 +7,27 @@ const { gerarCartelaDigitalPNG } = require("./src/services/cartelas/gerar-cartel
 const { gerarVersoCartelaPNG } = require("./src/services/cartelas/gerar-verso-cartela");
 const { uploadCartelaDigital } = require("./src/services/cartelas/upload-cartela-storage");
 const { buscarLoteAtivo, valorEmReais } = require("./src/services/cartelas/lotes");
+
+/* Valor cobrado de quem está comprando a cartela. Normalmente é o preço do lote.
+   Exceção controlada: o admin pode ligar (tela Cartelas > Teste de pagamento) um
+   preço de teste válido SÓ para um CPF e por tempo limitado. Qualquer erro aqui
+   cai no preço normal — nunca barateia para o público. */
+async function valorDaCompra(lote, cpfLimpo) {
+  const normal = valorEmReais(lote);
+  try {
+    const { data } = await supabase
+      .from("cartelas_teste_pix")
+      .select("cpf, valor_centavos, valido_ate")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data && data.cpf && cpfLimpo && data.cpf === cpfLimpo &&
+        data.valido_ate && new Date(data.valido_ate).getTime() > Date.now()) {
+      console.log("[PIX] preço de TESTE aplicado (CPF do admin): R$", Number(data.valor_centavos) / 100);
+      return Number(data.valor_centavos) / 100;
+    }
+  } catch (e) { /* preço normal */ }
+  return normal;
+}
 const { normalizarNumeroDigitado } = require("./src/services/cartelas/dv");
 const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const vendas = require("./src/vendas/vendas");
@@ -2611,7 +2632,7 @@ app.post("/cartelas/pix-fisica", limitadorPix, async (req, res) => {
       });
     }
 
-    const valor = valorEmReais(loteFisica);
+    const valor = await valorDaCompra(loteFisica, cpfLimpo);
 
     /* ===== SICREDI PIX ===== */
     const pagamento = await criarPix(valor, nome, cpfLimpo);
@@ -2761,7 +2782,7 @@ app.post("/cartelas/pix-digital", limitadorPix, async (req, res) => {
       });
     }
 
-    const valor = valorEmReais(loteDigital);
+    const valor = await valorDaCompra(loteDigital, cpfLimpo);
 
     /* ===== SICREDI PIX ===== */
     const pagamento = await criarPix(valor, nome, cpfLimpo);
@@ -3950,6 +3971,143 @@ async function conferirCartelasPendentes() {
 }
 
 // botão "Conferir Pix pendentes" do admin de cartelas
+/* =====================================================
+   TESTE DE PAGAMENTO (só admin)
+   Liga R$ 0,01 para UM CPF por tempo limitado, para testar o Pix de
+   ponta a ponta com a cartela oficial sem expor o preço ao público.
+===================================================== */
+app.get("/admin/cartelas/teste-pix", verificarAdminBackend, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("cartelas_teste_pix").select("*").eq("id", 1).maybeSingle();
+    if (error) {
+      return res.status(500).json({ sucesso: false, erro: "Rode primeiro o SQL 2026-11-04-teste-pagamento-cartela.sql no Supabase." });
+    }
+    const ativo = !!(data && data.valido_ate && new Date(data.valido_ate).getTime() > Date.now());
+    return res.json({
+      sucesso: true,
+      ativo,
+      cpf: data ? data.cpf : null,
+      valor: data ? Number(data.valor_centavos) / 100 : 0.01,
+      valido_ate: data ? data.valido_ate : null
+    });
+  } catch (e) {
+    console.error("[TESTE-PIX] erro ao consultar:", e);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno." });
+  }
+});
+
+app.post("/admin/cartelas/teste-pix", verificarAdminBackend, async (req, res) => {
+  try {
+    const desligar = req.body && req.body.ativo === false;
+    let cpf = limparCPF(req.body && req.body.cpf);
+    let validoAte = new Date();   // desligar = vence agora
+
+    if (!desligar) {
+      if (!validarCPF(cpf)) {
+        return res.status(400).json({ sucesso: false, erro: "CPF inválido." });
+      }
+      const minutos = Math.min(Math.max(parseInt(req.body.minutos, 10) || 60, 5), 240);
+      validoAte = new Date(Date.now() + minutos * 60 * 1000);
+    }
+
+    const registro = {
+      id: 1,
+      valor_centavos: 1,
+      valido_ate: validoAte.toISOString(),
+      atualizado_por: req.nomeUsuario || null,
+      atualizado_em: new Date().toISOString()
+    };
+    if (!desligar) registro.cpf = cpf;
+
+    const { error } = await supabase.from("cartelas_teste_pix").upsert(registro, { onConflict: "id" });
+    if (error) {
+      console.error("[TESTE-PIX] erro ao gravar:", error);
+      return res.status(500).json({ sucesso: false, erro: "Não foi possível gravar. Rode o SQL 2026-11-04-teste-pagamento-cartela.sql no Supabase." });
+    }
+    console.log(`[TESTE-PIX] ${desligar ? "DESLIGADO" : "LIGADO até " + registro.valido_ate} por ${req.nomeUsuario}`);
+    return res.json({ sucesso: true, ativo: !desligar, valido_ate: registro.valido_ate });
+  } catch (e) {
+    console.error("[TESTE-PIX] erro:", e);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno." });
+  }
+});
+
+/* =====================================================
+   CANCELAR VENDA DE CARTELA (só admin)
+   A cartela volta a "disponível" e os dados do comprador são apagados.
+   Fica registro em cartelas_cancelamentos. NÃO devolve o Pix: se o
+   pagamento foi real, a devolução é feita no app do banco.
+===================================================== */
+app.post("/admin/cartelas/:id/cancelar-venda", verificarAdminBackend, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ sucesso: false, erro: "Cartela inválida." });
+    }
+    const motivo = sanitizarTexto(req.body && req.body.motivo, 200);
+    if (!motivo || motivo.length < 3) {
+      return res.status(400).json({ sucesso: false, erro: "Informe o motivo do cancelamento." });
+    }
+
+    const { data: c, error: erroBusca } = await supabase
+      .from("cartelas").select("*").eq("id", id).maybeSingle();
+    if (erroBusca || !c) {
+      return res.status(404).json({ sucesso: false, erro: "Cartela não encontrada." });
+    }
+    if (c.status === "disponivel") {
+      return res.status(400).json({ sucesso: false, erro: "Essa cartela já está disponível." });
+    }
+    // venda de valor normal precisa de confirmação explícita (dinheiro de verdade)
+    if (Number(c.valor_pago) > 1 && !(req.body && req.body.confirmar === true)) {
+      return res.status(409).json({ sucesso: false, erro: "Venda de valor real: confirme o cancelamento." });
+    }
+
+    const { error: erroLog } = await supabase.from("cartelas_cancelamentos").insert({
+      cartela_id: c.id,
+      numero_chance1: c.numero_chance1,
+      tipo: c.tipo,
+      lote: c.lote,
+      status_anterior: c.status,
+      nome_comprador: c.nome_comprador,
+      cpf_comprador: c.cpf_comprador,
+      valor_pago: c.valor_pago,
+      pix_id: c.pix_id,
+      data_pagamento: c.data_pagamento,
+      motivo,
+      cancelado_por: req.nomeUsuario || null
+    });
+    if (erroLog) {
+      console.error("[CANCELAR-VENDA] erro ao registrar:", erroLog);
+      return res.status(500).json({ sucesso: false, erro: "Não foi possível registrar o cancelamento. Rode o SQL 2026-11-04-teste-pagamento-cartela.sql no Supabase." });
+    }
+
+    const { data: atualizada, error: erroUp } = await supabase
+      .from("cartelas")
+      .update({
+        status: "disponivel",
+        nome_comprador: null, cpf_comprador: null, whatsapp_comprador: null,
+        vai_na_festa: null, valor_pago: null, pix_id: null, reservado_em: null,
+        cep: null, cidade: null, bairro: null, rua: null, numero_endereco: null,
+        data_pagamento: null, comprovante_id: null, pdf_url: null, pdf_gerado_em: null
+      })
+      .eq("id", c.id)
+      .eq("status", c.status)
+      .select("id")
+      .maybeSingle();
+    if (erroUp || !atualizada) {
+      console.error("[CANCELAR-VENDA] erro ao liberar:", erroUp);
+      return res.status(409).json({ sucesso: false, erro: "A cartela mudou de situação agora há pouco. Atualize a tela e tente de novo." });
+    }
+
+    console.log(`[CANCELAR-VENDA] cartela ${c.id} (${c.numero_chance1}) ${c.status} -> disponivel por ${req.nomeUsuario}. Motivo: ${motivo}`);
+    return res.json({ sucesso: true, status_anterior: c.status });
+  } catch (e) {
+    console.error("[CANCELAR-VENDA] erro:", e);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno." });
+  }
+});
+
 app.post("/admin/cartelas/conferir-pendentes", exigirPagina("cartelas"), async (req, res) => {
   const r = await conferirCartelasPendentes();
   return res.status(r.sucesso ? 200 : 500).json(r);
