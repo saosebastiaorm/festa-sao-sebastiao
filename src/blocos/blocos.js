@@ -267,9 +267,15 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     /* ---- filtros da tela Blocos cadastrados ---- */
     const ate = parseInt(req.query.ate, 10);
     if (Number.isFinite(ate) && ate >= de) q = q.lte("sequencial", ate);
-    if (req.query.cartela) {
-      const n = idCartela(req.query.cartela);
-      if (Number.isFinite(n)) q = q.lte("numero_inicial", n).gte("numero_final", n);
+    const cDe = req.query.cartela ? idCartela(req.query.cartela) : NaN;
+    const cAte = req.query.cartela_ate ? idCartela(req.query.cartela_ate) : NaN;
+    if (Number.isFinite(cDe) && Number.isFinite(cAte)) {
+      // faixa: todos os blocos que têm alguma cartela entre a 1ª e a última
+      q = q.gte("numero_final", Math.min(cDe, cAte)).lte("numero_inicial", Math.max(cDe, cAte));
+    } else if (Number.isFinite(cDe)) {
+      q = q.lte("numero_inicial", cDe).gte("numero_final", cDe);
+    } else if (Number.isFinite(cAte)) {
+      q = q.lte("numero_inicial", cAte);
     }
     const comSem = (campo, v) => { if (v === "com") q = q.gt(campo, 0); else if (v === "sem") q = q.eq(campo, 0); };
     comSem("estoque", req.query.estoque);
