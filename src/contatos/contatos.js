@@ -81,7 +81,7 @@ function registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador })
   /* ---- Envio de aviso um a um: marca quem já recebeu cada aviso (campanha) ---- */
   const limparCampanha = v => String(v ?? "").trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
-  app.get("/admin/contatos/envios", limiteEnvio, acesso, async (req, res) => {
+  app.get("/admin/contatos/envios", limiteEnvio, exigirPagina("contatos_envio"), async (req, res) => {
     const campanha = limparCampanha(req.query.campanha);
     if (!campanha) return res.status(400).json({ sucesso: false, erro: "Informe o nome do aviso." });
     const r = await lerTudo("contatos_envios", "telefone, enviado_em, enviado_por", q => q.eq("campanha", campanha));
@@ -92,7 +92,7 @@ function registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador })
     res.json({ sucesso: true, envios: r.linhas });
   });
 
-  app.post("/admin/contatos/envios", limiteEnvio, acesso, async (req, res) => {
+  app.post("/admin/contatos/envios", limiteEnvio, exigirPagina("contatos_envio"), async (req, res) => {
     const campanha = limparCampanha(req.body?.campanha);
     const telefone = normalizar(req.body?.telefone);
     if (!campanha || !telefone) return res.status(400).json({ sucesso: false, erro: "Aviso ou telefone inválido." });

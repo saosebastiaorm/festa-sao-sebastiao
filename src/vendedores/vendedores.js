@@ -187,7 +187,7 @@ function registrarRotasVendedores(app, { supabase, exigirPagina, criarLimitador,
     }
   });
 
-  app.get("/admin/vendedores/:id/arquivo/:tipo", acesso, async (req, res) => {
+  app.get("/admin/vendedores/:id/arquivo/:tipo", exigirPagina("vendedores_documentos"), async (req, res) => {
     const col = TIPOS[req.params.tipo];
     if (!col) return res.status(400).json({ sucesso: false, erro: "Tipo de documento inválido." });
     const { data: v } = await supabase.from("vendedores_cartela").select(`id,${col}`).eq("id", Number(req.params.id)).maybeSingle();
@@ -198,7 +198,7 @@ function registrarRotasVendedores(app, { supabase, exigirPagina, criarLimitador,
     return res.json({ sucesso: true, url: data.signedUrl, pdf: /\.pdf$/i.test(v[col]) });
   });
 
-  app.delete("/admin/vendedores/:id", acesso, async (req, res) => {
+  app.delete("/admin/vendedores/:id", exigirPagina("vendedores_excluir"), async (req, res) => {
     const { data, error } = await supabase.from("vendedores_cartela").delete().eq("id", Number(req.params.id)).select().maybeSingle();
     if (error) { console.error("[VENDEDORES] excluir:", error.message); return res.status(500).json({ sucesso: false, erro: "Erro ao excluir." }); }
     if (!data) return res.status(404).json({ sucesso: false, erro: "Vendedor não encontrado." });

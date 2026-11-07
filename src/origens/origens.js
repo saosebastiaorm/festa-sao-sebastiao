@@ -140,7 +140,7 @@ function registrarRotasOrigens(app, { supabase, exigirPagina, criarLimitador }) 
     res.json({ sucesso: true, links: data || [] });
   });
 
-  app.post("/admin/origens/links", acesso, async (req, res) => {
+  app.post("/admin/origens/links", exigirPagina("origens_links"), async (req, res) => {
     const b = req.body || {};
     const nome = limparTexto(b.nome, 80);
     const origem = limparChave(b.origem, 60);
@@ -153,7 +153,7 @@ function registrarRotasOrigens(app, { supabase, exigirPagina, criarLimitador }) 
     res.json({ sucesso: true, link: data });
   });
 
-  app.delete("/admin/origens/links/:id", acesso, async (req, res) => {
+  app.delete("/admin/origens/links/:id", exigirPagina("origens_links"), async (req, res) => {
     const { error } = await supabase.from("origem_links").delete().eq("id", Number(req.params.id));
     if (error) return res.status(500).json({ sucesso: false, erro: error.message });
     res.json({ sucesso: true });

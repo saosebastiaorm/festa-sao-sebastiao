@@ -93,17 +93,18 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
         return res.status(403).json({ sucesso: false, erro: "Acesso restrito." });
       }
       const admin = perfil.role === "admin";
+      let liberadas = [];
       if (!admin) {
         /* Blocos liberado pelo perfil (Usuários → Perfis de acesso) ou
            individualmente (acesso_blocos). A consulta de uma cartela
            também serve à tela Cartelas (Conferência rápida). */
-        const liberadas = paginasDoUsuario ? await paginasDoUsuario(perfil) : (perfil.acesso_blocos === true ? ["blocos"] : []);
+        liberadas = paginasDoUsuario ? await paginasDoUsuario(perfil) : (perfil.acesso_blocos === true ? ["blocos"] : []);
         const consultaCartela = req.method === "GET" && req.path.startsWith("/admin/blocos/cartela/");
         if (!liberadas.includes("blocos") && !(consultaCartela && liberadas.includes("cartelas"))) {
           return res.status(403).json({ sucesso: false, erro: "Seu usuário não tem acesso à Distribuição de Blocos. Peça a um administrador para liberar na tela Usuários." });
         }
       }
-      req.lancador = { id: u.user.id, nome: perfil.nome || u.user.email, admin };
+      req.lancador = { id: u.user.id, nome: perfil.nome || u.user.email, admin, liberadas };
       next();
     } catch (e) {
       console.error("[BLOCOS] erro ao verificar acesso:", e);
@@ -114,6 +115,16 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   function somenteAdmin(req, res, next) {
     if (!req.lancador?.admin) return res.status(403).json({ sucesso: false, erro: "Só administradores podem fazer isso." });
     next();
+  }
+
+  /* Função dentro de Blocos (Usuários → Perfis de acesso). Admin sempre pode;
+     os demais precisam de pelo menos uma das chaves informadas. */
+  function pode(...chaves) {
+    return (req, res, next) => {
+      const l = req.lancador;
+      if (l?.admin || chaves.some(c => (l?.liberadas || []).includes(c))) return next();
+      return res.status(403).json({ sucesso: false, erro: "Seu usuário não tem permissão para esta função. Peça a um administrador para liberar em Usuários → Perfis de acesso." });
+    };
   }
 
   const base = [limitadorOperador, exigirAcessoBlocos].filter(Boolean);
@@ -132,7 +143,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
 
   /* --------------------------- QUEM SOU ---------------------------- */
   app.get("/admin/blocos/me", ...base, (req, res) => {
-    res.json({ sucesso: true, nome: req.lancador.nome, admin: req.lancador.admin });
+    res.json({ sucesso: true, nome: req.lancador.nome, admin: req.lancador.admin, funcoes: req.lancador.liberadas || [] });
   });
 
   /* ------------------------ CONFIG E PLANOS ------------------------ */
@@ -144,7 +155,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, config, planos: planos || [] });
   });
 
-  app.put("/admin/blocos/config", ...base, somenteAdmin, async (req, res) => {
+  app.put("/admin/blocos/config", ...base, pode("blocos_config"), async (req, res) => {
     const b = req.body || {};
     const dados = {};
     if (b.preco_cartela !== undefined) {
@@ -186,7 +197,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     return { dados };
   }
 
-  app.post("/admin/blocos/planos", ...base, somenteAdmin, async (req, res) => {
+  app.post("/admin/blocos/planos", ...base, pode("blocos_config"), async (req, res) => {
     const p = lerPlano(req.body || {});
     if (p.erro) return res.status(400).json({ sucesso: false, erro: p.erro });
     const { data: ult } = await supabase.from("blocos_planos").select("ordem").order("ordem", { ascending: false }).limit(1);
@@ -197,7 +208,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true });
   });
 
-  app.put("/admin/blocos/planos/:id", ...base, somenteAdmin, async (req, res) => {
+  app.put("/admin/blocos/planos/:id", ...base, pode("blocos_config"), async (req, res) => {
     const p = lerPlano(req.body || {});
     if (p.erro) return res.status(400).json({ sucesso: false, erro: p.erro });
     const { error } = await supabase.from("blocos_planos").update(p.dados).eq("id", Number(req.params.id));
@@ -213,7 +224,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   /* ---------------------- CADASTRO DE BLOCOS ----------------------- */
-  app.post("/admin/blocos/faixa", ...base, somenteAdmin, async (req, res) => {
+  app.post("/admin/blocos/faixa", ...base, pode("blocos_cadastro"), async (req, res) => {
     const b = req.body || {};
     const { data, error } = await supabase.rpc("fpss_blocos_cadastrar_faixa", {
       p_inicio: idCartela(b.inicio),
@@ -226,7 +237,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, ...data });
   });
 
-  app.post("/admin/blocos/faixa/excluir", ...base, somenteAdmin, async (req, res) => {
+  app.post("/admin/blocos/faixa/excluir", ...base, pode("blocos_cadastro"), async (req, res) => {
     const b = req.body || {};
     const { data, error } = await supabase.rpc("fpss_blocos_excluir_faixa", {
       p_seq_inicio: parseInt(b.seq_inicio, 10),
@@ -328,7 +339,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   /* ------------------------- RESPONSÁVEIS -------------------------- */
   /* Blocos SEPARADOS (ainda não entregues), agrupados por quem vai receber.
      Usado pela aba "Separadas" para achar e confirmar a entrega na visita. */
-  app.get("/admin/blocos/separadas", ...base, async (req, res) => {
+  app.get("/admin/blocos/separadas", ...base, pode("blocos_separadas"), async (req, res) => {
     const busca = texto(req.query.busca, 60).toLowerCase();
     const { data, error } = await supabase
       .from("blocos_entregas")
@@ -435,7 +446,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, responsaveis: data || [] });
   });
 
-  app.put("/admin/blocos/responsaveis/:id", ...base, async (req, res) => {
+  app.put("/admin/blocos/responsaveis/:id", ...base, pode("blocos_responsaveis"), async (req, res) => {
     const b = req.body || {};
     const nome = texto(b.nome, 100);
     if (!nome) return res.status(400).json({ sucesso: false, erro: "Informe o nome." });
@@ -465,7 +476,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   // definir/corrigir o distribuidor (quem entregou) das entregas deste responsável
-  app.put("/admin/blocos/responsaveis/:id/distribuidor", ...base, async (req, res) => {
+  app.put("/admin/blocos/responsaveis/:id/distribuidor", ...base, pode("blocos_responsaveis"), async (req, res) => {
     const id = Number(req.params.id);
     const todas = req.body?.todas === true;
     const { data: dist } = await supabase.from("blocos_distribuidores").select("id, nome").eq("id", Number(req.body?.distribuidor_id)).maybeSingle();
@@ -574,7 +585,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   }
 
   /* ---------------------------- ENTREGA ---------------------------- */
-  app.post("/admin/blocos/entregar", ...base, async (req, res) => {
+  app.post("/admin/blocos/entregar", ...base, pode("blocos_entregar"), async (req, res) => {
     const b = req.body || {};
     const dEnt = lerDataEntrega(b.data_entrega);
     if (!dEnt.ok) return res.status(400).json({ sucesso: false, erro: "Data da entrega inválida (não pode ser futura)." });
@@ -649,7 +660,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   // confirmar a entrega de blocos que estavam só separados (visita feita)
-  app.post("/admin/blocos/separacoes/confirmar", ...base, async (req, res) => {
+  app.post("/admin/blocos/separacoes/confirmar", ...base, pode("blocos_separadas"), async (req, res) => {
     const b = req.body || {};
     const dEnt = lerDataEntrega(b.data_entrega);
     if (!dEnt.ok) return res.status(400).json({ sucesso: false, erro: "Data da entrega inválida (não pode ser futura)." });
@@ -679,7 +690,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   /* corrigir a data em que a entrega foi feita (entregas já lançadas) */
-  app.post("/admin/blocos/entregas/:id/data", ...base, async (req, res) => {
+  app.post("/admin/blocos/entregas/:id/data", ...base, pode("blocos_corrigir"), async (req, res) => {
     const d = lerDataEntrega(req.body?.data_entrega);
     if (!d.ok || req.body?.data_entrega === undefined || req.body?.data_entrega === "") {
       return res.status(400).json({ sucesso: false, erro: "Informe uma data de entrega válida (não pode ser futura)." });
@@ -704,7 +715,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   /* trocar o plano de uma entrega já lançada (ex.: lançaram como Pastorais, era Normal).
      Mantém assinatura, data, recibo e cartelas; muda plano, comissão e se cobra.
      Não permite se a entrega já tem acerto lançado (o valor devido mudaria) — desfaça o acerto antes. */
-  app.post("/admin/blocos/entregas/:id/plano", ...base, async (req, res) => {
+  app.post("/admin/blocos/entregas/:id/plano", ...base, pode("blocos_corrigir"), async (req, res) => {
     const id = Number(req.params.id);
     const { data: plano } = await supabase.from("blocos_planos").select("*").eq("id", Number(req.body?.plano_id)).eq("ativo", true).maybeSingle();
     if (!plano) return res.status(400).json({ sucesso: false, erro: "Escolha um plano válido." });
@@ -742,7 +753,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, alteradas: ids.length });
   });
 
-  app.post("/admin/blocos/entregas/:id/cancelar", ...base, async (req, res) => {
+  app.post("/admin/blocos/entregas/:id/cancelar", ...base, pode("blocos_corrigir"), async (req, res) => {
     const { data, error } = await supabase.rpc("fpss_blocos_cancelar_entrega", {
       p_entrega_id: Number(req.params.id), p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
     });
@@ -751,7 +762,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   /* ----------------------------- ACERTO ---------------------------- */
-  app.post("/admin/blocos/acertar", ...base, async (req, res) => {
+  app.post("/admin/blocos/acertar", ...base, pode("blocos_acertar"), async (req, res) => {
     const b = req.body || {};
     const itens = (Array.isArray(b.itens) ? b.itens : []).slice(0, 200).map(i => {
       const cartelas = {};
@@ -801,7 +812,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   /* cartelas dos blocos que já constam PAGAS no site (cruzamento com o Pix) */
-  app.post("/admin/blocos/cartelas-pagas", ...base, async (req, res) => {
+  app.post("/admin/blocos/cartelas-pagas", ...base, pode("blocos_acertar"), async (req, res) => {
     const numeros = [...new Set((Array.isArray(req.body?.numeros) ? req.body.numeros : [])
       .slice(0, 3000).map(n => parseInt(n, 10)).filter(Number.isFinite))];
     if (!numeros.length) return res.json({ sucesso: true, pagas: [] });
@@ -813,7 +824,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, pagas: data || [] });
   });
 
-  app.post("/admin/blocos/acertos/:id/desfazer", ...base, async (req, res) => {
+  app.post("/admin/blocos/acertos/:id/desfazer", ...base, pode("blocos_corrigir"), async (req, res) => {
     const { data, error } = await supabase.rpc("fpss_blocos_desfazer_acerto", {
       p_acerto_id: Number(req.params.id), p_lancador_id: req.lancador.id, p_lancador_nome: req.lancador.nome
     });
@@ -836,7 +847,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     return { dados: { nome, telefone: soDigitos(b.telefone).slice(0, 13) || null, ativo: b.ativo !== false } };
   }
 
-  app.post("/admin/blocos/distribuidores", ...base, somenteAdmin, async (req, res) => {
+  app.post("/admin/blocos/distribuidores", ...base, pode("blocos_cadastro"), async (req, res) => {
     const l = lerDistribuidor(req.body || {});
     if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
     const { error } = await supabase.from("blocos_distribuidores").insert(l.dados);
@@ -845,7 +856,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true });
   });
 
-  app.put("/admin/blocos/distribuidores/:id", ...base, somenteAdmin, async (req, res) => {
+  app.put("/admin/blocos/distribuidores/:id", ...base, pode("blocos_cadastro"), async (req, res) => {
     const l = lerDistribuidor(req.body || {});
     if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
     const { error } = await supabase.from("blocos_distribuidores").update(l.dados).eq("id", Number(req.params.id));
@@ -866,7 +877,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, comunidades: data || [] });
   });
 
-  app.get("/admin/blocos/comunidades/:id", ...base, async (req, res) => {
+  app.get("/admin/blocos/comunidades/:id", ...base, pode("blocos_comunidades"), async (req, res) => {
     const id = Number(req.params.id);
     const [{ data: c }, { data: resp }] = await Promise.all([
       supabase.from("blocos_resumo_comunidade").select("*").eq("id", id).maybeSingle(),
@@ -891,7 +902,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     return { dados };
   }
 
-  app.put("/admin/blocos/comunidades/:id", ...base, somenteAdmin, async (req, res) => {
+  app.put("/admin/blocos/comunidades/:id", ...base, pode("blocos_cadastro"), async (req, res) => {
     const l = lerComunidade(req.body || {});
     if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
     const id = Number(req.params.id);
@@ -904,7 +915,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true });
   });
 
-  app.post("/admin/blocos/comunidades", ...base, somenteAdmin, async (req, res) => {
+  app.post("/admin/blocos/comunidades", ...base, pode("blocos_cadastro"), async (req, res) => {
     const l = lerComunidade(req.body || {});
     if (l.erro) return res.status(400).json({ sucesso: false, erro: l.erro });
     const { data: ult } = await supabase.from("blocos_comunidades").select("ordem").order("ordem", { ascending: false }).limit(1);
@@ -916,7 +927,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   });
 
   /* ----------------------------- PAINEL ---------------------------- */
-  app.get("/admin/blocos/painel", ...base, async (req, res) => {
+  app.get("/admin/blocos/painel", ...base, pode("blocos_painel"), async (req, res) => {
     const { data, error } = await supabase.rpc("fpss_blocos_painel");
     if (error) return falha(res, error, "Erro ao carregar o painel.");
     res.json({ sucesso: true, ...data });
@@ -927,7 +938,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
      devolve o bloco, TODAS as entregas já lançadas nele (inclusive canceladas), quem lançou,
      quando, quem entregou, quem recebeu (nome, telefone, endereço, comunidade), assinatura,
      acertos e o histórico (cancelamentos etc.). */
-  app.get("/admin/blocos/localizar", ...base, async (req, res) => {
+  app.get("/admin/blocos/localizar", ...base, pode("blocos_localizar"), async (req, res) => {
     const termo = texto(req.query.q, 40).replace(/bloco/i, "").trim();
     if (!termo) return res.status(400).json({ sucesso: false, erro: "Digite o número da cartela (ex.: 24194-68) ou o sequencial do bloco." });
     let bloco = null, cartelaBuscada = null;
@@ -1006,7 +1017,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     });
   });
 
-  app.get("/admin/blocos/historico", ...base, async (req, res) => {
+  app.get("/admin/blocos/historico", ...base, pode("blocos_catalogo"), async (req, res) => {
     const limite = Math.min(500, parseInt(req.query.limite, 10) || 100);
     let q = supabase.from("blocos_historico").select("id, acao, descricao, lancador_nome, created_at")
       .order("created_at", { ascending: false }).limit(limite);

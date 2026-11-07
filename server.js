@@ -246,7 +246,38 @@ const PAGINAS_ADMIN = [
   { chave: "rel_blocos",       nome: "Relatório — Blocos (prestação de contas)", pagina: null },
   { chave: "rel_distribuicao", nome: "Relatório — Blocos (distribuição)",      pagina: null },
   { chave: "rel_origens",      nome: "Relatório — Origem das visitas",         pagina: null },
-  { chave: "rel_parceiros",    nome: "Relatório — Parceiros",                  pagina: null }
+  { chave: "rel_parceiros",    nome: "Relatório — Parceiros",                  pagina: null },
+
+  /* ===== FUNÇÕES dentro de uma tela (pai = tela). Aparecem recuadas em
+     Usuários → Perfis de acesso e no acesso personalizado.
+     padrao:true  = vale automaticamente enquanto ninguém marcou nenhuma
+     função daquela tela (mantém exatamente o acesso que já existia). ===== */
+  { chave: "blocos_entregar",     pai: "blocos", padrao: true,  nome: "Entregar blocos",                              pagina: null },
+  { chave: "blocos_separadas",    pai: "blocos", padrao: true,  nome: "Separadas (confirmar a visita)",               pagina: null },
+  { chave: "blocos_acertar",      pai: "blocos", padrao: true,  nome: "Acertar (prestação de contas)",                pagina: null },
+  { chave: "blocos_ficha",        pai: "blocos", padrao: true,  nome: "Ficha de quem recebeu",                        pagina: null },
+  { chave: "blocos_responsaveis", pai: "blocos", padrao: true,  nome: "Responsáveis (ver e editar dados)",            pagina: null },
+  { chave: "blocos_comunidades",  pai: "blocos", padrao: true,  nome: "Comunidades (planejado x entregue)",           pagina: null },
+  { chave: "blocos_localizar",    pai: "blocos", padrao: true,  nome: "Localizar bloco",                              pagina: null },
+  { chave: "blocos_painel",       pai: "blocos", padrao: true,  nome: "Painel",                                       pagina: null },
+  { chave: "blocos_catalogo",     pai: "blocos", padrao: true,  nome: "Blocos cadastrados, formulário de papel e histórico", pagina: null },
+  { chave: "blocos_corrigir",     pai: "blocos", padrao: true,  nome: "Corrigir lançamentos (trocar plano ou data, cancelar entrega, desfazer acerto)", pagina: null },
+  { chave: "blocos_cadastro",     pai: "blocos", padrao: false, nome: "Cadastrar faixas de blocos, distribuidores e planejado das comunidades", pagina: null },
+  { chave: "blocos_config",       pai: "blocos", padrao: false, nome: "Planos, preço e configuração dos blocos",      pagina: null },
+  { chave: "cartelas_exportar",   pai: "cartelas", padrao: true,  nome: "Exportar CSV",                               pagina: null },
+  { chave: "cartelas_conferir",   pai: "cartelas", padrao: true,  nome: "Conferir Pix pendentes",                     pagina: null },
+  { chave: "cartelas_cancelar",   pai: "cartelas", padrao: false, nome: "Cancelar venda (cartela volta a disponível)", pagina: null },
+  { chave: "cartelas_teste",      pai: "cartelas", padrao: false, nome: "Teste de pagamento R$ 0,01",                 pagina: null },
+  { chave: "produtos_cadastro",   pai: "produtos", padrao: true,  nome: "Cadastro de produtos e preços",              pagina: null },
+  { chave: "produtos_estoque",    pai: "produtos", padrao: true,  nome: "Controle de estoque",                        pagina: null },
+  { chave: "pedidos_verificar",   pai: "pedidos",  padrao: true,  nome: "Verificar pagamento do pedido",              pagina: null },
+  { chave: "lotes_criar",         pai: "lotes",    padrao: true,  nome: "Criar lote e importar cartelas",             pagina: null },
+  { chave: "lotes_ativar",        pai: "lotes",    padrao: true,  nome: "Ativar e desativar lote",                    pagina: null },
+  { chave: "caixas_fechar",       pai: "caixas",   padrao: true,  nome: "Fechar o caixa de outra pessoa",             pagina: null },
+  { chave: "vendedores_documentos", pai: "vendedores", padrao: true, nome: "Ver documentos do vendedor",              pagina: null },
+  { chave: "vendedores_excluir",  pai: "vendedores", padrao: true, nome: "Excluir vendedor",                          pagina: null },
+  { chave: "contatos_envio",      pai: "contatos", padrao: true,  nome: "Enviar avisos (marcar quem já recebeu)",     pagina: null },
+  { chave: "origens_links",       pai: "origens",  padrao: true,  nome: "Criar e excluir links de divulgação",        pagina: null }
 ];
 /* a tela "Relatórios" aparece para quem tem qualquer relatório liberado */
 const CHAVES_RELATORIOS = ["rel_caixa", "rel_pedidos", "rel_produtos", "rel_retirada", "rel_estoque", "rel_cartelas",
@@ -297,6 +328,21 @@ async function lerPerfisAcesso() {
   return dados;
 }
 
+/* Funções dentro das telas: sem a tela, sem a função. Se a tela está liberada e
+   NENHUMA função dela foi marcada, valem as funções "padrao" (o acesso que já
+   existia antes de as funções existirem). */
+function normalizarFuncoes(lista) {
+  const out = new Set(lista);
+  const funcoes = PAGINAS_ADMIN.filter(f => f.pai);
+  funcoes.forEach(f => { if (!out.has(f.pai)) out.delete(f.chave); });
+  new Set(funcoes.map(f => f.pai)).forEach(pai => {
+    if (!out.has(pai)) return;
+    const filhos = funcoes.filter(f => f.pai === pai);
+    if (!filhos.some(f => out.has(f.chave))) filhos.filter(f => f.padrao).forEach(f => out.add(f.chave));
+  });
+  return [...out];
+}
+
 /* telas liberadas para um usuário:
    - acesso personalizado (user_profiles.paginas_personalizadas) → exatamente essas;
    - senão as telas do perfil (+ "acesso_blocos" antigo, se marcado) */
@@ -305,12 +351,12 @@ async function paginasDoUsuario(perfil) {
   if (perfil.role === "admin") return CHAVES_PAGINAS.slice();
   if (!PAPEIS_EQUIPE.includes(perfil.role)) return [];
   if (Array.isArray(perfil.paginas_personalizadas)) {
-    return perfil.paginas_personalizadas.filter(k => CHAVES_PAGINAS.includes(k));
+    return normalizarFuncoes(perfil.paginas_personalizadas.filter(k => CHAVES_PAGINAS.includes(k)));
   }
   const perfis = await lerPerfisAcesso();
   const lista = (perfis[perfil.role] || []).slice();
   if (perfil.acesso_blocos === true && !lista.includes("blocos")) lista.push("blocos");
-  return lista;
+  return normalizarFuncoes(lista);
 }
 
 /* Fábrica de verificador.
@@ -1447,7 +1493,7 @@ app.get("/admin/produtos", exigirPagina("produtos"), async (req, res) => {
 /* =====================================================
    ADMIN PRODUTOS - CRIAR / ATUALIZAR
 ===================================================== */
-app.post("/admin/produtos", exigirPagina("produtos"), async (req, res) => {
+app.post("/admin/produtos", exigirPagina("produtos_cadastro"), async (req, res) => {
   
   try {
 
@@ -1612,7 +1658,7 @@ if (!resultado || resultado.error) {
 /* =====================================================
    ADMIN PRODUTOS - EXCLUIR
 ===================================================== */
-app.delete("/admin/produtos/:id", exigirPagina("produtos"), async (req, res) => {
+app.delete("/admin/produtos/:id", exigirPagina("produtos_cadastro"), async (req, res) => {
 
   try {
 
@@ -1706,7 +1752,7 @@ app.delete("/admin/produtos/:id", exigirPagina("produtos"), async (req, res) => 
 /* =====================================================
    ADMIN UPLOAD IMAGEM PRODUTO
 ===================================================== */
-app.post("/admin/upload-imagem", exigirPagina("produtos"), upload.single("imagem"), async (req, res) => {
+app.post("/admin/upload-imagem", exigirPagina("produtos_cadastro"), upload.single("imagem"), async (req, res) => {
   try {
 
     if (!req.file) {
@@ -2082,7 +2128,7 @@ app.get("/admin/perfis", verificarAdminBackend, async (req, res) => {
   PAPEIS_EQUIPE.forEach(p => { perfis[p] = { paginas: [], atualizado_em: null, atualizado_por: null }; });
   (data || []).forEach(r => {
     if (perfis[r.papel]) perfis[r.papel] = {
-      paginas: (r.paginas || []).filter(k => CHAVES_PAGINAS.includes(k)),
+      paginas: normalizarFuncoes((r.paginas || []).filter(k => CHAVES_PAGINAS.includes(k))),
       atualizado_em: r.atualizado_em,
       atualizado_por: r.atualizado_por
     };
@@ -3491,7 +3537,7 @@ app.get("/admin/cartelas", exigirPagina("cartelas"), async (req, res) => {
    paginação — todas as linhas que baterem com o filtro, não só a página
    visível na tela.
 ===================================================================== */
-app.get("/admin/cartelas/exportar", exigirPagina("cartelas"), async (req, res) => {
+app.get("/admin/cartelas/exportar", exigirPagina("cartelas_exportar"), async (req, res) => {
   try {
 
     const filtros = filtrosCartelasDaQuery(req.query);
@@ -3680,7 +3726,7 @@ app.get("/admin/lotes", exigirPagina("lotes"), async (req, res) => {
 });
 
 /* ===== CRIAR LOTE (só metadados — nenhuma cartela ainda) ===== */
-app.post("/admin/lotes", exigirPagina("lotes"), async (req, res) => {
+app.post("/admin/lotes", exigirPagina("lotes_criar"), async (req, res) => {
   try {
 
     const { chave, tipo, descricao, valor_centavos, quantidade_total } = req.body || {};
@@ -3740,7 +3786,7 @@ app.post("/admin/lotes", exigirPagina("lotes"), async (req, res) => {
 });
 
 /* ===== ATIVAR LOTE (desativa qualquer outro do mesmo tipo) ===== */
-app.post("/admin/lotes/:id/ativar", exigirPagina("lotes"), async (req, res) => {
+app.post("/admin/lotes/:id/ativar", exigirPagina("lotes_ativar"), async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -3780,7 +3826,7 @@ app.post("/admin/lotes/:id/ativar", exigirPagina("lotes"), async (req, res) => {
 });
 
 /* ===== DESATIVAR LOTE ===== */
-app.post("/admin/lotes/:id/desativar", exigirPagina("lotes"), async (req, res) => {
+app.post("/admin/lotes/:id/desativar", exigirPagina("lotes_ativar"), async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -3817,7 +3863,7 @@ app.post("/admin/lotes/:id/desativar", exigirPagina("lotes"), async (req, res) =
    A gravação é uma única inserção (todas as linhas de uma vez), que no
    Postgres é atômica: ou entra tudo, ou não entra nada.
 ===================================================================== */
-app.post("/admin/lotes/:id/importar", exigirPagina("lotes"), uploadPlanilha.single("planilha"), async (req, res) => {
+app.post("/admin/lotes/:id/importar", exigirPagina("lotes_criar"), uploadPlanilha.single("planilha"), async (req, res) => {
   try {
 
     const { id } = req.params;
@@ -3976,7 +4022,7 @@ async function conferirCartelasPendentes() {
    Liga R$ 0,01 para UM CPF por tempo limitado, para testar o Pix de
    ponta a ponta com a cartela oficial sem expor o preço ao público.
 ===================================================== */
-app.get("/admin/cartelas/teste-pix", verificarAdminBackend, async (req, res) => {
+app.get("/admin/cartelas/teste-pix", exigirPagina("cartelas_teste"), async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("cartelas_teste_pix").select("*").eq("id", 1).maybeSingle();
@@ -3997,7 +4043,7 @@ app.get("/admin/cartelas/teste-pix", verificarAdminBackend, async (req, res) => 
   }
 });
 
-app.post("/admin/cartelas/teste-pix", verificarAdminBackend, async (req, res) => {
+app.post("/admin/cartelas/teste-pix", exigirPagina("cartelas_teste"), async (req, res) => {
   try {
     const desligar = req.body && req.body.ativo === false;
     let cpf = limparCPF(req.body && req.body.cpf);
@@ -4039,7 +4085,7 @@ app.post("/admin/cartelas/teste-pix", verificarAdminBackend, async (req, res) =>
    Fica registro em cartelas_cancelamentos. NÃO devolve o Pix: se o
    pagamento foi real, a devolução é feita no app do banco.
 ===================================================== */
-app.post("/admin/cartelas/:id/cancelar-venda", verificarAdminBackend, async (req, res) => {
+app.post("/admin/cartelas/:id/cancelar-venda", exigirPagina("cartelas_cancelar"), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
@@ -4108,7 +4154,7 @@ app.post("/admin/cartelas/:id/cancelar-venda", verificarAdminBackend, async (req
   }
 });
 
-app.post("/admin/cartelas/conferir-pendentes", exigirPagina("cartelas"), async (req, res) => {
+app.post("/admin/cartelas/conferir-pendentes", exigirPagina("cartelas_conferir"), async (req, res) => {
   const r = await conferirCartelasPendentes();
   return res.status(r.sucesso ? 200 : 500).json(r);
 });

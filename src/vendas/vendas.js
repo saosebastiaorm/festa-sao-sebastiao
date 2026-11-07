@@ -865,7 +865,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* ----------------------- ADMIN: ESTOQUE ------------------------- */
-  app.get("/admin/estoque", exigirPagina("produtos"), async (req, res) => {
+  app.get("/admin/estoque", exigirPagina("produtos_estoque"), async (req, res) => {
     const { data, error } = await supabase
       .from("produtos")
       .select("id,codigo,nome,imagem,preco,ativo,estoque,estoque_fisico,estoque_minimo,exige_horario,ordem")
@@ -888,7 +888,7 @@ function registrarRotasVendas(app, deps) {
     });
   });
 
-  app.post("/admin/estoque/movimentar", exigirPagina("produtos"), async (req, res) => {
+  app.post("/admin/estoque/movimentar", exigirPagina("produtos_estoque"), async (req, res) => {
     const u = usuarioDaReq(req);
     const tipo = String(req.body?.tipo || "");
     const quantidade = Math.floor(Number(req.body?.quantidade));
@@ -908,7 +908,7 @@ function registrarRotasVendas(app, deps) {
     return res.json({ sucesso: true, resultado: data });
   });
 
-  app.get("/admin/estoque/historico", exigirPagina("produtos"), async (req, res) => {
+  app.get("/admin/estoque/historico", exigirPagina("produtos_estoque"), async (req, res) => {
     let consulta = supabase
       .from("estoque_movimentos")
       .select("id,produto_id,tipo,delta_disponivel,delta_fisico,disponivel_apos,fisico_apos,motivo,pedido_id,usuario_nome,created_at")
@@ -976,7 +976,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* administrador fecha o caixa de outra pessoa (operador esqueceu aberto, etc.) */
-  app.post("/admin/caixas/:id/fechar", exigirPagina("caixas"), async (req, res) => {
+  app.post("/admin/caixas/:id/fechar", exigirPagina("caixas_fechar"), async (req, res) => {
     const adm = usuarioDaReq(req);
     const { data: sessao } = await supabase.from("caixa_sessoes").select("*").eq("id", Number(req.params.id)).maybeSingle();
     if (!sessao) return res.status(404).json({ sucesso: false, erro: "Caixa não encontrado." });
@@ -1019,7 +1019,7 @@ function registrarRotasVendas(app, deps) {
   });
 
   /* ----------------------- ADMIN: PEDIDOS ------------------------- */
-  app.post("/admin/pedidos/:id/verificar-pagamento", exigirPagina("pedidos"), async (req, res) => {
+  app.post("/admin/pedidos/:id/verificar-pagamento", exigirPagina("pedidos_verificar"), async (req, res) => {
     const { data: pedido } = await supabase.from("pedidos").select("*").eq("id", Number(req.params.id)).maybeSingle();
     if (!pedido) return res.status(404).json({ sucesso: false, erro: "Pedido não encontrado." });
     if (!pedido.txid) return res.json({ sucesso: true, pago: pedido.status_pagamento === "pago", mensagem: "Pedido sem Pix." });
