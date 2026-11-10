@@ -833,10 +833,19 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
   app.get("/admin/blocos/acerto-pix", ...base, pode("blocos_acertar"), async (req, res) => {
     const responsavelId = Number(req.query?.responsavel_id);
     if (!Number.isInteger(responsavelId)) return res.json({ sucesso: true, pix: [] });
+    /* Pix desta pessoa ainda não lançados em acerto (últimas 24h): confere cada um no Sicredi,
+       porque o cliente pode ter pagado depois que a tela foi fechada. */
+    const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase.from("blocos_acerto_pix").select("*")
-      .eq("responsavel_id", responsavelId).eq("status", "pago").is("usado_em", null).order("id", { ascending: true });
+      .eq("responsavel_id", responsavelId).is("usado_em", null).gte("created_at", desde).order("id", { ascending: true });
     if (error) return res.json({ sucesso: true, pix: [] });
-    res.json({ sucesso: true, pix: (data || []).map(pixAcertoPublico) });
+    const lista = [];
+    for (const l of data || []) {
+      const atual = await conferirPixAcerto(l);
+      const pub = pixAcertoPublico(atual);
+      if (pub.pago || pub.status === "pendente") lista.push(pub);
+    }
+    res.json({ sucesso: true, pix: lista });
   });
 
   app.get("/admin/blocos/acerto-pix/:id", ...base, pode("blocos_acertar"), async (req, res) => {
