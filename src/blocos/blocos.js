@@ -798,7 +798,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     return {
       id: l.id, valor: Number(l.valor), status: expirado ? "expirado" : l.status, pago: l.status === "pago",
       pago_em: l.pago_em, valor_pago: l.valor_pago != null ? Number(l.valor_pago) : null,
-      e2e_id: l.e2e_id, usado: !!l.usado_em, pix_copia_cola: l.status === "pago" ? null : l.pix_copia_cola
+      e2e_id: l.e2e_id, usado: !!l.usado_em, selecao: Array.isArray(l.selecao) ? l.selecao : null, pix_copia_cola: l.status === "pago" ? null : l.pix_copia_cola
     };
   }
 
@@ -815,10 +815,26 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       if (!cobranca || !cobranca.txid || !cobranca.pixCopiaECola) {
         return res.status(502).json({ sucesso: false, erro: "Não foi possível gerar o Pix agora. Tente de novo." });
       }
-      const { data: linha, error } = await supabase.from("blocos_acerto_pix").insert({
+      /* blocos/cartelas marcados na tela quando o QR foi gerado: voltam sozinhos ao reabrir o acerto */
+      const selecao = (Array.isArray(req.body?.selecao) ? req.body.selecao : []).slice(0, 200).map(i => {
+        const cartelas = {};
+        Object.entries(i?.cartelas || {}).slice(0, 1000).forEach(([n, st]) => {
+          const num = parseInt(n, 10);
+          if (Number.isFinite(num) && ["vendida", "devolvida", "com_responsavel"].includes(st)) cartelas[num] = st;
+        });
+        const item = { entrega_id: Number(i?.entrega_id), cartelas };
+        if (typeof i?.bonus_usado === "boolean") item.bonus_usado = i.bonus_usado;
+        return item;
+      }).filter(i => Number.isFinite(i.entrega_id) && Object.keys(i.cartelas).length);
+      const registro = {
         responsavel_id: responsavelId, valor, txid: cobranca.txid, pix_copia_cola: cobranca.pixCopiaECola,
         criado_por_id: req.lancador.id, criado_por_nome: req.lancador.nome
-      }).select("*").single();
+      };
+      let { data: linha, error } = await supabase.from("blocos_acerto_pix").insert({ ...registro, selecao: selecao.length ? selecao : null }).select("*").single();
+      if (error && /selecao/i.test(error.message || "")) {
+        /* coluna nova ainda não criada (SQL 2026-11-10): grava sem a seleção */
+        ({ data: linha, error } = await supabase.from("blocos_acerto_pix").insert(registro).select("*").single());
+      }
       if (error) {
         console.error("[BLOCOS] gravar Pix do acerto:", error.message);
         return res.status(500).json({ sucesso: false, erro: "Pix gerado, mas não foi possível registrar (rode o SQL 2026-11-10-acerto-pix)." });

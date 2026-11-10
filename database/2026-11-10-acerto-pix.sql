@@ -25,4 +25,7 @@ create table if not exists public.blocos_acerto_pix (
 create index if not exists blocos_acerto_pix_resp_idx on public.blocos_acerto_pix (responsavel_id, created_at desc);
 alter table public.blocos_acerto_pix enable row level security;
 
+-- seleção de blocos/cartelas feita no momento de gerar o QR (volta sozinha ao reabrir o acerto)
+alter table public.blocos_acerto_pix add column if not exists selecao jsonb;
+
 select 'blocos_acerto_pix' as tabela, count(*) as linhas from public.blocos_acerto_pix;
