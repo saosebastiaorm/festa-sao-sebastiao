@@ -76,7 +76,7 @@ function idCartela(v) {
   return NaN;
 }
 
-function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS }) {
+function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS, criarPix, consultarPix }) {
 
   const papeisValidos = PAPEIS_VALIDOS || ["admin", "padrao", "voluntario"];
 
@@ -522,8 +522,8 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     try {
       const acIds = (acertos || []).map(a => a.id);
       if (acIds.length) {
-        const { data: pgs, error: ep } = await supabase.from("blocos_acerto_pagamentos").select("acerto_id, forma, valor").in("acerto_id", acIds);
-        if (!ep) (pgs || []).forEach(p => { (pagamentosPorAcerto[p.acerto_id] = pagamentosPorAcerto[p.acerto_id] || []).push({ forma: p.forma, valor: Number(p.valor) }); });
+        const { data: pgs, error: ep } = await supabase.from("blocos_acerto_pagamentos").select("acerto_id, forma, valor, detalhe").in("acerto_id", acIds);
+        if (!ep) (pgs || []).forEach(p => { (pagamentosPorAcerto[p.acerto_id] = pagamentosPorAcerto[p.acerto_id] || []).push({ forma: p.forma, valor: Number(p.valor), comprovado: !!(p.detalhe && p.detalhe.pix_txid) }); });
       }
     } catch (e) { /* ignora */ }
 
@@ -767,6 +767,90 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     res.json({ sucesso: true, ...data });
   });
 
+  /* ------------------- PIX COM QR CODE NO ACERTO -------------------- */
+  /* SQL: database/2026-11-10-acerto-pix.sql */
+  async function liberarPixAcerto(lista) {
+    for (const x of lista || []) {
+      await supabase.from("blocos_acerto_pix").update({ usado_em: null }).eq("id", x.id);
+    }
+  }
+
+  /* consulta o Sicredi e, se CONCLUIDA, grava como pago. Devolve a linha atualizada. */
+  async function conferirPixAcerto(linha) {
+    if (linha.status === "pago") return linha;
+    try {
+      const pg = await consultarPix(linha.txid);
+      if (pg && pg.status === "CONCLUIDA") {
+        const pix0 = Array.isArray(pg.pix) && pg.pix[0] ? pg.pix[0] : {};
+        const valorPago = arred(pix0.valor ?? pg.valor?.original ?? linha.valor);
+        const upd = { status: "pago", pago_em: pix0.horario || new Date().toISOString(), e2e_id: pix0.endToEndId || null, valor_pago: valorPago };
+        const { data } = await supabase.from("blocos_acerto_pix").update(upd).eq("id", linha.id).select("*").maybeSingle();
+        return data || { ...linha, ...upd };
+      }
+    } catch (e) {
+      console.error("[BLOCOS] consultar Pix do acerto:", linha.txid, e.message);
+    }
+    return linha;
+  }
+
+  function pixAcertoPublico(l) {
+    const expirado = l.status !== "pago" && Date.now() - new Date(l.created_at).getTime() > 31 * 60 * 1000;
+    return {
+      id: l.id, valor: Number(l.valor), status: expirado ? "expirado" : l.status, pago: l.status === "pago",
+      pago_em: l.pago_em, valor_pago: l.valor_pago != null ? Number(l.valor_pago) : null,
+      e2e_id: l.e2e_id, usado: !!l.usado_em, pix_copia_cola: l.status === "pago" ? null : l.pix_copia_cola
+    };
+  }
+
+  app.post("/admin/blocos/acerto-pix", ...base, pode("blocos_acertar"), async (req, res) => {
+    try {
+      if (!criarPix || !consultarPix) return res.status(503).json({ sucesso: false, erro: "Pix indisponível neste servidor." });
+      const responsavelId = Number(req.body?.responsavel_id);
+      const valor = arred(String(req.body?.valor ?? 0).replace(",", "."));
+      if (!Number.isInteger(responsavelId)) return res.status(400).json({ sucesso: false, erro: "Escolha a pessoa do acerto." });
+      if (!(valor >= 1 && valor <= 50000)) return res.status(400).json({ sucesso: false, erro: "Informe um valor de Pix entre R$ 1,00 e R$ 50.000,00." });
+      const { data: resp } = await supabase.from("blocos_responsaveis").select("id,nome").eq("id", responsavelId).maybeSingle();
+      if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
+      const cobranca = await criarPix(valor, null, null, { expiracao: 1800, descricao: "FPSS 2027 - Acerto de blocos" });
+      if (!cobranca || !cobranca.txid || !cobranca.pixCopiaECola) {
+        return res.status(502).json({ sucesso: false, erro: "Não foi possível gerar o Pix agora. Tente de novo." });
+      }
+      const { data: linha, error } = await supabase.from("blocos_acerto_pix").insert({
+        responsavel_id: responsavelId, valor, txid: cobranca.txid, pix_copia_cola: cobranca.pixCopiaECola,
+        criado_por_id: req.lancador.id, criado_por_nome: req.lancador.nome
+      }).select("*").single();
+      if (error) {
+        console.error("[BLOCOS] gravar Pix do acerto:", error.message);
+        return res.status(500).json({ sucesso: false, erro: "Pix gerado, mas não foi possível registrar (rode o SQL 2026-11-10-acerto-pix)." });
+      }
+      res.json({ sucesso: true, pix: { ...pixAcertoPublico(linha), pix_copia_cola: linha.pix_copia_cola } });
+    } catch (e) {
+      console.error("[BLOCOS] criar Pix do acerto:", e);
+      res.status(500).json({ sucesso: false, erro: "Erro ao gerar o Pix." });
+    }
+  });
+
+  app.get("/admin/blocos/acerto-pix", ...base, pode("blocos_acertar"), async (req, res) => {
+    const responsavelId = Number(req.query?.responsavel_id);
+    if (!Number.isInteger(responsavelId)) return res.json({ sucesso: true, pix: [] });
+    const { data, error } = await supabase.from("blocos_acerto_pix").select("*")
+      .eq("responsavel_id", responsavelId).eq("status", "pago").is("usado_em", null).order("id", { ascending: true });
+    if (error) return res.json({ sucesso: true, pix: [] });
+    res.json({ sucesso: true, pix: (data || []).map(pixAcertoPublico) });
+  });
+
+  app.get("/admin/blocos/acerto-pix/:id", ...base, pode("blocos_acertar"), async (req, res) => {
+    try {
+      const { data: linha } = await supabase.from("blocos_acerto_pix").select("*").eq("id", Number(req.params.id)).maybeSingle();
+      if (!linha) return res.status(404).json({ sucesso: false, erro: "Pix não encontrado." });
+      const atual = await conferirPixAcerto(linha);
+      res.json({ sucesso: true, pix: pixAcertoPublico(atual) });
+    } catch (e) {
+      console.error("[BLOCOS] status Pix do acerto:", e);
+      res.status(500).json({ sucesso: false, erro: "Erro ao conferir o Pix." });
+    }
+  });
+
   /* ----------------------------- ACERTO ---------------------------- */
   app.post("/admin/blocos/acertar", ...base, pode("blocos_acertar"), async (req, res) => {
     const b = req.body || {};
@@ -790,7 +874,27 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
         if (!(valor > 0)) continue;
         if (!formasPag.includes(p?.forma)) return res.status(400).json({ sucesso: false, erro: "Forma de pagamento inválida." });
         const det = Array.isArray(p?.detalhe) ? p.detalhe.slice(0, 500).map(n => Number(n)).filter(Number.isFinite) : null;
-        pagamentos.push({ forma: p.forma, valor, detalhe: det && det.length ? { cartelas: det } : null });
+        const pixId = p?.forma === "pix" && p?.pix_id ? Number(p.pix_id) : null;
+        if (p?.pix_id && !Number.isInteger(pixId)) return res.status(400).json({ sucesso: false, erro: "Pix comprovado inválido." });
+        pagamentos.push({ forma: p.forma, valor, detalhe: det && det.length ? { cartelas: det } : null, pix_id: pixId });
+      }
+    }
+    /* Pix gerado pelo QR Code do acerto: só vale se o Sicredi confirmou, é desta pessoa e ainda não foi usado.
+       O valor que conta é o da cobrança paga (nunca o que veio do navegador). */
+    const pixUsados = [];
+    if (pagamentos) {
+      for (const p of pagamentos.filter(x => x.pix_id)) {
+        if (pixUsados.some(u => u.id === p.pix_id)) { await liberarPixAcerto(pixUsados); return res.status(400).json({ sucesso: false, erro: "O mesmo Pix foi informado duas vezes." }); }
+        const { data: linha } = await supabase.from("blocos_acerto_pix").select("*").eq("id", p.pix_id).maybeSingle();
+        if (!linha || Number(linha.responsavel_id) !== Number(b.responsavel_id)) { await liberarPixAcerto(pixUsados); return res.status(400).json({ sucesso: false, erro: "Pix do acerto não encontrado para esta pessoa." }); }
+        const conf = await conferirPixAcerto(linha);
+        if (conf.status !== "pago") { await liberarPixAcerto(pixUsados); return res.status(400).json({ sucesso: false, erro: `O Pix de ${arred(linha.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} ainda não foi confirmado pelo banco.` }); }
+        const { data: reservado } = await supabase.from("blocos_acerto_pix")
+          .update({ usado_em: new Date().toISOString() }).eq("id", linha.id).is("usado_em", null).select("id").maybeSingle();
+        if (!reservado) { await liberarPixAcerto(pixUsados); return res.status(409).json({ sucesso: false, erro: "Este Pix já foi usado em outro acerto." }); }
+        pixUsados.push(conf);
+        p.valor = arred(conf.valor_pago ?? conf.valor);
+        p.detalhe = { pix_txid: conf.txid, pix_e2e: conf.e2e_id || null, pix_pago_em: conf.pago_em || null, pix_id: conf.id };
       }
     }
     const valorPago = pagamentos
@@ -804,7 +908,10 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
       p_lancador_id: req.lancador.id,
       p_lancador_nome: req.lancador.nome
     });
-    if (error) return falha(res, error, "Erro ao registrar o acerto.", 409);
+    if (error) { await liberarPixAcerto(pixUsados); return falha(res, error, "Erro ao registrar o acerto.", 409); }
+    if (pixUsados.length) {
+      await supabase.from("blocos_acerto_pix").update({ acerto_id: data.acerto_id }).in("id", pixUsados.map(x => x.id));
+    }
     let aviso = null;
     if (pagamentos && pagamentos.length) {
       const { error: ep } = await supabase.from("blocos_acerto_pagamentos")

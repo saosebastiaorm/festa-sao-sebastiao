@@ -12,6 +12,8 @@
    verificar-pagamento, retirada, painel do cliente).
 ===================================================================== */
 
+const lotesProduto = require("./lotes-produto");
+
 const TERMO_VERSAO = "2026-10-04";
 const MAX_QTD_ITEM = 100;
 const MAX_ITENS_DIFERENTES = 30;
@@ -68,6 +70,15 @@ async function montarItensDoCarrinho(supabase, itensBrutos, { conferirEstoque = 
 
   if (error) return { erro: "Erro ao conferir os produtos.", status: 500 };
 
+  /* lotes de preço (só produtos que têm lotes ativos) */
+  let lotesPorProduto = new Map();
+  try {
+    lotesPorProduto = await lotesProduto.carregarLotes(supabase, (produtos || []).map(p => p.id));
+  } catch (e) {
+    console.error("[LOTES]", e.message);
+    return { erro: "Erro ao conferir os preços. Tente novamente.", status: 500 };
+  }
+
   const itens = [];
   for (const codigo of codigos) {
     const produto = (produtos || []).find(p => p.codigo === codigo);
@@ -89,17 +100,42 @@ async function montarItensDoCarrinho(supabase, itensBrutos, { conferirEstoque = 
       };
     }
 
-    itens.push({
+    const base = {
       produto_id: produto.id,
       produto_codigo: produto.codigo,
       produto_nome: produto.nome,
-      preco_unitario: arred(produto.preco),
-      quantidade: qtd,
       exige_horario: produto.exige_horario === true,
       horario_retirada: produto.exige_horario === true ? (horarioPorCodigo.get(produto.codigo) || null) : null,
       imagem: produto.imagem || null,
       descricao: produto.descricao || null
-    });
+    };
+
+    const lotes = lotesPorProduto.get(produto.id);
+    if (lotes && lotes.length) {
+      /* produto com lotes: preço vem do lote vigente; compra grande divide em 2+ linhas */
+      if (!lotes.some(l => l.vigente)) {
+        return { erro: `${produto.nome}: vendas indisponíveis no momento (nenhum lote aberto).`, esgotado: produto.codigo };
+      }
+      const { faixas, faltou } = lotesProduto.alocarQuantidade(lotes, qtd);
+      if (faltou > 0) {
+        const restam = qtd - faltou;
+        return {
+          erro: `Restam apenas ${restam} unidade(s) de ${produto.nome} nos lotes abertos.`,
+          esgotado: produto.codigo
+        };
+      }
+      for (const f of faixas) {
+        itens.push({
+          ...base,
+          preco_unitario: arred(f.lote.preco),
+          quantidade: f.quantidade,
+          lote_id: f.lote.id,
+          lote_nome: f.lote.nome
+        });
+      }
+    } else {
+      itens.push({ ...base, preco_unitario: arred(produto.preco), quantidade: qtd });
+    }
   }
 
   const total = arred(itens.reduce((s, i) => s + i.preco_unitario * i.quantidade, 0));
@@ -124,14 +160,50 @@ function cpfValido(cpf) {
 /* Na venda do caixa: vai ficar item pendente? (entregar < comprado) */
 function vendaTemPendencia(itens, entregar) {
   if (!Array.isArray(entregar)) return false; // sem lista = entrega tudo
-  return itens.some(i => {
-    const e = entregar.find(x => String(x?.codigo || "").trim().toUpperCase() === i.produto_codigo);
-    return !e || intPos(e.quantidade) < i.quantidade;
+  /* soma por produto (um produto pode ter 2 linhas, de lotes diferentes) */
+  const compradoPor = new Map();
+  for (const i of itens) compradoPor.set(i.produto_codigo, (compradoPor.get(i.produto_codigo) || 0) + i.quantidade);
+  return [...compradoPor.entries()].some(([codigo, comprado]) => {
+    const e = entregar.find(x => String(x?.codigo || "").trim().toUpperCase() === codigo);
+    return !e || intPos(e.quantidade) < comprado;
   });
 }
 
+/* Se todos os itens são do mesmo produto, devolve a primeira linha; senão null */
+function itemUnico(itens) {
+  if (!itens || !itens.length) return null;
+  return itens.every(i => i.produto_codigo === itens[0].produto_codigo) ? itens[0] : null;
+}
+
+/* Produto como o site/caixa mostram: preço = lote atual; `lotes` = lotes abertos (para somar totais) */
+function produtoComLotes(p, lotes) {
+  const base = { ...p, disponivel: Math.max(Number(p.estoque || 0), 0), esgotado: Number(p.estoque || 0) <= 0 };
+  if (!lotes || !lotes.length) return base;
+  const atual = lotesProduto.loteAtual(lotes);
+  if (!atual) return { ...base, tem_lotes: true, lotes: [], lote_atual: null, esgotado: true, sem_lote: true };
+  const abertos = lotes.filter(l => l.vigente).map(lotesProduto.lotePublico);
+  const saldo = lotesProduto.saldoTotal(lotes);
+  const disponivel = Math.min(base.disponivel, saldo === Infinity ? base.disponivel : saldo);
+  return {
+    ...base,
+    preco: atual.preco,
+    tem_lotes: true,
+    lote_atual: lotesProduto.lotePublico(atual),
+    lotes: abertos,
+    disponivel,
+    esgotado: base.esgotado || disponivel <= 0
+  };
+}
+
 function resumoItensTexto(itens) {
-  return (itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(" + ");
+  const por = new Map();
+  for (const i of itens || []) {
+    const k = i.produto_codigo || i.produto_nome;
+    const atual = por.get(k) || { nome: i.produto_nome, quantidade: 0 };
+    atual.quantidade += i.quantidade;
+    por.set(k, atual);
+  }
+  return [...por.values()].map(i => `${i.quantidade}x ${i.nome}`).join(" + ");
 }
 
 function itensParaSql(itens) {
@@ -175,6 +247,7 @@ async function criarPedidoComItens(supabase, pedido, itens, prefixo, pagamentos)
     return { erro: "Erro ao salvar pedido." };
   }
   await gravarTipoCartao(supabase, data.id, pagamentos);
+  await lotesProduto.gravarLotesNosItens(supabase, data.id, itens);
   return { id: data.id, codigo_pedido: data.codigo_pedido };
 }
 
@@ -188,7 +261,7 @@ async function anexarItens(supabase, pedidos, { comEntregas = false } = {}) {
 
   const { data: itens } = await supabase
     .from("pedido_itens")
-    .select("id,pedido_id,produto_id,produto_codigo,produto_nome,preco_unitario,quantidade,quantidade_entregue,exige_horario,horario_retirada")
+    .select("id,pedido_id,produto_id,produto_codigo,produto_nome,preco_unitario,quantidade,quantidade_entregue,exige_horario,horario_retirada,lote_id,lote_nome")
     .in("pedido_id", ids)
     .order("id", { ascending: true });
 
@@ -556,6 +629,7 @@ function registrarRotasVendas(app, deps) {
   }
 
   /* ----------------------- CAIXA: PRODUTOS ------------------------ */
+  function comLotesPublico(p, lotes) { return produtoComLotes(p, lotes); }
   app.get("/caixa/produtos", ...acessoCaixa, async (req, res) => {
     const { data, error } = await supabase
       .from("produtos")
@@ -563,9 +637,12 @@ function registrarRotasVendas(app, deps) {
       .eq("ativo", true)
       .order("ordem", { ascending: true });
     if (error) return res.status(500).json({ sucesso: false, erro: "Erro ao carregar produtos." });
+    let lotesMapa = new Map();
+    try { lotesMapa = await lotesProduto.carregarLotes(supabase, (data || []).map(p => p.id)); }
+    catch (e) { console.error("[LOTES]", e.message); }
     return res.json({
       sucesso: true,
-      produtos: (data || []).map(p => ({ ...p, disponivel: Number(p.estoque || 0), esgotado: Number(p.estoque || 0) <= 0 }))
+      produtos: (data || []).map(p => comLotesPublico(p, lotesMapa.get(p.id)))
     });
   });
 
@@ -720,7 +797,7 @@ function registrarRotasVendas(app, deps) {
         sobrenome: "",
         cpf: cpfValido(cpfCliente) ? cpfCliente : null,
         telefone: telefoneCliente.length >= 10 ? telefoneCliente : null,
-        produto_tipo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
+        produto_tipo: itemUnico(itens) ? itens[0].produto_codigo : "MIX",
         quantidade: quantidadeTotal,
         valor_total: total,
         txid: pagamento ? pagamento.txid : null,
@@ -788,11 +865,16 @@ function registrarRotasVendas(app, deps) {
     if (entregarPorCod === null) {
       lista = (itensPedido || []).map(i => ({ item_id: i.id, quantidade: i.quantidade - i.quantidade_entregue }));
     } else {
-      lista = entregarPorCod.map(e => {
-        const item = (itensPedido || []).find(i => i.produto_codigo === e.codigo);
-        if (!item) return null;
-        return { item_id: item.id, quantidade: Math.min(e.quantidade, item.quantidade - item.quantidade_entregue) };
-      }).filter(Boolean);
+      /* um produto pode ter 2 linhas (lotes): entrega preenchendo uma linha de cada vez */
+      lista = [];
+      for (const e of entregarPorCod) {
+        let falta = e.quantidade;
+        for (const item of (itensPedido || []).filter(i => i.produto_codigo === e.codigo)) {
+          if (falta <= 0) break;
+          const q = Math.min(falta, item.quantidade - item.quantidade_entregue);
+          if (q > 0) { lista.push({ item_id: item.id, quantidade: q }); falta -= q; }
+        }
+      }
     }
     lista = lista.filter(i => i.quantidade > 0);
     if (!lista.length) return { status_retirada: "pendente", entregue_agora: 0 };
@@ -1059,6 +1141,8 @@ module.exports = {
   TERMO_VERSAO,
   arred,
   montarItensDoCarrinho,
+  itemUnico,
+  produtoComLotes,
   criarPedidoComItens,
   resumoItensTexto,
   anexarItens,

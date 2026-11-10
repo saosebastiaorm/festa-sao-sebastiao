@@ -799,9 +799,11 @@ app.post("/criar-pix", limitadorPix, async (req, res) => {
     const exigeHorario = itensComHorario.length > 0;
     const horario = !exigeHorario
       ? null
-      : itensComHorario.length === 1
+      : new Set(itensComHorario.map(i => i.produto_codigo)).size === 1
         ? itensComHorario[0].horario_retirada
-        : itensComHorario.map(i => `${i.produto_nome} ${i.horario_retirada}`).join(" · ");
+        : itensComHorario
+            .filter((i, k, arr) => arr.findIndex(x => x.produto_codigo === i.produto_codigo) === k)
+            .map(i => `${i.produto_nome} ${i.horario_retirada}`).join(" · ");
 
     /* SICREDI PIX (valor calculado aqui, com os preços do banco) */
     const cobranca = await criarPix(total, `${nome} ${sobrenome || ""}`.trim(), cpfLimpo);
@@ -810,7 +812,8 @@ app.post("/criar-pix", limitadorPix, async (req, res) => {
       return res.status(502).json({ sucesso: false, erro: "Não foi possível gerar o Pix agora. Tente novamente." });
     }
 
-    const prefixo = itens.length === 1 ? itens[0].produto_codigo : "P";
+    const unico = vendas.itemUnico(itens);
+    const prefixo = unico ? unico.produto_codigo : "P";
 
     const criado = await vendas.criarPedidoComItens(supabase, {
       nome,
@@ -818,9 +821,9 @@ app.post("/criar-pix", limitadorPix, async (req, res) => {
       cpf: cpfLimpo,
       telefone: telefoneLimpo || "nao informado",
       email: email ? sanitizarTexto(email, 150) : null,
-      produto_tipo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
+      produto_tipo: unico ? unico.produto_codigo : "MIX",
       quantidade: quantidadeTotal,
-      valor_unitario: itens.length === 1 ? itens[0].preco_unitario : null,
+      valor_unitario: unico && itens.every(i => i.preco_unitario === unico.preco_unitario) ? unico.preco_unitario : null,
       horario_retirada: exigeHorario ? horario : null,
       valor_total: total,
       txid: cobranca.txid,
@@ -852,17 +855,18 @@ app.post("/criar-pix", limitadorPix, async (req, res) => {
         preco_unitario: i.preco_unitario,
         imagem: i.imagem,
         exige_horario: i.exige_horario,
-        horario_retirada: i.horario_retirada || null
+        horario_retirada: i.horario_retirada || null,
+        lote: i.lote_nome || null
       })),
       horario_retirada: exigeHorario ? horario : null,
 
       /* campos do formato antigo (telas que mostram 1 produto) */
-      produto_tipo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
-      produto_codigo: itens.length === 1 ? itens[0].produto_codigo : "MIX",
-      produto_nome: itens.length === 1 ? itens[0].produto_nome : resumo,
+      produto_tipo: unico ? unico.produto_codigo : "MIX",
+      produto_codigo: unico ? unico.produto_codigo : "MIX",
+      produto_nome: unico ? unico.produto_nome : resumo,
       produto_imagem: itens[0].imagem,
-      produto_descricao: itens.length === 1 ? itens[0].descricao : resumo,
-      produto_preco_unitario: itens.length === 1 ? itens[0].preco_unitario : total,
+      produto_descricao: unico ? unico.descricao : resumo,
+      produto_preco_unitario: unico ? (itens.length === 1 ? unico.preco_unitario : arred2(total / quantidadeTotal)) : total,
       quantidade: quantidadeTotal,
       total,
       pix_copia_cola: cobranca.pixCopiaECola,
@@ -1379,6 +1383,76 @@ app.get("/admin/pedidos", exigirPagina("pedidos"), async (req, res) => {
 /* =====================================================
    PRODUTOS - LISTAR TODOS ATIVOS
 ===================================================== */
+const lotesProdutoMod = require("./src/vendas/lotes-produto");
+const arred2 = v => Math.round(Number(v || 0) * 100) / 100;
+
+/* =====================================================
+   ADMIN - LOTES DE PREÇO DO PRODUTO
+   (nome, preço, limite de quantidade e data "válido até")
+===================================================== */
+function lerCorpoLote(body) {
+  const nome = sanitizarTexto(body?.nome, 60);
+  const preco = Number(String(body?.preco ?? "").replace(",", "."));
+  const limiteBruto = body?.quantidade_limite;
+  const limite = limiteBruto === null || limiteBruto === undefined || limiteBruto === "" ? null : Math.floor(Number(limiteBruto));
+  const validoAte = body?.valido_ate ? String(body.valido_ate).slice(0, 10) : null;
+  const ordem = Number.isFinite(Number(body?.ordem)) ? Math.floor(Number(body.ordem)) : 0;
+  if (!nome) return { erro: "Informe o nome do lote (ex.: 1º lote)." };
+  if (!Number.isFinite(preco) || preco < 0 || preco > 100000) return { erro: "Preço do lote inválido." };
+  if (limite !== null && (!Number.isFinite(limite) || limite <= 0)) return { erro: "O limite de quantidade deve ser maior que zero (ou deixe em branco)." };
+  if (validoAte && !/^\d{4}-\d{2}-\d{2}$/.test(validoAte)) return { erro: "Data inválida." };
+  return { valores: { nome, preco: Math.round(preco * 100) / 100, quantidade_limite: limite, valido_ate: validoAte, ordem, ativo: body?.ativo !== false } };
+}
+
+app.get("/admin/produtos/:id/lotes", exigirPagina("produtos"), async (req, res) => {
+  try {
+    const produtoId = Number(req.params.id);
+    if (!Number.isInteger(produtoId)) return res.status(400).json({ sucesso: false, erro: "Produto inválido." });
+    const mapa = await lotesProdutoMod.carregarLotes(supabase, [produtoId], { incluirInativos: true });
+    const lotes = mapa.get(produtoId) || [];
+    const atual = lotesProdutoMod.loteAtual(lotes);
+    return res.json({ sucesso: true, lotes, lote_atual_id: atual ? atual.id : null, hoje: lotesProdutoMod.hojeLocal() });
+  } catch (e) {
+    console.error("[LOTES] listar:", e.message);
+    return res.status(500).json({ sucesso: false, erro: "Erro ao carregar os lotes." });
+  }
+});
+
+app.post("/admin/produtos/:id/lotes", exigirPagina("produtos_cadastro"), async (req, res) => {
+  const produtoId = Number(req.params.id);
+  if (!Number.isInteger(produtoId)) return res.status(400).json({ sucesso: false, erro: "Produto inválido." });
+  const lido = lerCorpoLote(req.body);
+  if (lido.erro) return res.status(400).json({ sucesso: false, erro: lido.erro });
+  const { data, error } = await supabase.from("produto_lotes").insert({ ...lido.valores, produto_id: produtoId }).select().single();
+  if (error) { console.error("[LOTES] criar:", error.message); return res.status(500).json({ sucesso: false, erro: "Erro ao criar o lote." }); }
+  return res.json({ sucesso: true, lote: data });
+});
+
+app.put("/admin/produtos/:id/lotes/:loteId", exigirPagina("produtos_cadastro"), async (req, res) => {
+  const produtoId = Number(req.params.id);
+  const loteId = Number(req.params.loteId);
+  if (!Number.isInteger(produtoId) || !Number.isInteger(loteId)) return res.status(400).json({ sucesso: false, erro: "Lote inválido." });
+  const lido = lerCorpoLote(req.body);
+  if (lido.erro) return res.status(400).json({ sucesso: false, erro: lido.erro });
+  const { data, error } = await supabase.from("produto_lotes")
+    .update({ ...lido.valores, updated_at: new Date().toISOString() })
+    .eq("id", loteId).eq("produto_id", produtoId).select().single();
+  if (error) { console.error("[LOTES] editar:", error.message); return res.status(500).json({ sucesso: false, erro: "Erro ao salvar o lote." }); }
+  return res.json({ sucesso: true, lote: data });
+});
+
+/* só apaga lote que ainda não vendeu; senão, desative */
+app.delete("/admin/produtos/:id/lotes/:loteId", exigirPagina("produtos_cadastro"), async (req, res) => {
+  const produtoId = Number(req.params.id);
+  const loteId = Number(req.params.loteId);
+  if (!Number.isInteger(produtoId) || !Number.isInteger(loteId)) return res.status(400).json({ sucesso: false, erro: "Lote inválido." });
+  const { count } = await supabase.from("pedido_itens").select("id", { count: "exact", head: true }).eq("lote_id", loteId);
+  if (count > 0) return res.status(400).json({ sucesso: false, erro: "Este lote já tem vendas. Desative em vez de excluir." });
+  const { error } = await supabase.from("produto_lotes").delete().eq("id", loteId).eq("produto_id", produtoId);
+  if (error) return res.status(500).json({ sucesso: false, erro: "Erro ao excluir o lote." });
+  return res.json({ sucesso: true });
+});
+
 app.get("/produtos", async (req, res) => {
   try {
 
@@ -1395,11 +1469,12 @@ app.get("/produtos", async (req, res) => {
       });
     }
 
-    const produtosPublicos = (data || []).map(p => ({
-      ...p,
-      disponivel: Math.max(Number(p.estoque || 0), 0),
-      esgotado: Number(p.estoque || 0) <= 0
-    }));
+    let lotesMapa = new Map();
+    try {
+      lotesMapa = await lotesProdutoMod.carregarLotes(supabase, (data || []).map(p => p.id));
+    } catch (e) { console.error("[LOTES]", e.message); }
+
+    const produtosPublicos = (data || []).map(p => vendas.produtoComLotes(p, lotesMapa.get(p.id)));
 
     return res.json({
       sucesso: true,
@@ -4177,7 +4252,7 @@ vendas.registrarRotasVendas(app, {
 /* =====================================================
    DISTRIBUIÇÃO DE BLOCOS DE CARTELAS (src/blocos/blocos.js)
 ===================================================== */
-registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS });
+registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS, criarPix, consultarPix });
 
 /* =====================================================
    ORIGEM DAS VISITAS (parcerias, Instagram…) — src/origens/origens.js
