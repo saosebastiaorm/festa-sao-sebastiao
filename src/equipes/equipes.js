@@ -134,7 +134,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const b = req.body || {};
     const titulo = txt(b.titulo, 100);
     if (!titulo) return res.status(400).json({ sucesso: false, erro: "Informe o nome da etapa." });
-    const base = { titulo, descricao: txt(b.descricao, 300) || null, origem: "admin", ordem: Number(b.ordem) || 50 };
+    const ag = lerAgenda({ data: b.data, hora: b.hora });
+    if (ag.erro) return res.status(400).json({ sucesso: false, erro: ag.erro });
+    const base = { titulo, descricao: txt(b.descricao, 300) || null, origem: "admin", ordem: Number(b.ordem) || 50, data: ag.dados.data, hora: ag.dados.hora };
     let ids = [];
     if (b.todas === true || b.todas === "true") {
       const { data } = await supabase.from("equipes").select("id").eq("ativo", true);
@@ -177,6 +179,40 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const { error: e2 } = await supabase.from("equipes_etapas").delete().in("id", ids);
     if (e2) return falha(res, e2, "Não foi possível excluir as etapas.");
     res.json({ sucesso: true, excluidas: ids.length });
+  });
+
+  /* edita a mesma etapa (pelo nome) em todas as equipes: data, hora, local, observação e/ou novo nome.
+     Só muda o que vier preenchido; "limpar" apaga o campo em todas. Realizada/participantes não são tocados. */
+  app.post("/admin/equipes/etapas/editar-todas", acesso, async (req, res) => {
+    const b = req.body || {};
+    const alvo = txt(b.titulo, 100).toLowerCase();
+    if (!alvo) return res.status(400).json({ sucesso: false, erro: "Informe o nome da etapa." });
+    const ag = lerAgenda({ data: b.data, hora: b.hora, local: b.local, observacao: b.observacao });
+    if (ag.erro) return res.status(400).json({ sucesso: false, erro: ag.erro });
+    const limpar = new Set(Array.isArray(b.limpar) ? b.limpar : []);
+    const dados = {};
+    for (const k of ["data", "hora", "local", "observacao"]) {
+      if (limpar.has(k)) dados[k] = null; else if (ag.dados[k]) dados[k] = ag.dados[k];
+    }
+    const novoNome = txt(b.novo_titulo, 100);
+    if (!Object.keys(dados).length && !novoNome) return res.status(400).json({ sucesso: false, erro: "Preencha ao menos um campo (ou marque “limpar”)." });
+    const { data: todas, error } = await supabase.from("equipes_etapas").select("id, titulo, equipe_id");
+    if (error) return falha(res, error, "Não foi possível localizar as etapas.");
+    let alvos = (todas || []).filter(t => String(t.titulo || "").trim().toLowerCase() === alvo);
+    if (!alvos.length) return res.status(404).json({ sucesso: false, erro: "Nenhuma etapa encontrada com esse nome." });
+    let puladas = 0;
+    if (novoNome) {
+      const novoMin = novoNome.toLowerCase();
+      const ocupadas = new Set((todas || []).filter(t => String(t.titulo || "").trim().toLowerCase() === novoMin && novoMin !== alvo).map(t => t.equipe_id));
+      const livres = alvos.filter(t => !ocupadas.has(t.equipe_id));
+      puladas = alvos.length - livres.length; alvos = livres;
+      if (!alvos.length) return res.status(400).json({ sucesso: false, erro: "Todas as equipes já têm uma etapa com o novo nome." });
+      dados.titulo = novoNome;
+    }
+    dados.updated_at = new Date().toISOString();
+    const { error: e2 } = await supabase.from("equipes_etapas").update(dados).in("id", alvos.map(t => t.id));
+    if (e2) return falha(res, e2, "Não foi possível atualizar as etapas.");
+    res.json({ sucesso: true, atualizadas: alvos.length, puladas });
   });
 
   app.put("/admin/equipes/etapas/:id", acesso, async (req, res) => {
