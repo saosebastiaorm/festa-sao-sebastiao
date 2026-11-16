@@ -57,13 +57,25 @@ function lerMembro(b, equipe) {
   return { dados: { nome, data_nascimento: nasc, tamanho_camiseta: tam, telefone: fone(b.telefone) || null, endereco: txt(b.endereco, 200) || null } };
 }
 
+const zero = () => ({ cadastrados: 0, menores: 0, camisetas: {} });
+function somar(mapa, chave, m) {
+  const x = mapa.get(chave) || zero();
+  x.cadastrados++; if (m.idade < 18) x.menores++;
+  x.camisetas[m.tamanho_camiseta] = (x.camisetas[m.tamanho_camiseta] || 0) + 1;
+  mapa.set(chave, x);
+}
+function lerGrupo(b) {
+  return { nome: txt(b.nome, 60), previsto: inteiro(b.previsto), disponivel: inteiro(b.disponivel),
+    ordem: Number.isFinite(Number(b.ordem)) ? Math.trunc(Number(b.ordem)) : 0 };
+}
+
 function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) {
   const acesso = exigirPagina("equipes");
   const limitadorLider = criarLimitador({ janelaMs: 60 * 1000, max: 90 });
   const falha = (res, e, msg) => { console.error("[EQUIPES]", e?.message || e); return res.status(500).json({ sucesso: false, erro: msg }); };
 
   async function carregarMembros(equipeId) {
-    const q = supabase.from("equipes_membros").select("id, equipe_id, nome, telefone, endereco, data_nascimento, tamanho_camiseta, created_at").order("nome");
+    const q = supabase.from("equipes_membros").select("id, equipe_id, grupo_id, nome, telefone, endereco, data_nascimento, tamanho_camiseta, created_at").order("nome");
     const { data, error } = equipeId ? await q.eq("equipe_id", equipeId) : await q;
     if (error) throw error;
     const hoje = hojeRondonia();
@@ -71,21 +83,59 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
   }
 
   /* ------------------------- ADMIN ------------------------- */
+  async function carregarGrupos() {
+    const { data, error } = await supabase.from("equipes_grupos").select("*").order("ordem").order("id");
+    return error ? [] : (data || []);   // sem a tabela (SQL ainda não rodou): sem grupos
+  }
+  /* grupo precisa ser da própria equipe; devolve o id, null (equipe principal) ou false (inválido) */
+  async function grupoDaEquipe(equipeId, bruto) {
+    const gid = Number(bruto) || null;
+    if (!gid) return null;
+    const { data } = await supabase.from("equipes_grupos").select("id").eq("id", gid).eq("equipe_id", equipeId).maybeSingle();
+    return data ? data.id : false;
+  }
+
   app.get("/admin/equipes", acesso, async (req, res) => {
     try {
       const { data: equipes, error } = await supabase.from("equipes").select("*").order("ordem").order("nome");
       if (error) throw error;
-      const membros = await carregarMembros(null);
-      const por = new Map();
-      membros.forEach(m => {
-        const x = por.get(m.equipe_id) || { cadastrados: 0, menores: 0, camisetas: {} };
-        x.cadastrados++; if (m.idade < 18) x.menores++;
-        x.camisetas[m.tamanho_camiseta] = (x.camisetas[m.tamanho_camiseta] || 0) + 1;
-        por.set(m.equipe_id, x);
-      });
+      const [membros, grupos] = [await carregarMembros(null), await carregarGrupos()];
+      const porEq = new Map(), porGr = new Map();
+      membros.forEach(m => { somar(porEq, m.equipe_id, m); if (m.grupo_id) somar(porGr, m.grupo_id, m); });
       res.json({ sucesso: true, tamanhos: TAMANHOS,
-        equipes: (equipes || []).map(e => ({ ...e, ...(por.get(e.id) || { cadastrados: 0, menores: 0, camisetas: {} }) })) });
+        equipes: (equipes || []).map(e => {
+          const gs = grupos.filter(g => g.equipe_id === e.id).map(g => ({ ...g, ...(porGr.get(g.id) || zero()) }));
+          const tot = porEq.get(e.id) || zero();
+          return { ...e, ...tot, grupos: gs,
+            cad_principal: tot.cadastrados - gs.reduce((a, g) => a + g.cadastrados, 0),
+            previsto_total: e.previsto + gs.reduce((a, g) => a + g.previsto, 0),
+            disponivel_total: e.disponivel + gs.reduce((a, g) => a + g.disponivel, 0) };
+        }) });
     } catch (e) { falha(res, e, "Erro ao carregar as equipes (rodou o SQL 2026-11-16-equipes?)."); }
+  });
+
+  /* ---- grupos dentro da equipe (Frete, Auxiliar…) ---- */
+  app.post("/admin/equipes/:id/grupos", acesso, async (req, res) => {
+    const d = lerGrupo(req.body || {});
+    if (!d.nome) return res.status(400).json({ sucesso: false, erro: "Informe o nome da função." });
+    const { error } = await supabase.from("equipes_grupos").insert({ ...d, equipe_id: Number(req.params.id) });
+    if (error) return falha(res, error, "Não foi possível criar a função (rodou o SQL 2026-11-16c-equipes-grupos?).");
+    res.json({ sucesso: true });
+  });
+  app.put("/admin/equipes/grupos/:gid", acesso, async (req, res) => {
+    const d = lerGrupo(req.body || {});
+    if (!d.nome) return res.status(400).json({ sucesso: false, erro: "Informe o nome da função." });
+    const { error } = await supabase.from("equipes_grupos").update(d).eq("id", Number(req.params.gid));
+    if (error) return falha(res, error, "Não foi possível salvar a função.");
+    res.json({ sucesso: true });
+  });
+  app.delete("/admin/equipes/grupos/:gid", acesso, async (req, res) => {
+    const gid = Number(req.params.gid);
+    const { count } = await supabase.from("equipes_membros").select("id", { count: "exact", head: true }).eq("grupo_id", gid);
+    if (count > 0) return res.status(400).json({ sucesso: false, erro: "Esta função tem pessoas cadastradas. Mude essas pessoas para outra função antes de excluir." });
+    const { error } = await supabase.from("equipes_grupos").delete().eq("id", gid);
+    if (error) return falha(res, error, "Não foi possível excluir a função.");
+    res.json({ sucesso: true });
   });
 
   function lerEquipe(b) {
@@ -150,7 +200,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (!eq) return res.status(404).json({ sucesso: false, erro: "Equipe não encontrada." });
     const r = lerMembro(req.body || {}, eq);
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
-    const { error } = await supabase.from("equipes_membros").insert({ ...r.dados, equipe_id: eq.id, origem: "admin" });
+    const grupoId = await grupoDaEquipe(eq.id, (req.body || {}).grupo_id);
+    if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida para esta equipe." });
+    const { error } = await supabase.from("equipes_membros").insert({ ...r.dados, grupo_id: grupoId, equipe_id: eq.id, origem: "admin" });
     if (error) return falha(res, error, "Não foi possível cadastrar.");
     res.json({ sucesso: true });
   });
@@ -161,7 +213,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const eq = await equipePorId(m.equipe_id);
     const r = lerMembro(req.body || {}, eq);
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
-    const { error } = await supabase.from("equipes_membros").update({ ...r.dados, updated_at: new Date().toISOString() }).eq("id", m.id);
+    const grupoId = await grupoDaEquipe(m.equipe_id, (req.body || {}).grupo_id);
+    if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida para esta equipe." });
+    const { error } = await supabase.from("equipes_membros").update({ ...r.dados, grupo_id: grupoId, updated_at: new Date().toISOString() }).eq("id", m.id);
     if (error) return falha(res, error, "Não foi possível salvar.");
     res.json({ sucesso: true });
   });
@@ -185,7 +239,11 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const eq = await equipeDoLink(req, res); if (!eq) return;
     try {
       const membros = await carregarMembros(eq.id);
-      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto, proibe_menor: eq.proibe_menor }, membros });
+      const gr = (await carregarGrupos()).filter(g => g.equipe_id === eq.id);
+      const porGr = new Map(); membros.forEach(m => { if (m.grupo_id) somar(porGr, m.grupo_id, m); });
+      const grupos = gr.map(g => ({ id: g.id, nome: g.nome, previsto: g.previsto, cadastrados: (porGr.get(g.id) || zero()).cadastrados }));
+      const principal = { nome: gr.length ? "Integrante" : eq.nome, previsto: eq.previsto, cadastrados: membros.filter(m => !m.grupo_id).length };
+      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto + gr.reduce((a, g) => a + g.previsto, 0), proibe_menor: eq.proibe_menor }, principal, grupos, membros });
     } catch (e) { falha(res, e, "Erro ao carregar."); }
   });
 
@@ -193,7 +251,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const eq = await equipeDoLink(req, res); if (!eq) return;
     const r = lerMembro(req.body || {}, eq);
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
-    const { error } = await supabase.from("equipes_membros").insert({ ...r.dados, equipe_id: eq.id, origem: "lider" });
+    const grupoId = await grupoDaEquipe(eq.id, (req.body || {}).grupo_id);
+    if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida." });
+    const { error } = await supabase.from("equipes_membros").insert({ ...r.dados, grupo_id: grupoId, equipe_id: eq.id, origem: "lider" });
     if (error) return falha(res, error, "Não foi possível cadastrar.");
     res.json({ sucesso: true });
   });
@@ -202,7 +262,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const eq = await equipeDoLink(req, res); if (!eq) return;
     const r = lerMembro(req.body || {}, eq);
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
-    const { data, error } = await supabase.from("equipes_membros").update({ ...r.dados, updated_at: new Date().toISOString() })
+    const grupoId = await grupoDaEquipe(eq.id, (req.body || {}).grupo_id);
+    if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida." });
+    const { data, error } = await supabase.from("equipes_membros").update({ ...r.dados, grupo_id: grupoId, updated_at: new Date().toISOString() })
       .eq("id", Number(req.params.mid)).eq("equipe_id", eq.id).select("id");
     if (error) return falha(res, error, "Não foi possível salvar.");
     if (!data || !data.length) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada nesta equipe." });
