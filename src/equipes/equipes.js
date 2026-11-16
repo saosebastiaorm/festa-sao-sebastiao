@@ -139,8 +139,12 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (b.todas === true || b.todas === "true") {
       const { data } = await supabase.from("equipes").select("id").eq("ativo", true);
       ids = (data || []).map(x => x.id);
+    } else if (Array.isArray(b.equipe_ids)) {
+      const pedidos = [...new Set(b.equipe_ids.map(Number).filter(Boolean))];
+      const { data } = await supabase.from("equipes").select("id").in("id", pedidos);
+      ids = (data || []).map(x => x.id);
     } else if (Number(b.equipe_id)) ids = [Number(b.equipe_id)];
-    if (!ids.length) return res.status(400).json({ sucesso: false, erro: "Escolha a equipe (ou todas)." });
+    if (!ids.length) return res.status(400).json({ sucesso: false, erro: "Marque ao menos uma equipe." });
     const { data: jaTem } = await supabase.from("equipes_etapas").select("equipe_id").in("equipe_id", ids).ilike("titulo", titulo);
     const ja = new Set((jaTem || []).map(x => x.equipe_id));
     const novos = ids.filter(id => !ja.has(id)).map(id => ({ ...base, equipe_id: id }));
