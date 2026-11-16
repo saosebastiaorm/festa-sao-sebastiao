@@ -194,8 +194,11 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
           const tot = porEq.get(e.id) || zero();
           return { ...e, ...tot, ...(porEt.get(e.id) || { et_total: 0, et_sem_data: 0, et_atrasadas: 0, et_agendadas: 0, et_realizadas: 0 }), grupos: gs,
             cad_principal: tot.cadastrados - gs.reduce((a, g) => a + g.cadastrados, 0),
-            previsto_total: e.previsto + gs.reduce((a, g) => a + g.previsto, 0),
-            disponivel_total: e.disponivel + gs.reduce((a, g) => a + g.disponivel, 0) };
+            /* o previsto da equipe é o TOTAL; as funções são parte dele e o resto são "integrantes" */
+            previsto_total: e.previsto, disponivel_total: e.disponivel,
+            soma_funcoes: gs.reduce((a, g) => a + g.previsto, 0),
+            previsto_integrantes: Math.max(0, e.previsto - gs.reduce((a, g) => a + g.previsto, 0)),
+            disponivel_integrantes: Math.max(0, e.disponivel - gs.reduce((a, g) => a + g.disponivel, 0)) };
         }) });
     } catch (e) { falha(res, e, "Erro ao carregar as equipes (rodou o SQL 2026-11-16-equipes?)."); }
   });
@@ -328,8 +331,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
       const gr = (await carregarGrupos()).filter(g => g.equipe_id === eq.id);
       const porGr = new Map(); membros.forEach(m => { if (m.grupo_id) somar(porGr, m.grupo_id, m); });
       const grupos = gr.map(g => ({ id: g.id, nome: g.nome, previsto: g.previsto, cadastrados: (porGr.get(g.id) || zero()).cadastrados }));
-      const principal = { nome: gr.length ? "Integrante" : eq.nome, previsto: eq.previsto, cadastrados: membros.filter(m => !m.grupo_id).length };
-      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto + gr.reduce((a, g) => a + g.previsto, 0), proibe_menor: eq.proibe_menor }, principal, grupos, membros, etapas: await carregarEtapas(eq.id), hoje: hojeRondonia() });
+      const somaF = gr.reduce((a, g) => a + g.previsto, 0);
+      const principal = { nome: gr.length ? "Integrante" : eq.nome, previsto: Math.max(0, eq.previsto - somaF), cadastrados: membros.filter(m => !m.grupo_id).length };
+      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto, proibe_menor: eq.proibe_menor }, principal, grupos, membros, etapas: await carregarEtapas(eq.id), hoje: hojeRondonia() });
     } catch (e) { falha(res, e, "Erro ao carregar."); }
   });
 

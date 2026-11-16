@@ -1,0 +1,38 @@
+-- =====================================================================
+-- Equipes: o "previsto" da equipe passa a ser o TOTAL (as funções fazem
+-- parte dele); no relatório, "integrantes" = total menos as funções.
+-- Rode UMA vez no Supabase (só troca a função do relatório).
+-- =====================================================================
+create or replace function public.fpss_relatorio_equipes(p_ativa text default null) returns jsonb
+language plpgsql stable as $$
+declare hoje date := (now() at time zone 'America/Porto_Velho')::date; v_eq jsonb; v_me jsonb;
+begin
+  select coalesce(jsonb_agg(to_jsonb(x) order by x.ordem_u, x.nome), '[]'::jsonb) into v_eq from (
+    select 'e' || e.id as unidade, e.id as equipe_id, null::bigint as grupo_id,
+           e.nome || case when exists (select 1 from public.equipes_grupos g where g.equipe_id = e.id) then ' (integrantes)' else '' end as nome,
+           e.lider_nome, e.lider_telefone,
+           greatest(0, e.previsto    - coalesce((select sum(g.previsto)    from public.equipes_grupos g where g.equipe_id = e.id), 0)) as previsto,
+           greatest(0, e.disponivel  - coalesce((select sum(g.disponivel)  from public.equipes_grupos g where g.equipe_id = e.id), 0)) as disponivel,
+           e.proibe_menor, e.ativo, e.fechada, e.ordem * 100 as ordem_u
+      from public.equipes e
+     where p_ativa is null or p_ativa = '' or (p_ativa = 'sim' and e.ativo) or (p_ativa = 'nao' and not e.ativo)
+    union all
+    select 'g' || g.id, e.id, g.id, e.nome || ' — ' || g.nome, e.lider_nome, e.lider_telefone, g.previsto, g.disponivel,
+           e.proibe_menor, e.ativo, e.fechada, e.ordem * 100 + g.ordem + 1
+      from public.equipes_grupos g join public.equipes e on e.id = g.equipe_id
+     where p_ativa is null or p_ativa = '' or (p_ativa = 'sim' and e.ativo) or (p_ativa = 'nao' and not e.ativo)) x;
+  select coalesce(jsonb_agg(to_jsonb(m) order by m.equipe_nome, m.nome), '[]'::jsonb) into v_me from (
+    select p.id, p.equipe_id,
+           case when p.grupo_id is null then 'e' || p.equipe_id else 'g' || p.grupo_id end as unidade,
+           e.nome || coalesce(' — ' || g.nome, '') as equipe_nome,
+           p.nome, p.telefone, p.endereco, p.data_nascimento,
+           extract(year from age(hoje, p.data_nascimento))::int as idade, p.tamanho_camiseta
+      from public.equipes_membros p
+      join public.equipes e on e.id = p.equipe_id
+      left join public.equipes_grupos g on g.id = p.grupo_id
+     where p_ativa is null or p_ativa = '' or (p_ativa = 'sim' and e.ativo) or (p_ativa = 'nao' and not e.ativo)) m;
+  return jsonb_build_object('equipes', v_eq, 'membros', v_me);
+end;
+$$;
+grant execute on function public.fpss_relatorio_equipes(text) to service_role;
+select 'ok' as resultado;

@@ -40,7 +40,10 @@ begin
   select coalesce(jsonb_agg(to_jsonb(x) order by x.ordem_u, x.nome), '[]'::jsonb) into v_eq from (
     select 'e' || e.id as unidade, e.id as equipe_id, null::bigint as grupo_id,
            e.nome || case when exists (select 1 from public.equipes_grupos g where g.equipe_id = e.id) then ' (integrantes)' else '' end as nome,
-           e.lider_nome, e.lider_telefone, e.previsto, e.disponivel, e.proibe_menor, e.ativo, e.fechada, e.ordem * 100 as ordem_u
+           e.lider_nome, e.lider_telefone,
+           greatest(0, e.previsto   - coalesce((select sum(g.previsto)   from public.equipes_grupos g where g.equipe_id = e.id), 0)) as previsto,
+           greatest(0, e.disponivel - coalesce((select sum(g.disponivel) from public.equipes_grupos g where g.equipe_id = e.id), 0)) as disponivel,
+           e.proibe_menor, e.ativo, e.fechada, e.ordem * 100 as ordem_u
       from public.equipes e
      where p_ativa is null or p_ativa = '' or (p_ativa = 'sim' and e.ativo) or (p_ativa = 'nao' and not e.ativo)
     union all
