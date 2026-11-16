@@ -182,14 +182,17 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     try {
       const { data: equipes, error } = await supabase.from("equipes").select("*").order("ordem").order("nome");
       if (error) throw error;
-      const [membros, grupos] = [await carregarMembros(null), await carregarGrupos()];
+      const [membros, grupos, etapas] = [await carregarMembros(null), await carregarGrupos(), await carregarEtapas(null)];
+      const porEt = new Map();
+      etapas.forEach(t => { const x = porEt.get(t.equipe_id) || { et_total: 0, et_sem_data: 0, et_atrasadas: 0, et_agendadas: 0, et_realizadas: 0 };
+        x.et_total++; if (t.situacao === "sem_data") x.et_sem_data++; else if (t.situacao === "atrasada") x.et_atrasadas++; else if (t.situacao === "agendada") x.et_agendadas++; else x.et_realizadas++; porEt.set(t.equipe_id, x); });
       const porEq = new Map(), porGr = new Map();
       membros.forEach(m => { somar(porEq, m.equipe_id, m); if (m.grupo_id) somar(porGr, m.grupo_id, m); });
       res.json({ sucesso: true, tamanhos: TAMANHOS,
         equipes: (equipes || []).map(e => {
           const gs = grupos.filter(g => g.equipe_id === e.id).map(g => ({ ...g, ...(porGr.get(g.id) || zero()) }));
           const tot = porEq.get(e.id) || zero();
-          return { ...e, ...tot, grupos: gs,
+          return { ...e, ...tot, ...(porEt.get(e.id) || { et_total: 0, et_sem_data: 0, et_atrasadas: 0, et_agendadas: 0, et_realizadas: 0 }), grupos: gs,
             cad_principal: tot.cadastrados - gs.reduce((a, g) => a + g.cadastrados, 0),
             previsto_total: e.previsto + gs.reduce((a, g) => a + g.previsto, 0),
             disponivel_total: e.disponivel + gs.reduce((a, g) => a + g.disponivel, 0) };
