@@ -1306,6 +1306,7 @@ const RELATORIOS = {
   origens:      { chave: "rel_origens",      fn: "fpss_relatorio_origens",      datas: true,  f: q => ({ p_origem: txtFiltro(q.origem), p_meio: txtFiltro(q.meio) }) },
   parceiros:    { chave: "rel_parceiros",    fn: "fpss_relatorio_parceiros",    datas: false, f: q => ({ p_ativo: txtFiltro(q.ativo), p_cota: txtFiltro(q.cota), ...(txtFiltro(q.situacao) ? { p_situacao: txtFiltro(q.situacao) } : {}) }) },
   comunidades:  { chave: "rel_distribuicao", fn: "fpss_relatorio_comunidades",  datas: false, f: q => ({ p_ativa: txtFiltro(q.ativa), ...(txtFiltro(q.situacao) ? { p_situacao: txtFiltro(q.situacao) } : {}) }) },
+  cronograma:   { chave: "rel_equipes",      fn: "fpss_relatorio_cronograma",   datas: false, f: q => ({ p_ativa: txtFiltro(q.ativa) }) },
   equipes:      { chave: "rel_equipes",      fn: "fpss_relatorio_equipes",      datas: false, f: q => ({ p_ativa: txtFiltro(q.ativa) }) },
   usuarios:     { chave: null,               fn: "fpss_relatorio_usuarios",     datas: false, f: q => ({ p_papel: txtFiltro(q.papel) }) }   // só administrador
 };

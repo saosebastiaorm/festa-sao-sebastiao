@@ -12,7 +12,9 @@
      GET    /api/equipe/:token
      POST   /api/equipe/:token/membros
      PUT    /api/equipe/:token/membros/:mid    DELETE idem
-   Tabelas: equipes, equipes_membros (SQL 2026-11-16-equipes.sql).
+   Cronograma: GET/POST /admin/equipes/etapas, PUT/DELETE /admin/equipes/etapas/:id;
+     líder: PUT/POST/DELETE /api/equipe/:token/etapas[/:id]
+   Tabelas: equipes, equipes_membros (SQL 2026-11-16-equipes.sql), equipes_etapas (2026-11-17).
    Equipe com "proibe_menor" não aceita quem tem menos de 18 anos.
 ===================================================================== */
 
@@ -69,6 +71,32 @@ function lerGrupo(b) {
     ordem: Number.isFinite(Number(b.ordem)) ? Math.trunc(Number(b.ordem)) : 0 };
 }
 
+/* ---- cronograma: etapas da equipe ---- */
+function horaValida(v) { const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(v || "").trim()); return m ? m[0] : null; }
+function dataEtapa(v) {
+  const s = String(v || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const dt = new Date(s + "T12:00:00Z");
+  if (isNaN(dt) || dt.toISOString().slice(0, 10) !== s || s < "2026-01-01" || s > "2027-12-31") return null;
+  return s;
+}
+function situacaoEtapa(t, hoje) {
+  return t.realizada ? "realizada" : !t.data ? "sem_data" : t.data < hoje ? "atrasada" : "agendada";
+}
+/* campos que o líder (ou o admin) preenche */
+function lerAgenda(b) {
+  const bruto = String(b.data || "").trim();
+  const data = bruto ? dataEtapa(bruto) : null;
+  if (bruto && !data) return { erro: "Data inválida (use uma data entre 2026 e 2027)." };
+  const horaBruta = String(b.hora || "").trim();
+  const hora = horaBruta ? horaValida(horaBruta) : null;
+  if (horaBruta && !hora) return { erro: "Horário inválido (use HH:MM)." };
+  const pBruto = String(b.participantes ?? "").trim();
+  const participantes = pBruto === "" ? null : (/^\d{1,5}$/.test(pBruto) ? parseInt(pBruto, 10) : NaN);
+  if (Number.isNaN(participantes)) return { erro: "Informe a quantidade de participantes só com números." };
+  return { dados: { data, hora, participantes, local: txt(b.local, 150) || null, observacao: txt(b.observacao, 300) || null, realizada: b.realizada === true || b.realizada === "true" } };
+}
+
 function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) {
   const acesso = exigirPagina("equipes");
   const limitadorLider = criarLimitador({ janelaMs: 60 * 1000, max: 90 });
@@ -83,6 +111,61 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
   }
 
   /* ------------------------- ADMIN ------------------------- */
+  /* ---- CRONOGRAMA (admin) ---- */
+  async function carregarEtapas(equipeId) {
+    const q = supabase.from("equipes_etapas").select("*").order("ordem").order("id");
+    const { data, error } = equipeId ? await q.eq("equipe_id", equipeId) : await q;
+    if (error) return [];     // SQL do cronograma ainda não rodou
+    const hoje = hojeRondonia();
+    return (data || []).map(t => ({ ...t, situacao: situacaoEtapa(t, hoje) }));
+  }
+
+  app.get("/admin/equipes/etapas", acesso, async (req, res) => {
+    const { data: eq } = await supabase.from("equipes").select("id, nome, lider_nome, lider_telefone, ativo, ordem");
+    const mapa = new Map((eq || []).map(e => [e.id, e]));
+    const etapas = (await carregarEtapas(null)).map(t => ({ ...t, equipe_nome: mapa.get(t.equipe_id)?.nome || "", lider_nome: mapa.get(t.equipe_id)?.lider_nome || "", equipe_ativa: mapa.get(t.equipe_id)?.ativo !== false }));
+    res.json({ sucesso: true, etapas });
+  });
+
+  /* cria a etapa para UMA equipe (equipe_id) ou para TODAS as equipes ativas (todas: true) */
+  app.post("/admin/equipes/etapas", acesso, async (req, res) => {
+    const b = req.body || {};
+    const titulo = txt(b.titulo, 100);
+    if (!titulo) return res.status(400).json({ sucesso: false, erro: "Informe o nome da etapa." });
+    const base = { titulo, descricao: txt(b.descricao, 300) || null, origem: "admin", ordem: Number(b.ordem) || 50 };
+    let ids = [];
+    if (b.todas === true || b.todas === "true") {
+      const { data } = await supabase.from("equipes").select("id").eq("ativo", true);
+      ids = (data || []).map(x => x.id);
+    } else if (Number(b.equipe_id)) ids = [Number(b.equipe_id)];
+    if (!ids.length) return res.status(400).json({ sucesso: false, erro: "Escolha a equipe (ou todas)." });
+    const { data: jaTem } = await supabase.from("equipes_etapas").select("equipe_id").in("equipe_id", ids).ilike("titulo", titulo);
+    const ja = new Set((jaTem || []).map(x => x.equipe_id));
+    const novos = ids.filter(id => !ja.has(id)).map(id => ({ ...base, equipe_id: id }));
+    if (!novos.length) return res.status(400).json({ sucesso: false, erro: "Essa etapa já existe nas equipes escolhidas." });
+    const { error } = await supabase.from("equipes_etapas").insert(novos);
+    if (error) return falha(res, error, "Não foi possível criar a etapa (rodou o SQL 2026-11-17-equipes-cronograma?).");
+    res.json({ sucesso: true, criadas: novos.length });
+  });
+
+  app.put("/admin/equipes/etapas/:id", acesso, async (req, res) => {
+    const b = req.body || {};
+    const r = lerAgenda(b);
+    if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
+    const dados = { ...r.dados, realizada_em: r.dados.realizada ? new Date().toISOString() : null, updated_at: new Date().toISOString() };
+    if (b.titulo !== undefined) { const t = txt(b.titulo, 100); if (!t) return res.status(400).json({ sucesso: false, erro: "Informe o nome da etapa." }); dados.titulo = t; }
+    if (b.descricao !== undefined) dados.descricao = txt(b.descricao, 300) || null;
+    const { error } = await supabase.from("equipes_etapas").update(dados).eq("id", Number(req.params.id));
+    if (error) return falha(res, error, "Não foi possível salvar a etapa.");
+    res.json({ sucesso: true });
+  });
+
+  app.delete("/admin/equipes/etapas/:id", acesso, async (req, res) => {
+    const { error } = await supabase.from("equipes_etapas").delete().eq("id", Number(req.params.id));
+    if (error) return falha(res, error, "Não foi possível excluir a etapa.");
+    res.json({ sucesso: true });
+  });
+
   async function carregarGrupos() {
     const { data, error } = await supabase.from("equipes_grupos").select("*").order("ordem").order("id");
     return error ? [] : (data || []);   // sem a tabela (SQL ainda não rodou): sem grupos
@@ -243,7 +326,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
       const porGr = new Map(); membros.forEach(m => { if (m.grupo_id) somar(porGr, m.grupo_id, m); });
       const grupos = gr.map(g => ({ id: g.id, nome: g.nome, previsto: g.previsto, cadastrados: (porGr.get(g.id) || zero()).cadastrados }));
       const principal = { nome: gr.length ? "Integrante" : eq.nome, previsto: eq.previsto, cadastrados: membros.filter(m => !m.grupo_id).length };
-      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto + gr.reduce((a, g) => a + g.previsto, 0), proibe_menor: eq.proibe_menor }, principal, grupos, membros });
+      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto + gr.reduce((a, g) => a + g.previsto, 0), proibe_menor: eq.proibe_menor }, principal, grupos, membros, etapas: await carregarEtapas(eq.id), hoje: hojeRondonia() });
     } catch (e) { falha(res, e, "Erro ao carregar."); }
   });
 
@@ -275,6 +358,42 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const eq = await equipeDoLink(req, res); if (!eq) return;
     const { error } = await supabase.from("equipes_membros").delete().eq("id", Number(req.params.mid)).eq("equipe_id", eq.id);
     if (error) return falha(res, error, "Não foi possível excluir.");
+    res.json({ sucesso: true });
+  });
+
+  /* ---- cronograma pelo link do líder ---- */
+  app.put("/api/equipe/:token/etapas/:id", limitadorLider, async (req, res) => {
+    const eq = await equipeDoLink(req, res); if (!eq) return;
+    const b = req.body || {};
+    const r = lerAgenda(b);
+    if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
+    const { data: et } = await supabase.from("equipes_etapas").select("id, origem").eq("id", Number(req.params.id)).eq("equipe_id", eq.id).maybeSingle();
+    if (!et) return res.status(404).json({ sucesso: false, erro: "Etapa não encontrada nesta equipe." });
+    const dados = { ...r.dados, realizada_em: r.dados.realizada ? new Date().toISOString() : null, updated_at: new Date().toISOString() };
+    if (et.origem === "lider" && b.titulo !== undefined) { const t = txt(b.titulo, 100); if (t) dados.titulo = t; }
+    const { error } = await supabase.from("equipes_etapas").update(dados).eq("id", et.id);
+    if (error) return falha(res, error, "Não foi possível salvar.");
+    res.json({ sucesso: true });
+  });
+
+  app.post("/api/equipe/:token/etapas", limitadorLider, async (req, res) => {
+    const eq = await equipeDoLink(req, res); if (!eq) return;
+    const b = req.body || {};
+    const titulo = txt(b.titulo, 100);
+    if (!titulo) return res.status(400).json({ sucesso: false, erro: "Informe o nome da etapa." });
+    const r = lerAgenda(b);
+    if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
+    const { error } = await supabase.from("equipes_etapas").insert({ ...r.dados, equipe_id: eq.id, titulo, origem: "lider", ordem: 90,
+      realizada_em: r.dados.realizada ? new Date().toISOString() : null });
+    if (error) return falha(res, error, "Não foi possível cadastrar a etapa.");
+    res.json({ sucesso: true });
+  });
+
+  app.delete("/api/equipe/:token/etapas/:id", limitadorLider, async (req, res) => {
+    const eq = await equipeDoLink(req, res); if (!eq) return;
+    const { data, error } = await supabase.from("equipes_etapas").delete().eq("id", Number(req.params.id)).eq("equipe_id", eq.id).eq("origem", "lider").select("id");
+    if (error) return falha(res, error, "Não foi possível excluir.");
+    if (!data || !data.length) return res.status(400).json({ sucesso: false, erro: "Só é possível excluir etapas criadas pela equipe." });
     res.json({ sucesso: true });
   });
 }
