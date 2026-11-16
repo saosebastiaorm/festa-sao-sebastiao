@@ -170,6 +170,16 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     const { data, error } = await supabase.from("equipes_grupos").select("*").order("ordem").order("id");
     return error ? [] : (data || []);   // sem a tabela (SQL ainda não rodou): sem grupos
   }
+  /* com funções, o previsto/disponível da equipe é a SOMA das funções (todo integrante tem função) */
+  async function sincronizarTotais(equipeId) {
+    const { data } = await supabase.from("equipes_grupos").select("previsto, disponivel").eq("equipe_id", equipeId);
+    if (!data || !data.length) return;
+    await supabase.from("equipes").update({ previsto: data.reduce((a, g) => a + g.previsto, 0), disponivel: data.reduce((a, g) => a + g.disponivel, 0) }).eq("id", equipeId);
+  }
+  async function equipeTemFuncoes(equipeId) {
+    const { count } = await supabase.from("equipes_grupos").select("id", { count: "exact", head: true }).eq("equipe_id", equipeId);
+    return count > 0;
+  }
   /* grupo precisa ser da própria equipe; devolve o id, null (equipe principal) ou false (inválido) */
   async function grupoDaEquipe(equipeId, bruto) {
     const gid = Number(bruto) || null;
@@ -195,10 +205,9 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
           return { ...e, ...tot, ...(porEt.get(e.id) || { et_total: 0, et_sem_data: 0, et_atrasadas: 0, et_agendadas: 0, et_realizadas: 0 }), grupos: gs,
             cad_principal: tot.cadastrados - gs.reduce((a, g) => a + g.cadastrados, 0),
             /* o previsto da equipe é o TOTAL; as funções são parte dele e o resto são "integrantes" */
-            previsto_total: e.previsto, disponivel_total: e.disponivel,
-            soma_funcoes: gs.reduce((a, g) => a + g.previsto, 0),
-            previsto_integrantes: Math.max(0, e.previsto - gs.reduce((a, g) => a + g.previsto, 0)),
-            disponivel_integrantes: Math.max(0, e.disponivel - gs.reduce((a, g) => a + g.disponivel, 0)) };
+            previsto_total: gs.length ? gs.reduce((a, g) => a + g.previsto, 0) : e.previsto,
+            disponivel_total: gs.length ? gs.reduce((a, g) => a + g.disponivel, 0) : e.disponivel,
+            tem_funcoes: gs.length > 0 };
         }) });
     } catch (e) { falha(res, e, "Erro ao carregar as equipes (rodou o SQL 2026-11-16-equipes?)."); }
   });
@@ -209,21 +218,24 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (!d.nome) return res.status(400).json({ sucesso: false, erro: "Informe o nome da função." });
     const { error } = await supabase.from("equipes_grupos").insert({ ...d, equipe_id: Number(req.params.id) });
     if (error) return falha(res, error, "Não foi possível criar a função (rodou o SQL 2026-11-16c-equipes-grupos?).");
+    await sincronizarTotais(Number(req.params.id));
     res.json({ sucesso: true });
   });
   app.put("/admin/equipes/grupos/:gid", acesso, async (req, res) => {
     const d = lerGrupo(req.body || {});
     if (!d.nome) return res.status(400).json({ sucesso: false, erro: "Informe o nome da função." });
-    const { error } = await supabase.from("equipes_grupos").update(d).eq("id", Number(req.params.gid));
+    const { data: g, error } = await supabase.from("equipes_grupos").update(d).eq("id", Number(req.params.gid)).select("equipe_id").maybeSingle();
     if (error) return falha(res, error, "Não foi possível salvar a função.");
+    if (g) await sincronizarTotais(g.equipe_id);
     res.json({ sucesso: true });
   });
   app.delete("/admin/equipes/grupos/:gid", acesso, async (req, res) => {
     const gid = Number(req.params.gid);
     const { count } = await supabase.from("equipes_membros").select("id", { count: "exact", head: true }).eq("grupo_id", gid);
     if (count > 0) return res.status(400).json({ sucesso: false, erro: "Esta função tem pessoas cadastradas. Mude essas pessoas para outra função antes de excluir." });
-    const { error } = await supabase.from("equipes_grupos").delete().eq("id", gid);
+    const { data: g, error } = await supabase.from("equipes_grupos").delete().eq("id", gid).select("equipe_id").maybeSingle();
     if (error) return falha(res, error, "Não foi possível excluir a função.");
+    if (g) await sincronizarTotais(g.equipe_id);
     res.json({ sucesso: true });
   });
 
@@ -255,6 +267,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     }
     const { data, error } = await supabase.from("equipes").update(d).eq("id", id).select("*").single();
     if (error) return falha(res, error, "Não foi possível salvar a equipe.");
+    await sincronizarTotais(id);
     res.json({ sucesso: true, equipe: data });
   });
 
@@ -291,6 +304,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
     const grupoId = await grupoDaEquipe(eq.id, (req.body || {}).grupo_id);
     if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida para esta equipe." });
+    if (grupoId === null && await equipeTemFuncoes(eq.id)) return res.status(400).json({ sucesso: false, erro: "Escolha a função da pessoa na equipe." });
     const { error } = await supabase.from("equipes_membros").insert({ ...r.dados, grupo_id: grupoId, equipe_id: eq.id, origem: "admin" });
     if (error) return falha(res, error, "Não foi possível cadastrar.");
     res.json({ sucesso: true });
@@ -304,6 +318,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
     const grupoId = await grupoDaEquipe(m.equipe_id, (req.body || {}).grupo_id);
     if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida para esta equipe." });
+    if (grupoId === null && await equipeTemFuncoes(m.equipe_id)) return res.status(400).json({ sucesso: false, erro: "Escolha a função da pessoa na equipe." });
     const { error } = await supabase.from("equipes_membros").update({ ...r.dados, grupo_id: grupoId, updated_at: new Date().toISOString() }).eq("id", m.id);
     if (error) return falha(res, error, "Não foi possível salvar.");
     res.json({ sucesso: true });
@@ -332,8 +347,8 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
       const porGr = new Map(); membros.forEach(m => { if (m.grupo_id) somar(porGr, m.grupo_id, m); });
       const grupos = gr.map(g => ({ id: g.id, nome: g.nome, previsto: g.previsto, cadastrados: (porGr.get(g.id) || zero()).cadastrados }));
       const somaF = gr.reduce((a, g) => a + g.previsto, 0);
-      const principal = { nome: gr.length ? "Integrante" : eq.nome, previsto: Math.max(0, eq.previsto - somaF), cadastrados: membros.filter(m => !m.grupo_id).length };
-      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: eq.previsto, proibe_menor: eq.proibe_menor }, principal, grupos, membros, etapas: await carregarEtapas(eq.id), hoje: hojeRondonia() });
+      const principal = { nome: gr.length ? "Sem função definida" : eq.nome, previsto: gr.length ? 0 : eq.previsto, cadastrados: membros.filter(m => !m.grupo_id).length };
+      res.json({ sucesso: true, tamanhos: TAMANHOS, equipe: { nome: eq.nome, lider_nome: eq.lider_nome, previsto: gr.length ? somaF : eq.previsto, proibe_menor: eq.proibe_menor }, principal, grupos, membros, etapas: await carregarEtapas(eq.id), hoje: hojeRondonia() });
     } catch (e) { falha(res, e, "Erro ao carregar."); }
   });
 
@@ -343,6 +358,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
     const grupoId = await grupoDaEquipe(eq.id, (req.body || {}).grupo_id);
     if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida." });
+    if (grupoId === null && await equipeTemFuncoes(eq.id)) return res.status(400).json({ sucesso: false, erro: "Escolha a sua função na equipe." });
     const { error } = await supabase.from("equipes_membros").insert({ ...r.dados, grupo_id: grupoId, equipe_id: eq.id, origem: "lider" });
     if (error) return falha(res, error, "Não foi possível cadastrar.");
     res.json({ sucesso: true });
@@ -354,6 +370,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     if (r.erro) return res.status(400).json({ sucesso: false, erro: r.erro });
     const grupoId = await grupoDaEquipe(eq.id, (req.body || {}).grupo_id);
     if (grupoId === false) return res.status(400).json({ sucesso: false, erro: "Função inválida." });
+    if (grupoId === null && await equipeTemFuncoes(eq.id)) return res.status(400).json({ sucesso: false, erro: "Escolha a função da pessoa na equipe." });
     const { data, error } = await supabase.from("equipes_membros").update({ ...r.dados, grupo_id: grupoId, updated_at: new Date().toISOString() })
       .eq("id", Number(req.params.mid)).eq("equipe_id", eq.id).select("id");
     if (error) return falha(res, error, "Não foi possível salvar.");
