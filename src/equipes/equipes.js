@@ -91,7 +91,7 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
   function lerEquipe(b) {
     return {
       nome: txt(b.nome, 80), lider_nome: txt(b.lider_nome, 100) || null, lider_telefone: fone(b.lider_telefone) || null,
-      previsto: inteiro(b.previsto), disponivel: inteiro(b.disponivel), proibe_menor: b.proibe_menor === true || b.proibe_menor === "true",
+      previsto: inteiro(b.previsto), disponivel: inteiro(b.disponivel), proibe_menor: b.proibe_menor === true || b.proibe_menor === "true", fechada: b.fechada === true || b.fechada === "true",
       ativo: b.ativo === undefined ? true : (b.ativo === true || b.ativo === "true"), observacao: txt(b.observacao, 300) || null,
       ordem: Number.isFinite(Number(b.ordem)) ? Math.trunc(Number(b.ordem)) : 0
     };
