@@ -121,6 +121,8 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
   }
 
   app.get("/admin/equipes/etapas", acesso, async (req, res) => {
+    const teste = await supabase.from("equipes_etapas").select("id", { head: true, count: "exact" });
+    if (teste.error) return res.status(500).json({ sucesso: false, erro: "O cronograma ainda não foi ativado no banco. Rode o SQL 2026-11-17-equipes-cronograma no Supabase." });
     const { data: eq } = await supabase.from("equipes").select("id, nome, lider_nome, lider_telefone, ativo, ordem");
     const mapa = new Map((eq || []).map(e => [e.id, e]));
     const etapas = (await carregarEtapas(null)).map(t => ({ ...t, equipe_nome: mapa.get(t.equipe_id)?.nome || "", lider_nome: mapa.get(t.equipe_id)?.lider_nome || "", equipe_ativa: mapa.get(t.equipe_id)?.ativo !== false }));
