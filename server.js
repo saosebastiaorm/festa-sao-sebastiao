@@ -32,6 +32,7 @@ const { normalizarNumeroDigitado } = require("./src/services/cartelas/dv");
 const { processarPlanilha } = require("./src/services/cartelas/importar-lote");
 const vendas = require("./src/vendas/vendas");
 const { registrarRotasBlocos } = require("./src/blocos/blocos");
+const { registrarRotasEquipes } = require("./src/equipes/equipes");
 const { registrarRotasOrigens } = require("./src/origens/origens");
 const { registrarRotasVendedores } = require("./src/vendedores/vendedores");
 const { registrarRotasEnquetes } = require("./src/enquetes/enquetes");
@@ -236,6 +237,7 @@ const PAGINAS_ADMIN = [
   { chave: "contatos",  nome: "Contatos (WhatsApp)",      pagina: "/admin/contatos.html" },
   { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
   { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" },
+  { chave: "equipes",   nome: "Equipes (voluntários e camisetas)", pagina: "/admin/equipes.html" },
   { chave: "rel_caixa",        nome: "Relatório — Vendas do caixa",            pagina: null },
   { chave: "rel_pedidos",      nome: "Relatório — Pedidos (site e caixa)",     pagina: null },
   { chave: "rel_produtos",     nome: "Relatório — Produtos vendidos",          pagina: null },
@@ -247,6 +249,7 @@ const PAGINAS_ADMIN = [
   { chave: "rel_distribuicao", nome: "Relatório — Blocos (distribuição)",      pagina: null },
   { chave: "rel_origens",      nome: "Relatório — Origem das visitas",         pagina: null },
   { chave: "rel_parceiros",    nome: "Relatório — Parceiros",                  pagina: null },
+  { chave: "rel_equipes",      nome: "Relatório — Equipes e camisetas",        pagina: null },
 
   /* ===== FUNÇÕES dentro de uma tela (pai = tela). Aparecem recuadas em
      Usuários → Perfis de acesso e no acesso personalizado.
@@ -281,7 +284,7 @@ const PAGINAS_ADMIN = [
 ];
 /* a tela "Relatórios" aparece para quem tem qualquer relatório liberado */
 const CHAVES_RELATORIOS = ["rel_caixa", "rel_pedidos", "rel_produtos", "rel_retirada", "rel_estoque", "rel_cartelas",
-  "rel_lotes", "rel_blocos", "rel_distribuicao", "rel_origens", "rel_parceiros"];
+  "rel_lotes", "rel_blocos", "rel_distribuicao", "rel_origens", "rel_parceiros", "rel_equipes"];
 const CHAVES_PAGINAS = PAGINAS_ADMIN.map(p => p.chave);
 const PAPEIS_EQUIPE = ["padrao", "voluntario", "operador_caixa", "equipe_bingo"];
 const NOMES_PAPEIS = {
@@ -1303,6 +1306,7 @@ const RELATORIOS = {
   origens:      { chave: "rel_origens",      fn: "fpss_relatorio_origens",      datas: true,  f: q => ({ p_origem: txtFiltro(q.origem), p_meio: txtFiltro(q.meio) }) },
   parceiros:    { chave: "rel_parceiros",    fn: "fpss_relatorio_parceiros",    datas: false, f: q => ({ p_ativo: txtFiltro(q.ativo), p_cota: txtFiltro(q.cota), ...(txtFiltro(q.situacao) ? { p_situacao: txtFiltro(q.situacao) } : {}) }) },
   comunidades:  { chave: "rel_distribuicao", fn: "fpss_relatorio_comunidades",  datas: false, f: q => ({ p_ativa: txtFiltro(q.ativa), ...(txtFiltro(q.situacao) ? { p_situacao: txtFiltro(q.situacao) } : {}) }) },
+  equipes:      { chave: "rel_equipes",      fn: "fpss_relatorio_equipes",      datas: false, f: q => ({ p_ativa: txtFiltro(q.ativa) }) },
   usuarios:     { chave: null,               fn: "fpss_relatorio_usuarios",     datas: false, f: q => ({ p_papel: txtFiltro(q.papel) }) }   // só administrador
 };
 
@@ -4258,6 +4262,9 @@ registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEI
    ORIGEM DAS VISITAS (parcerias, Instagram…) — src/origens/origens.js
 ===================================================== */
 registrarRotasOrigens(app, { supabase, exigirPagina, criarLimitador });
+
+/* EQUIPES DE VOLUNTÁRIOS (cadastro, líderes por link, camisetas) — src/equipes/equipes.js */
+registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador });
 
 /* =====================================================
    VENDEDORES DE CARTELA (cadastro + documentos privados) — src/vendedores/vendedores.js
