@@ -154,6 +154,31 @@ function registrarRotasEquipes(app, { supabase, exigirPagina, criarLimitador }) 
     res.json({ sucesso: true, criadas: novos.length });
   });
 
+  /* grava a ordem das etapas (lista de ids na ordem desejada) */
+  app.post("/admin/equipes/etapas/ordenar", acesso, async (req, res) => {
+    const ids = [...new Set((Array.isArray((req.body || {}).ids) ? req.body.ids : []).map(Number).filter(n => Number.isInteger(n) && n > 0))];
+    if (!ids.length || ids.length > 500) return res.status(400).json({ sucesso: false, erro: "Lista de etapas inválida." });
+    const rs = await Promise.all(ids.map((id, i) => supabase.from("equipes_etapas").update({ ordem: i + 1 }).eq("id", id)));
+    const err = rs.find(r => r.error);
+    if (err) return falha(res, err.error, "Não foi possível salvar a ordem.");
+    res.json({ sucesso: true });
+  });
+
+  /* exclui a etapa de nome igual em todas as equipes (ou só nas equipe_ids informadas) */
+  app.post("/admin/equipes/etapas/excluir-todas", acesso, async (req, res) => {
+    const b = req.body || {};
+    const alvo = txt(b.titulo, 100).toLowerCase();
+    if (!alvo) return res.status(400).json({ sucesso: false, erro: "Informe o nome da etapa." });
+    const { data, error } = await supabase.from("equipes_etapas").select("id, titulo, equipe_id");
+    if (error) return falha(res, error, "Não foi possível localizar as etapas.");
+    const so = Array.isArray(b.equipe_ids) ? new Set(b.equipe_ids.map(Number)) : null;
+    const ids = (data || []).filter(t => String(t.titulo || "").trim().toLowerCase() === alvo && (!so || so.has(t.equipe_id))).map(t => t.id);
+    if (!ids.length) return res.status(404).json({ sucesso: false, erro: "Nenhuma etapa encontrada com esse nome." });
+    const { error: e2 } = await supabase.from("equipes_etapas").delete().in("id", ids);
+    if (e2) return falha(res, e2, "Não foi possível excluir as etapas.");
+    res.json({ sucesso: true, excluidas: ids.length });
+  });
+
   app.put("/admin/equipes/etapas/:id", acesso, async (req, res) => {
     const b = req.body || {};
     const r = lerAgenda(b);
