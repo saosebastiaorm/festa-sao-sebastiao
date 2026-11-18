@@ -39,14 +39,15 @@ function registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador })
     const avisos = [];
     const fontes = await Promise.all([
       lerTudo("cartelas", "nome_comprador, whatsapp_comprador, criado_em, data_pagamento", q => q.eq("status", "pago")),
-      lerTudo("blocos_responsaveis", "nome, telefone, comunidade, provisorio, created_at"),
+      lerTudo("blocos_responsaveis", "id, nome, telefone, comunidade, provisorio, created_at"),
       lerTudo("vendedores_cartela", "nome, telefone, ativo, created_at"),
       lerTudo("pedidos", "nome, sobrenome, telefone, produto_tipo, status_pagamento, reembolsado_em, created_at", q => q.eq("status_pagamento", "pago").is("reembolsado_em", null)),
       lerTudo("vip", "nome, whatsapp, created_at"),
-      lerTudo("enquetes", "nome, whatsapp, created_at")
+      lerTudo("enquetes", "nome, whatsapp, created_at"),
+      lerTudo("blocos_entregas", "responsavel_id, plano_nome, status")
     ]);
-    const [cart, resp, vend, ped, vip, enq] = fontes;
-    ["cartelas", "blocos_responsaveis", "vendedores_cartela", "pedidos", "vip", "enquetes"].forEach((n, i) => {
+    const [cart, resp, vend, ped, vip, enq, entr] = fontes;
+    ["cartelas", "blocos_responsaveis", "vendedores_cartela", "pedidos", "vip", "enquetes", "blocos_entregas"].forEach((n, i) => {
       if (fontes[i].erro) { console.error("[CONTATOS]", n, fontes[i].erro); avisos.push(`Não foi possível ler "${n}".`); }
     });
 
@@ -65,7 +66,12 @@ function registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador })
       if (detalhe) c.detalhes.add(String(detalhe).trim());
     }
     cart.linhas.forEach(r => add("compradores_cartela", r.nome_comprador, r.whatsapp_comprador, null, r.data_pagamento || r.criado_em));
-    resp.linhas.filter(r => !r.provisorio).forEach(r => add("responsaveis_blocos", r.nome, r.telefone, r.comunidade, r.created_at));
+    /* parceiros = quem recebeu blocos no plano "Parceria" (revendem e ficam com o dinheiro; pagamento diferente) */
+    const parceirosIds = new Set(entr.linhas.filter(e => /parceria/i.test(e.plano_nome || "") && e.status !== "cancelada").map(e => e.responsavel_id));
+    resp.linhas.filter(r => !r.provisorio).forEach(r => {
+      add("responsaveis_blocos", r.nome, r.telefone, r.comunidade, r.created_at);
+      if (parceirosIds.has(r.id)) add("parceiros", r.nome, r.telefone, null, r.created_at);
+    });
     vend.linhas.filter(r => r.ativo !== false).forEach(r => add("vendedores", r.nome, r.telefone, null, r.created_at));
     ped.linhas.forEach(r => add("pedidos", [r.nome, r.sobrenome].filter(Boolean).join(" "), r.telefone, r.produto_tipo, r.created_at));
     vip.linhas.forEach(r => add("vip", r.nome, r.whatsapp, null, r.created_at));
