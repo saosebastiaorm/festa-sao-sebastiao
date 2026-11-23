@@ -23,17 +23,18 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
   const quem = req => texto(req.nomeUsuario || req.usuarioAdmin?.email || "", 100) || null;
   const falha = (res, e, msg, status = 500) => { console.error("[PAROQUIA]", msg, e?.message || e); return res.status(status).json({ sucesso: false, erro: msg }); };
   /* mesma conta do Acertar (Blocos): bônus do bloco inteiro, comissão do plano, parceria não cobra */
-  function valoresBloco(vendidas, e) {
+  function valoresBloco(vendidas, e, bonus) {
     let cobradas = vendidas;
-    if (e.tem_bonus && e.bonus_usado !== false && vendidas === e.quantidade_entregue && vendidas > 0) cobradas -= 1;
+    const usa = bonus === undefined ? e.bonus_usado !== false : bonus;
+    if (e.tem_bonus && usa && vendidas === e.quantidade_entregue && vendidas > 0) cobradas -= 1;
     if (!e.cobra) return { bruto: 0, comissao: 0, devido: 0 };
     const bruto = arred(cobradas * Number(e.preco));
     const comissao = arred(bruto * Number(e.comissao_pct) / 100);
     return { bruto, comissao, devido: arred(bruto - comissao) };
   }
   /* quanto a comunidade deve entregar por este bloco agora (vendas − comissão − o que o cliente já pagou no site) */
-  function contaBloco(e, antes, vendidas, pagas) {
-    const a = valoresBloco(antes, e), d = valoresBloco(antes + vendidas, e);
+  function contaBloco(e, antes, vendidas, pagas, bonus) {
+    const a = valoresBloco(antes, e), d = valoresBloco(antes + vendidas, e, bonus);
     const devido = arred(d.devido - a.devido);
     const abate = e.cobra ? arred(Math.min(pagas, vendidas) * Number(e.preco)) : 0;
     return { devido, abate, receber: arred(devido - abate) };
@@ -214,7 +215,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
     const b = req.body || {};
     const respId = Number(b.responsavel_id);
     const pedidos = (Array.isArray(b.blocos) ? b.blocos : []).slice(0, 100)
-      .map(x => ({ entrega_id: Number(x.entrega_id), vendidas: Number(x.vendidas) }));
+      .map(x => ({ entrega_id: Number(x.entrega_id), vendidas: Number(x.vendidas), bonus_usado: typeof x.bonus_usado === "boolean" ? x.bonus_usado : undefined }));
     if (!Number.isInteger(respId) || !pedidos.length) return res.status(400).json({ sucesso: false, erro: "Marque pelo menos um bloco recebido." });
     if (new Set(pedidos.map(p => p.entrega_id)).size !== pedidos.length) return res.status(400).json({ sucesso: false, erro: "Bloco repetido." });
     if (pedidos.some(p => !Number.isInteger(p.entrega_id) || !Number.isInteger(p.vendidas) || p.vendidas < 0)) {
@@ -263,9 +264,11 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
       if (p.vendidas > lista.length) return res.status(400).json({ sucesso: false, erro: `O bloco ${e.blocos?.sequencial ?? ""} tem só ${lista.length} cartela(s); você informou ${p.vendidas} vendidas.` });
       const pg = lista.filter(n => pagas.has(n)).length;
       if (p.vendidas < pg) return res.status(400).json({ sucesso: false, erro: `No bloco ${e.blocos?.sequencial ?? ""}, ${pg} cartela(s) já foram pagas no site; as vendidas não podem ser menos que isso.` });
-      const conta = contaBloco(e, antes[e.id] || 0, p.vendidas, pg);
+      const fechaBloco = e.tem_bonus && (antes[e.id] || 0) + p.vendidas === e.quantidade_entregue;
+      const bonus = fechaBloco ? (p.bonus_usado === undefined ? e.bonus_usado !== false : p.bonus_usado) : null;
+      const conta = contaBloco(e, antes[e.id] || 0, p.vendidas, pg, bonus === null ? undefined : bonus);
       linhas.push({
-        devido: conta.devido, abate_site: conta.abate,
+        devido: conta.devido, abate_site: conta.abate, bonus_usado: bonus,
         entrega_id: e.id, sequencial: e.blocos?.sequencial ?? null, numero_inicial: e.blocos?.numero_inicial ?? null, numero_final: e.blocos?.numero_final ?? null,
         quantidade: lista.length, vendidas: p.vendidas, devolvidas: lista.length - p.vendidas, pagas_site: pg
       });
@@ -296,7 +299,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
   /* tudo que a tela precisa: recebimentos (com blocos) e repasses */
   app.get("/admin/paroquia/dados", limite, acesso, async (req, res) => {
     const { data: recs, error } = await supabase.from("paroquia_recebimentos")
-      .select("*, paroquia_recebimento_blocos(entrega_id, sequencial, numero_inicial, numero_final, quantidade, vendidas, devolvidas, pagas_site, devido, abate_site, ativo)")
+      .select("*, paroquia_recebimento_blocos(entrega_id, sequencial, numero_inicial, numero_final, quantidade, vendidas, devolvidas, pagas_site, devido, abate_site, bonus_usado, ativo)")
       .eq("cancelado", false).order("created_at", { ascending: false }).limit(3000);
     if (error) return falha(res, error, /paroquia_/.test(error.message || "") ? SEM_TABELA : "Erro ao carregar.");
     const { data: reps } = await supabase.from("paroquia_repasses").select("*").eq("cancelado", false).order("data_repasse", { ascending: false }).order("id", { ascending: false }).limit(1000);
