@@ -314,9 +314,31 @@ function limparCachePerfis() {
   cachePerfis = { em: 0, dados: null };
 }
 
+/* Perfis criados na tela Usuários (papel "perfil_xxx"): entram e saem das listas de papéis em tempo de execução */
+function sincronizarPapeisPersonalizados(linhas) {
+  const vivos = new Set();
+  (linhas || []).forEach(r => {
+    if (r.personalizado === true && /^perfil_[a-z0-9_]{1,40}$/.test(String(r.papel))) {
+      vivos.add(r.papel);
+      NOMES_PAPEIS[r.papel] = r.nome || r.papel;
+      if (!PAPEIS_EQUIPE.includes(r.papel)) PAPEIS_EQUIPE.push(r.papel);
+      if (!PAPEIS_VALIDOS.includes(r.papel)) PAPEIS_VALIDOS.push(r.papel);
+    }
+  });
+  [...PAPEIS_EQUIPE].forEach(p => {
+    if (p.startsWith("perfil_") && !vivos.has(p)) {
+      PAPEIS_EQUIPE.splice(PAPEIS_EQUIPE.indexOf(p), 1);
+      const i = PAPEIS_VALIDOS.indexOf(p); if (i >= 0) PAPEIS_VALIDOS.splice(i, 1);
+      delete NOMES_PAPEIS[p];
+    }
+  });
+}
+
 async function lerPerfisAcesso() {
   if (cachePerfis.dados && Date.now() - cachePerfis.em < 30000) return cachePerfis.dados;
-  const { data, error } = await supabase.from("perfis_acesso").select("papel,paginas");
+  let { data, error } = await supabase.from("perfis_acesso").select("papel,paginas,nome,personalizado");
+  if (error) ({ data, error } = await supabase.from("perfis_acesso").select("papel,paginas"));   /* SQL 2026-11-23 ainda não rodou */
+  if (!error) sincronizarPapeisPersonalizados(data);
   let dados;
   if (error) {
     console.error("[ACESSO] perfis_acesso indisponível (rodou o SQL 2026-10-05b?):", error.message);
@@ -354,6 +376,7 @@ function normalizarFuncoes(lista) {
    - senão as telas do perfil (+ "acesso_blocos" antigo, se marcado) */
 async function paginasDoUsuario(perfil) {
   if (!perfil) return [];
+  await lerPerfisAcesso();
   if (perfil.role === "admin") return CHAVES_PAGINAS.slice();
   if (!PAPEIS_EQUIPE.includes(perfil.role)) return [];
   if (Array.isArray(perfil.paginas_personalizadas)) {
@@ -373,6 +396,8 @@ function criarVerificadorDeAcesso(paginas) {
   return async function (req, res, next) {
 
     try {
+
+      await lerPerfisAcesso();   /* mantém a lista de perfis (inclusive os criados por você) em dia */
 
       const authHeader = req.headers.authorization || "";
       const token = authHeader.replace("Bearer ", "").trim();
@@ -2182,6 +2207,7 @@ app.get("/admin/acesso", verificarEquipeLogada, (req, res) => {
   return res.json({
     sucesso: true,
     papel: req.papelUsuario,
+    perfil_nome: NOMES_PAPEIS[req.papelUsuario] || null,
     nome: req.nomeUsuario,
     paginas: comTelaRelatorios(req.paginasUsuario || [], req.papelUsuario)
   });
@@ -2198,8 +2224,11 @@ function comTelaRelatorios(paginas, papel) {
    PERFIS DE ACESSO — telas de Padrão e Voluntário (só admin)
 ===================================================== */
 app.get("/admin/perfis", verificarAdminBackend, async (req, res) => {
-  const { data, error } = await supabase
-    .from("perfis_acesso").select("papel,paginas,atualizado_em,atualizado_por");
+  limparCachePerfis();
+  await lerPerfisAcesso();
+  let { data, error } = await supabase
+    .from("perfis_acesso").select("papel,paginas,atualizado_em,atualizado_por,nome,personalizado");
+  if (error) ({ data, error } = await supabase.from("perfis_acesso").select("papel,paginas,atualizado_em,atualizado_por"));
   if (error) {
     console.error("[ACESSO] ERRO LER PERFIS:", error);
     return res.status(500).json({
@@ -2219,9 +2248,78 @@ app.get("/admin/perfis", verificarAdminBackend, async (req, res) => {
   return res.json({
     sucesso: true,
     paginas: PAGINAS_ADMIN,
-    papeis: PAPEIS_EQUIPE.map(p => ({ papel: p, nome: NOMES_PAPEIS[p] || p })),
+    papeis: PAPEIS_EQUIPE.map(p => ({ papel: p, nome: NOMES_PAPEIS[p] || p, personalizado: p.startsWith("perfil_") })),
     perfis
   });
+});
+
+/* ---- criar, renomear e excluir perfis personalizados (só admin) ---- */
+function slugPerfil(nome) {
+  return String(nome).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "perfil";
+}
+function nomePerfilValido(v) {
+  const n = String(v ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+  return n.length >= 2 && n.length <= 40 ? n : null;
+}
+
+app.post("/admin/perfis", verificarAdminBackend, async (req, res) => {
+  try {
+    const nome = nomePerfilValido(req.body?.nome);
+    if (!nome) return res.status(400).json({ sucesso: false, erro: "Dê um nome ao perfil (2 a 40 letras)." });
+    limparCachePerfis();
+    await lerPerfisAcesso();
+    if (PAPEIS_EQUIPE.concat(["admin"]).some(p => String(NOMES_PAPEIS[p] || "").toLowerCase() === nome.toLowerCase())) {
+      return res.status(400).json({ sucesso: false, erro: "Já existe um perfil com esse nome." });
+    }
+    let slug = "perfil_" + slugPerfil(nome), n = 2;
+    while (PAPEIS_EQUIPE.includes(slug)) slug = `perfil_${slugPerfil(nome).slice(0, 26)}_${n++}`;
+    let paginas = [];
+    const copiar = String(req.body?.copiar_de || "");
+    if (copiar && PAPEIS_EQUIPE.includes(copiar)) {
+      const perfis = await lerPerfisAcesso();
+      paginas = (perfis[copiar] || []).slice();
+    }
+    const { error } = await supabase.from("perfis_acesso").insert({
+      papel: slug, paginas, nome, personalizado: true, atualizado_em: new Date().toISOString(), atualizado_por: req.nomeUsuario
+    });
+    if (error) {
+      console.error("[ACESSO] ERRO CRIAR PERFIL:", error);
+      return res.status(500).json({ sucesso: false, erro: "Não foi possível criar o perfil. Rode no Supabase o SQL 2026-11-23-perfis-personalizados.sql." });
+    }
+    limparCachePerfis();
+    await lerPerfisAcesso();
+    return res.json({ sucesso: true, papel: slug, nome });
+  } catch (e) {
+    console.error("[ACESSO] ERRO CRIAR PERFIL:", e);
+    return res.status(500).json({ sucesso: false, erro: "Erro interno ao criar o perfil." });
+  }
+});
+
+app.put("/admin/perfis/:papel/nome", verificarAdminBackend, async (req, res) => {
+  const papel = String(req.params.papel || "");
+  if (!papel.startsWith("perfil_") || !PAPEIS_EQUIPE.includes(papel)) return res.status(400).json({ sucesso: false, erro: "Só dá para renomear os perfis que você criou." });
+  const nome = nomePerfilValido(req.body?.nome);
+  if (!nome) return res.status(400).json({ sucesso: false, erro: "Dê um nome ao perfil (2 a 40 letras)." });
+  if (PAPEIS_EQUIPE.concat(["admin"]).some(p => p !== papel && String(NOMES_PAPEIS[p] || "").toLowerCase() === nome.toLowerCase())) {
+    return res.status(400).json({ sucesso: false, erro: "Já existe um perfil com esse nome." });
+  }
+  const { error } = await supabase.from("perfis_acesso").update({ nome }).eq("papel", papel);
+  if (error) return res.status(500).json({ sucesso: false, erro: error.message });
+  limparCachePerfis();
+  await lerPerfisAcesso();
+  return res.json({ sucesso: true, nome });
+});
+
+app.delete("/admin/perfis/:papel", verificarAdminBackend, async (req, res) => {
+  const papel = String(req.params.papel || "");
+  if (!papel.startsWith("perfil_") || !PAPEIS_EQUIPE.includes(papel)) return res.status(400).json({ sucesso: false, erro: "Só dá para excluir os perfis que você criou." });
+  const { count } = await supabase.from("user_profiles").select("id", { count: "exact", head: true }).eq("role", papel);
+  if (count > 0) return res.status(400).json({ sucesso: false, erro: `${count} usuário(s) ainda usam esse perfil. Troque o perfil deles em Usuários e depois exclua.` });
+  const { error } = await supabase.from("perfis_acesso").delete().eq("papel", papel);
+  if (error) return res.status(500).json({ sucesso: false, erro: error.message });
+  limparCachePerfis();
+  await lerPerfisAcesso();
+  return res.json({ sucesso: true });
 });
 
 app.put("/admin/perfis/:papel", verificarAdminBackend, async (req, res) => {
@@ -4293,7 +4391,7 @@ vendas.registrarRotasVendas(app, {
 /* =====================================================
    DISTRIBUIÇÃO DE BLOCOS DE CARTELAS (src/blocos/blocos.js)
 ===================================================== */
-registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS, criarPix, consultarPix });
+registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS, criarPix, consultarPix, garantirPapeis: lerPerfisAcesso });
 
 /* =====================================================
    ORIGEM DAS VISITAS (parcerias, Instagram…) — src/origens/origens.js

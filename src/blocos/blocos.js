@@ -76,13 +76,14 @@ function idCartela(v) {
   return NaN;
 }
 
-function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS, criarPix, consultarPix }) {
+function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuario, PAPEIS_VALIDOS, criarPix, consultarPix, garantirPapeis }) {
 
   const papeisValidos = PAPEIS_VALIDOS || ["admin", "padrao", "voluntario"];
 
   /* ------------------------- AUTENTICAÇÃO -------------------------- */
   async function exigirAcessoBlocos(req, res, next) {
     try {
+      if (garantirPapeis) await garantirPapeis();   /* perfis criados na tela Usuários */
       const token = String(req.headers.authorization || "").replace("Bearer ", "").trim();
       if (!token) return res.status(401).json({ sucesso: false, erro: "Sessão não encontrada. Faça login novamente." });
       const { data: u, error: eu } = await supabase.auth.getUser(token);
