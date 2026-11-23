@@ -2386,14 +2386,15 @@ app.post("/admin/usuarios", verificarAdminBackend, async (req, res) => {
 });
 
 /* =====================================================
-   ADMIN USUÁRIOS — EDITAR (nome e papel)
+   ADMIN USUÁRIOS — EDITAR (nome, papel, e-mail e senha)
+   e-mail e senha são opcionais: só mudam se vierem preenchidos.
 ===================================================== */
 app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
 
   try {
 
     const { id } = req.params;
-    const { nome, role, acesso_blocos, paginas_personalizadas } = req.body || {};
+    const { nome, role, acesso_blocos, paginas_personalizadas, email, password } = req.body || {};
 
     if (!nome) {
       return res.status(400).json({
@@ -2404,11 +2405,42 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
 
     const roleFinal = PAPEIS_VALIDOS.includes(role) ? role : "voluntario";
 
+    /* e-mail e senha (opcionais) */
+    const novaSenha = password === undefined || password === null ? "" : String(password);
+    if (novaSenha && novaSenha.length < 6) {
+      return res.status(400).json({ sucesso: false, erro: "A senha precisa ter pelo menos 6 caracteres." });
+    }
+    let novoEmail = null;
+    if (email !== undefined && email !== null && String(email).trim()) {
+      const e = String(email).trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || e.length > 200) {
+        return res.status(400).json({ sucesso: false, erro: "E-mail inválido." });
+      }
+      const { data: atual } = await supabase.from("user_profiles").select("email").eq("id", id).maybeSingle();
+      if (!atual) return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado." });
+      if (String(atual.email || "").toLowerCase() !== e) {
+        const { data: outro } = await supabase.from("user_profiles").select("id").ilike("email", e).neq("id", id).limit(1);
+        if (outro && outro.length) return res.status(400).json({ sucesso: false, erro: "Já existe outro usuário com esse e-mail." });
+        novoEmail = e;
+      }
+    }
+
     if (id === req.usuarioAdmin.id && roleFinal !== "admin") {
       return res.status(400).json({
         sucesso: false,
         erro: "Você não pode remover o seu próprio acesso de administrador."
       });
+    }
+
+    if (novoEmail || novaSenha) {
+      const mudanca = {};
+      if (novoEmail) { mudanca.email = novoEmail; mudanca.email_confirm = true; }
+      if (novaSenha) mudanca.password = novaSenha;
+      const { error: authError } = await supabase.auth.admin.updateUserById(id, mudanca);
+      if (authError) {
+        console.error("[ADMIN] ERRO ATUALIZAR LOGIN DO USUARIO:", authError.message);
+        return res.status(400).json({ sucesso: false, erro: authError.message || "Não foi possível alterar o e-mail/senha." });
+      }
     }
 
     const { error } = await supabase
@@ -2417,7 +2449,8 @@ app.put("/admin/usuarios/:id", verificarAdminBackend, async (req, res) => {
         nome: String(nome).trim(),
         role: roleFinal,
         acesso_blocos: false,
-        paginas_personalizadas: limparPaginasPersonalizadas(paginas_personalizadas, roleFinal, acesso_blocos)
+        paginas_personalizadas: limparPaginasPersonalizadas(paginas_personalizadas, roleFinal, acesso_blocos),
+        ...(novoEmail ? { email: novoEmail } : {})
       })
       .eq("id", id);
 
