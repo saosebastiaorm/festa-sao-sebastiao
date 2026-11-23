@@ -22,6 +22,23 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
   };
   const quem = req => texto(req.nomeUsuario || req.usuarioAdmin?.email || "", 100) || null;
   const falha = (res, e, msg, status = 500) => { console.error("[PAROQUIA]", msg, e?.message || e); return res.status(status).json({ sucesso: false, erro: msg }); };
+  /* mesma conta do Acertar (Blocos): bônus do bloco inteiro, comissão do plano, parceria não cobra */
+  function valoresBloco(vendidas, e) {
+    let cobradas = vendidas;
+    if (e.tem_bonus && e.bonus_usado !== false && vendidas === e.quantidade_entregue && vendidas > 0) cobradas -= 1;
+    if (!e.cobra) return { bruto: 0, comissao: 0, devido: 0 };
+    const bruto = arred(cobradas * Number(e.preco));
+    const comissao = arred(bruto * Number(e.comissao_pct) / 100);
+    return { bruto, comissao, devido: arred(bruto - comissao) };
+  }
+  /* quanto a comunidade deve entregar por este bloco agora (vendas − comissão − o que o cliente já pagou no site) */
+  function contaBloco(e, antes, vendidas, pagas) {
+    const a = valoresBloco(antes, e), d = valoresBloco(antes + vendidas, e);
+    const devido = arred(d.devido - a.devido);
+    const abate = e.cobra ? arred(Math.min(pagas, vendidas) * Number(e.preco)) : 0;
+    return { devido, abate, receber: arred(devido - abate) };
+  }
+  const CAMPOS_ENTREGA = "id, cobra, preco, comissao_pct, tem_bonus, bonus_usado, quantidade_entregue, plano_nome";
   const SEM_TABELA = "O recurso da paróquia ainda não foi ativado no banco (falta rodar o SQL 2026-11-22-paroquia).";
 
   /* quem sou eu (a tela mostra ou esconde o que é da equipe) */
@@ -46,13 +63,13 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     const { data: resp } = await supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade").eq("id", id).maybeSingle();
     if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
     const { data: entregas, error } = await supabase.from("blocos_entregas")
-      .select("id, blocos(sequencial, numero_inicial, numero_final)")
+      .select(CAMPOS_ENTREGA + ", blocos(sequencial, numero_inicial, numero_final)")
       .eq("responsavel_id", id).neq("status", "cancelada").eq("separada", false).order("id");
     if (error) return falha(res, error, "Erro ao carregar os blocos.");
     const ids = (entregas || []).map(e => e.id);
     let cartelas = [], recebidos = [];
     if (ids.length) {
-      const r1 = await supabase.from("blocos_cartelas").select("numero, entrega_id").in("entrega_id", ids).eq("status", "com_responsavel").limit(20000);
+      const r1 = await supabase.from("blocos_cartelas").select("numero, entrega_id, status").in("entrega_id", ids).in("status", ["com_responsavel", "vendida"]).limit(20000);
       cartelas = r1.data || [];
       const r2 = await supabase.from("paroquia_recebimento_blocos").select("entrega_id, recebimento_id, vendidas, devolvidas, paroquia_recebimentos(created_at)")
         .in("entrega_id", ids).eq("ativo", true);
@@ -60,13 +77,17 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
       recebidos = r2.data || [];
     }
     let pagas = new Set();
-    const numeros = cartelas.map(c => c.numero);
+    const numeros = cartelas.filter(c => c.status === "com_responsavel").map(c => c.numero);
     if (numeros.length) {
       const { data: pg } = await supabase.rpc("fpss_blocos_cartelas_pagas", { p_numeros: numeros });
       pagas = new Set((pg || []).map(p => p.numero));
     }
     const porEntrega = {};
-    cartelas.forEach(c => { (porEntrega[c.entrega_id] = porEntrega[c.entrega_id] || []).push(c.numero); });
+    const vendidasAntes = {};
+    cartelas.forEach(c => {
+      if (c.status === "vendida") vendidasAntes[c.entrega_id] = (vendidasAntes[c.entrega_id] || 0) + 1;
+      else (porEntrega[c.entrega_id] = porEntrega[c.entrega_id] || []).push(c.numero);
+    });
     const jaRec = {};
     recebidos.forEach(r => { jaRec[r.entrega_id] = r; });
     const blocos = (entregas || []).map(e => {
@@ -75,6 +96,8 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
       return {
         entrega_id: e.id, sequencial: e.blocos?.sequencial, numero_inicial: e.blocos?.numero_inicial, numero_final: e.blocos?.numero_final,
         quantidade: nums.length, pagas_site: nums.filter(n => pagas.has(n)).length,
+        cobra: e.cobra, preco: Number(e.preco), comissao_pct: Number(e.comissao_pct), tem_bonus: e.tem_bonus, bonus_usado: e.bonus_usado,
+        quantidade_entregue: e.quantidade_entregue, plano_nome: e.plano_nome, vendidas_antes: vendidasAntes[e.id] || 0,
         ja_recebido: rec ? { recebimento_id: rec.recebimento_id, vendidas: rec.vendidas, devolvidas: rec.devolvidas, em: rec.paroquia_recebimentos?.created_at || null } : null
       };
     }).filter(b => b.quantidade > 0 || b.ja_recebido);
@@ -99,11 +122,14 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
     const ids = pedidos.map(p => p.entrega_id);
     const { data: entregas } = await supabase.from("blocos_entregas")
-      .select("id, responsavel_id, status, separada, blocos(sequencial, numero_inicial, numero_final)").in("id", ids);
-    const { data: cartelas } = await supabase.from("blocos_cartelas").select("numero, entrega_id").in("entrega_id", ids).eq("status", "com_responsavel").limit(20000);
-    const nums = {};
-    (cartelas || []).forEach(c => { (nums[c.entrega_id] = nums[c.entrega_id] || []).push(c.numero); });
-    const todas = (cartelas || []).map(c => c.numero);
+      .select(CAMPOS_ENTREGA + ", responsavel_id, status, separada, blocos(sequencial, numero_inicial, numero_final)").in("id", ids);
+    const { data: cartelas } = await supabase.from("blocos_cartelas").select("numero, entrega_id, status").in("entrega_id", ids).in("status", ["com_responsavel", "vendida"]).limit(20000);
+    const nums = {}, antes = {};
+    (cartelas || []).forEach(c => {
+      if (c.status === "vendida") antes[c.entrega_id] = (antes[c.entrega_id] || 0) + 1;
+      else (nums[c.entrega_id] = nums[c.entrega_id] || []).push(c.numero);
+    });
+    const todas = (cartelas || []).filter(c => c.status === "com_responsavel").map(c => c.numero);
     let pagas = new Set();
     if (todas.length) {
       const { data: pg } = await supabase.rpc("fpss_blocos_cartelas_pagas", { p_numeros: todas });
@@ -116,14 +142,18 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
       const lista = nums[e.id] || [];
       if (!lista.length) return res.status(400).json({ sucesso: false, erro: `O bloco ${e.blocos?.sequencial ?? ""} não tem mais cartelas pendentes (a equipe já acertou). Atualize a tela.` });
       if (p.vendidas > lista.length) return res.status(400).json({ sucesso: false, erro: `O bloco ${e.blocos?.sequencial ?? ""} tem só ${lista.length} cartela(s); você informou ${p.vendidas} vendidas.` });
+      const pg = lista.filter(n => pagas.has(n)).length;
+      const conta = contaBloco(e, antes[e.id] || 0, p.vendidas, pg);
       linhas.push({
+        devido: conta.devido, abate_site: conta.abate,
         entrega_id: e.id, sequencial: e.blocos?.sequencial ?? null, numero_inicial: e.blocos?.numero_inicial ?? null, numero_final: e.blocos?.numero_final ?? null,
-        quantidade: lista.length, vendidas: p.vendidas, devolvidas: lista.length - p.vendidas, pagas_site: lista.filter(n => pagas.has(n)).length
+        quantidade: lista.length, vendidas: p.vendidas, devolvidas: lista.length - p.vendidas, pagas_site: pg
       });
     }
     const { data: rec, error: er } = await supabase.from("paroquia_recebimentos").insert({
       responsavel_id: respId, responsavel_nome: resp.nome, comunidade: resp.comunidade || null,
-      ...vals, observacao: texto(b.observacao) || null, lancador_id: req.usuarioAdmin?.id || null, lancador_nome: quem(req)
+      ...vals, a_receber: arred(linhas.reduce((a, l) => a + l.devido - l.abate_site, 0)),
+      observacao: texto(b.observacao) || null, lancador_id: req.usuarioAdmin?.id || null, lancador_nome: quem(req)
     }).select("id, created_at").single();
     if (er) return falha(res, er, /paroquia_/.test(er.message || "") ? SEM_TABELA : "Erro ao registrar o recebimento.");
     const { error: eb } = await supabase.from("paroquia_recebimento_blocos").insert(linhas.map(l => ({ ...l, recebimento_id: rec.id })));
@@ -138,7 +168,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
   /* tudo que a tela precisa: recebimentos (com blocos) e repasses */
   app.get("/admin/paroquia/dados", limite, acesso, async (req, res) => {
     const { data: recs, error } = await supabase.from("paroquia_recebimentos")
-      .select("*, paroquia_recebimento_blocos(entrega_id, sequencial, numero_inicial, numero_final, quantidade, vendidas, devolvidas, pagas_site, ativo)")
+      .select("*, paroquia_recebimento_blocos(entrega_id, sequencial, numero_inicial, numero_final, quantidade, vendidas, devolvidas, pagas_site, devido, abate_site, ativo)")
       .eq("cancelado", false).order("created_at", { ascending: false }).limit(3000);
     if (error) return falha(res, error, /paroquia_/.test(error.message || "") ? SEM_TABELA : "Erro ao carregar.");
     const { data: reps } = await supabase.from("paroquia_repasses").select("*").eq("cancelado", false).order("data_repasse", { ascending: false }).order("id", { ascending: false }).limit(1000);

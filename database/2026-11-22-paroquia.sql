@@ -66,6 +66,11 @@ create table if not exists public.paroquia_recebimento_blocos (
 create unique index if not exists paroquia_bloco_unico_idx on public.paroquia_recebimento_blocos (entrega_id) where ativo;
 create index if not exists paroquia_recebimento_blocos_rec_idx on public.paroquia_recebimento_blocos (recebimento_id);
 
+-- quanto a comunidade devia entregar (vendas - comissao - pagas no site), calculado na hora do recebimento
+alter table public.paroquia_recebimentos add column if not exists a_receber numeric(12,2) not null default 0;
+alter table public.paroquia_recebimento_blocos add column if not exists devido numeric(12,2) not null default 0;
+alter table public.paroquia_recebimento_blocos add column if not exists abate_site numeric(12,2) not null default 0;
+
 -- só o servidor (service_role) acessa
 do $$
 declare t text;
