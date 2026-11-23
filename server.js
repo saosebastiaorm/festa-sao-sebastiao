@@ -4280,7 +4280,7 @@ registrarRotasEnquetes(app, { supabase, exigirPagina, criarLimitador });
 registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador });
 
 /* RECEBIMENTO DA PARÓQUIA (blocos recebidos e repassados à equipe) — src/paroquia/paroquia.js */
-registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador });
+registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, criarPix, consultarPix });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */

@@ -9,7 +9,7 @@
      cancelar recebimento lançado errado, desfazer repasse.
    NÃO mexe nos acertos dos Blocos: a paróquia só registra o que recebeu.
 ===================================================== */
-function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador }) {
+function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, criarPix, consultarPix }) {
   const acesso = exigirPagina("paroquia");
   const acessoRepasse = exigirPagina("paroquia_repasse");
   const limite = criarLimitador({ janelaMs: 60 * 1000, max: 60 });
@@ -40,6 +40,68 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
   }
   const CAMPOS_ENTREGA = "id, cobra, preco, comissao_pct, tem_bonus, bonus_usado, quantidade_entregue, plano_nome";
   const SEM_TABELA = "O recurso da paróquia ainda não foi ativado no banco (falta rodar o SQL 2026-11-22-paroquia).";
+
+  /* ---------------- Pix por QR Code (confirmado pelo banco) ----------------
+     Usa a mesma tabela do Acerto (blocos_acerto_pix) com origem = 'paroquia'.
+     Assim, quando a equipe abrir o Acerto dessa comunidade, o Pix já aparece
+     como "comprovado pelo banco" e entra no recebido. */
+  async function conferirPix(linha) {
+    if (linha.status === "pago") return linha;
+    try {
+      const pg = await consultarPix(linha.txid);
+      if (pg && pg.status === "CONCLUIDA") {
+        const pix0 = Array.isArray(pg.pix) && pg.pix[0] ? pg.pix[0] : {};
+        const upd = { status: "pago", pago_em: pix0.horario || new Date().toISOString(), e2e_id: pix0.endToEndId || null, valor_pago: arred(pix0.valor ?? pg.valor?.original ?? linha.valor) };
+        const { data } = await supabase.from("blocos_acerto_pix").update(upd).eq("id", linha.id).select("*").maybeSingle();
+        return data || { ...linha, ...upd };
+      }
+    } catch (e) { console.error("[PAROQUIA] consultar Pix:", linha.txid, e.message); }
+    return linha;
+  }
+  function pixPublico(l) {
+    const expirado = l.status !== "pago" && Date.now() - new Date(l.created_at).getTime() > 31 * 60 * 1000;
+    return { id: l.id, valor: Number(l.valor), status: expirado ? "expirado" : l.status, pago: l.status === "pago",
+      pago_em: l.pago_em, valor_pago: l.valor_pago != null ? Number(l.valor_pago) : null, pix_copia_cola: l.status === "pago" ? null : l.pix_copia_cola };
+  }
+
+  app.post("/admin/paroquia/pix", limite, acesso, async (req, res) => {
+    try {
+      if (!criarPix || !consultarPix) return res.status(503).json({ sucesso: false, erro: "Pix indisponível neste servidor." });
+      const respId = Number(req.body?.responsavel_id);
+      const valor = arred(String(req.body?.valor ?? 0).replace(",", "."));
+      if (!Number.isInteger(respId)) return res.status(400).json({ sucesso: false, erro: "Escolha a pessoa." });
+      if (!(valor >= 1 && valor <= 50000)) return res.status(400).json({ sucesso: false, erro: "Informe um valor de Pix entre R$ 1,00 e R$ 50.000,00." });
+      const { data: resp } = await supabase.from("blocos_responsaveis").select("id").eq("id", respId).maybeSingle();
+      if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
+      const cobranca = await criarPix(valor, null, null, { expiracao: 1800, descricao: "FPSS 2027 - Recebimento da paroquia" });
+      if (!cobranca || !cobranca.txid || !cobranca.pixCopiaECola) return res.status(502).json({ sucesso: false, erro: "Não foi possível gerar o Pix agora. Tente de novo." });
+      const { data: linha, error } = await supabase.from("blocos_acerto_pix").insert({
+        responsavel_id: respId, valor, txid: cobranca.txid, pix_copia_cola: cobranca.pixCopiaECola, origem: "paroquia",
+        criado_por_id: req.usuarioAdmin?.id || null, criado_por_nome: quem(req)
+      }).select("*").single();
+      if (error) return falha(res, error, "Pix gerado, mas não foi possível registrar (rode o SQL 2026-11-22-paroquia).");
+      res.json({ sucesso: true, pix: { ...pixPublico(linha), pix_copia_cola: linha.pix_copia_cola } });
+    } catch (e) { return falha(res, e, "Erro ao gerar o Pix."); }
+  });
+
+  app.get("/admin/paroquia/pix/:id", limite, acesso, async (req, res) => {
+    const { data: linha } = await supabase.from("blocos_acerto_pix").select("*").eq("id", Number(req.params.id)).eq("origem", "paroquia").maybeSingle();
+    if (!linha) return res.status(404).json({ sucesso: false, erro: "Pix não encontrado." });
+    res.json({ sucesso: true, pix: pixPublico(await conferirPix(linha)) });
+  });
+
+  /* Pix desta pessoa já gerados na paróquia e ainda não ligados a um recebimento (a tela pode ter sido fechada) */
+  app.get("/admin/paroquia/responsaveis/:id/pix", limite, acesso, async (req, res) => {
+    const { data, error } = await supabase.from("blocos_acerto_pix").select("*")
+      .eq("responsavel_id", Number(req.params.id)).eq("origem", "paroquia").is("recebimento_id", null).is("usado_em", null).order("id");
+    if (error) return res.json({ sucesso: true, pix: [] });
+    const lista = [];
+    for (const l of data || []) {
+      const pub = pixPublico(await conferirPix(l));
+      if (pub.pago || pub.status === "pendente") lista.push(pub);
+    }
+    res.json({ sucesso: true, pix: lista });
+  });
 
   /* quem sou eu (a tela mostra ou esconde o que é da equipe) */
   app.get("/admin/paroquia/me", limite, acesso, (req, res) => {
@@ -115,8 +177,22 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     if (pedidos.some(p => !Number.isInteger(p.entrega_id) || !Number.isInteger(p.vendidas) || p.vendidas < 0)) {
       return res.status(400).json({ sucesso: false, erro: "Informe quantas cartelas foram vendidas em cada bloco (pode ser zero)." });
     }
-    const vals = { dinheiro: dinheiro(b.dinheiro), pix: dinheiro(b.pix), cartao: dinheiro(b.cartao) };
+    const vals = { dinheiro: dinheiro(b.dinheiro), pix: 0, cartao: dinheiro(b.cartao) };
     if (Object.values(vals).some(v => Number.isNaN(v))) return res.status(400).json({ sucesso: false, erro: "Valor inválido." });
+    /* Pix: só vale o que o banco confirmou, é desta pessoa, veio da paróquia e ainda não foi usado */
+    const pixIds = [...new Set((Array.isArray(b.pix_ids) ? b.pix_ids : []).map(Number).filter(Number.isInteger))].slice(0, 20);
+    let pixLinhas = [];
+    if (pixIds.length) {
+      const { data: pl } = await supabase.from("blocos_acerto_pix").select("*").in("id", pixIds);
+      for (const l of pl || []) {
+        if (l.origem !== "paroquia" || Number(l.responsavel_id) !== respId || l.recebimento_id || l.usado_em) return res.status(400).json({ sucesso: false, erro: "Um dos Pix não pode ser usado (já foi lançado ou é de outra pessoa). Atualize a tela." });
+        const conf = await conferirPix(l);
+        if (conf.status !== "pago") return res.status(400).json({ sucesso: false, erro: `O Pix de ${arred(l.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} ainda não foi confirmado pelo banco.` });
+        pixLinhas.push(conf);
+      }
+      if (pixLinhas.length !== pixIds.length) return res.status(400).json({ sucesso: false, erro: "Pix não encontrado. Atualize a tela." });
+      vals.pix = arred(pixLinhas.reduce((a, l) => a + Number(l.valor_pago ?? l.valor), 0));
+    }
 
     const { data: resp } = await supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade").eq("id", respId).maybeSingle();
     if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
@@ -157,6 +233,14 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     }).select("id, created_at").single();
     if (er) return falha(res, er, /paroquia_/.test(er.message || "") ? SEM_TABELA : "Erro ao registrar o recebimento.");
     const { error: eb } = await supabase.from("paroquia_recebimento_blocos").insert(linhas.map(l => ({ ...l, recebimento_id: rec.id })));
+    if (!eb && pixLinhas.length) {
+      const { data: lig } = await supabase.from("blocos_acerto_pix").update({ recebimento_id: rec.id }).in("id", pixLinhas.map(l => l.id)).is("recebimento_id", null).select("id");
+      if ((lig || []).length !== pixLinhas.length) {
+        if (lig?.length) await supabase.from("blocos_acerto_pix").update({ recebimento_id: null }).in("id", lig.map(x => x.id));
+        await supabase.from("paroquia_recebimentos").delete().eq("id", rec.id);
+        return res.status(409).json({ sucesso: false, erro: "Esse Pix foi usado ao mesmo tempo em outro lançamento. Atualize a tela." });
+      }
+    }
     if (eb) {
       await supabase.from("paroquia_recebimentos").delete().eq("id", rec.id);
       if (eb.code === "23505") return res.status(409).json({ sucesso: false, erro: "Algum desses blocos já foi recebido por outra pessoa. Atualize a tela." });
@@ -181,6 +265,9 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     const { data: r } = await supabase.from("paroquia_recebimentos").select("id, repasse_id, cancelado").eq("id", id).maybeSingle();
     if (!r || r.cancelado) return res.status(404).json({ sucesso: false, erro: "Recebimento não encontrado." });
     if (r.repasse_id) return res.status(400).json({ sucesso: false, erro: "Esse recebimento já foi repassado. Desfaça o repasse antes." });
+    const { data: usados } = await supabase.from("blocos_acerto_pix").select("id").eq("recebimento_id", id).not("usado_em", "is", null).limit(1);
+    if ((usados || []).length) return res.status(400).json({ sucesso: false, erro: "O Pix desse recebimento já foi lançado em um acerto dos Blocos. Desfaça o acerto antes." });
+    await supabase.from("blocos_acerto_pix").update({ recebimento_id: null }).eq("recebimento_id", id);
     const { error } = await supabase.from("paroquia_recebimentos").update({ cancelado: true, cancelado_por: quem(req), cancelado_em: new Date().toISOString() }).eq("id", id);
     if (error) return falha(res, error, "Erro ao cancelar.");
     await supabase.from("paroquia_recebimento_blocos").update({ ativo: false }).eq("recebimento_id", id);
@@ -194,7 +281,8 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(b.data || ""));
     const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Porto_Velho" });
     if (!m || String(b.data) > hoje || m[1] < "2026") return res.status(400).json({ sucesso: false, erro: "Data inválida (não pode ser futura)." });
-    const vals = { dinheiro: dinheiro(b.dinheiro), pix: dinheiro(b.pix), cartao: dinheiro(b.cartao) };
+    /* o Pix confirmado pelo banco cai direto na conta da festa: não entra no repasse */
+    const vals = { dinheiro: dinheiro(b.dinheiro), pix: 0, cartao: dinheiro(b.cartao) };
     if (Object.values(vals).some(v => Number.isNaN(v))) return res.status(400).json({ sucesso: false, erro: "Valor inválido." });
     const { data: recs } = await supabase.from("paroquia_recebimentos")
       .select("id, dinheiro, pix, cartao, repasse_id, cancelado, paroquia_recebimento_blocos(ativo)").in("id", ids);
@@ -204,7 +292,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador })
     const soma = k => arred(recs.reduce((a, r) => a + Number(r[k] || 0), 0));
     const nBlocos = recs.reduce((a, r) => a + (r.paroquia_recebimento_blocos || []).filter(x => x.ativo).length, 0);
     const { data: rep, error } = await supabase.from("paroquia_repasses").insert({
-      data_repasse: b.data, esperado_dinheiro: soma("dinheiro"), esperado_pix: soma("pix"), esperado_cartao: soma("cartao"),
+      data_repasse: b.data, esperado_dinheiro: soma("dinheiro"), esperado_pix: 0, esperado_cartao: soma("cartao"),
       ...vals, blocos: nBlocos, observacao: texto(b.observacao) || null, lancador_id: req.usuarioAdmin?.id || null, lancador_nome: quem(req)
     }).select("id").single();
     if (error) return falha(res, error, /paroquia_/.test(error.message || "") ? SEM_TABELA : "Erro ao registrar o repasse.");

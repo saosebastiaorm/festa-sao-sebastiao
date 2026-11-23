@@ -71,6 +71,10 @@ alter table public.paroquia_recebimentos add column if not exists a_receber nume
 alter table public.paroquia_recebimento_blocos add column if not exists devido numeric(12,2) not null default 0;
 alter table public.paroquia_recebimento_blocos add column if not exists abate_site numeric(12,2) not null default 0;
 
+-- Pix por QR Code gerado na paróquia (mesma tabela do Acerto, para a equipe ver o Pix ao acertar a comunidade)
+alter table public.blocos_acerto_pix add column if not exists origem text;
+alter table public.blocos_acerto_pix add column if not exists recebimento_id bigint;
+
 -- só o servidor (service_role) acessa
 do $$
 declare t text;

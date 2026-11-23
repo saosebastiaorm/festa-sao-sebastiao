@@ -798,7 +798,7 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     return {
       id: l.id, valor: Number(l.valor), status: expirado ? "expirado" : l.status, pago: l.status === "pago",
       pago_em: l.pago_em, valor_pago: l.valor_pago != null ? Number(l.valor_pago) : null,
-      e2e_id: l.e2e_id, usado: !!l.usado_em, selecao: Array.isArray(l.selecao) ? l.selecao : null, pix_copia_cola: l.status === "pago" ? null : l.pix_copia_cola
+      e2e_id: l.e2e_id, usado: !!l.usado_em, origem: l.origem || null, selecao: Array.isArray(l.selecao) ? l.selecao : null, pix_copia_cola: l.status === "pago" ? null : l.pix_copia_cola
     };
   }
 
@@ -852,8 +852,13 @@ function registrarRotasBlocos(app, { supabase, limitadorOperador, paginasDoUsuar
     /* Pix desta pessoa ainda não lançados em acerto (últimas 24h): confere cada um no Sicredi,
        porque o cliente pode ter pagado depois que a tela foi fechada. */
     const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data, error } = await supabase.from("blocos_acerto_pix").select("*")
-      .eq("responsavel_id", responsavelId).is("usado_em", null).gte("created_at", desde).order("id", { ascending: true });
+    let { data, error } = await supabase.from("blocos_acerto_pix").select("*")
+      .eq("responsavel_id", responsavelId).is("usado_em", null).or(`created_at.gte.${desde},origem.eq.paroquia`).order("id", { ascending: true });
+    if (error) {
+      /* coluna "origem" ainda não existe (SQL 2026-11-22): segue só com as últimas 24h */
+      ({ data, error } = await supabase.from("blocos_acerto_pix").select("*")
+        .eq("responsavel_id", responsavelId).is("usado_em", null).gte("created_at", desde).order("id", { ascending: true }));
+    }
     if (error) return res.json({ sucesso: true, pix: [] });
     const lista = [];
     for (const l of data || []) {
