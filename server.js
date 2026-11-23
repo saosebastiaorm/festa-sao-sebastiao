@@ -37,6 +37,7 @@ const { registrarRotasOrigens } = require("./src/origens/origens");
 const { registrarRotasVendedores } = require("./src/vendedores/vendedores");
 const { registrarRotasEnquetes } = require("./src/enquetes/enquetes");
 const { registrarRotasContatos } = require("./src/contatos/contatos");
+const { registrarRotasParoquia } = require("./src/paroquia/paroquia");
 const sharp = require("sharp");
 require("dotenv").config();
 
@@ -238,6 +239,7 @@ const PAGINAS_ADMIN = [
   { chave: "lotes",     nome: "Lotes de cartelas",        pagina: "/admin/lotes.html" },
   { chave: "origens",   nome: "Origem das visitas (parcerias)", pagina: "/admin/origens.html" },
   { chave: "equipes",   nome: "Equipes (voluntários e camisetas)", pagina: "/admin/equipes.html" },
+  { chave: "paroquia",  nome: "Paróquia (receber blocos e repassar)", pagina: "/admin/paroquia.html" },
   { chave: "rel_caixa",        nome: "Relatório — Vendas do caixa",            pagina: null },
   { chave: "rel_pedidos",      nome: "Relatório — Pedidos (site e caixa)",     pagina: null },
   { chave: "rel_produtos",     nome: "Relatório — Produtos vendidos",          pagina: null },
@@ -267,6 +269,7 @@ const PAGINAS_ADMIN = [
   { chave: "blocos_corrigir",     pai: "blocos", padrao: true,  nome: "Corrigir lançamentos (trocar plano ou data, cancelar entrega, desfazer acerto)", pagina: null },
   { chave: "blocos_cadastro",     pai: "blocos", padrao: false, nome: "Cadastrar faixas de blocos, distribuidores e planejado das comunidades", pagina: null },
   { chave: "blocos_config",       pai: "blocos", padrao: false, nome: "Planos, preço e configuração dos blocos",      pagina: null },
+  { chave: "paroquia_repasse",    pai: "paroquia", padrao: false, nome: "Registrar o repasse da paróquia e corrigir recebimentos", pagina: null },
   { chave: "cartelas_exportar",   pai: "cartelas", padrao: true,  nome: "Exportar CSV",                               pagina: null },
   { chave: "cartelas_conferir",   pai: "cartelas", padrao: true,  nome: "Conferir Pix pendentes",                     pagina: null },
   { chave: "cartelas_cancelar",   pai: "cartelas", padrao: false, nome: "Cancelar venda (cartela volta a disponível)", pagina: null },
@@ -4275,6 +4278,9 @@ registrarRotasVendedores(app, { supabase, exigirPagina, criarLimitador, validarC
 /* ENQUETES e GRUPO VIP (leitura no admin) — src/enquetes/enquetes.js */
 registrarRotasEnquetes(app, { supabase, exigirPagina, criarLimitador });
 registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador });
+
+/* RECEBIMENTO DA PARÓQUIA (blocos recebidos e repassados à equipe) — src/paroquia/paroquia.js */
+registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador });
 
 /* Confere sozinho, a cada 2 minutos, os Pix de produtos ainda pendentes
    (quem pagou e fechou a página antes da confirmação). */
