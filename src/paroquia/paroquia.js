@@ -110,60 +110,103 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
   });
 
   /* busca de comunidade / responsável que ainda tem bloco na rua */
+  /* ids das comunidades marcadas como "devolve na paróquia"; se nenhuma foi marcada ainda, vale toda comunidade cadastrada */
+  async function comunidadesDaParoquia() {
+    const { data, error } = await supabase.from("blocos_comunidades").select("id").eq("devolve_paroquia", true);
+    if (error) return { ids: null, marcadas: false };   /* coluna ainda não criada */
+    return { ids: (data || []).map(c => c.id), marcadas: (data || []).length > 0 };
+  }
+
   app.get("/admin/paroquia/responsaveis", limite, acesso, async (req, res) => {
     const busca = texto(req.query.busca, 60).replace(/[%,()*]/g, "");
-    let q = supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade, com_responsavel").gt("com_responsavel", 0);
+    const todos = req.query.todos === "1";
+    let q = supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade, com_responsavel, comunidade_id").gt("com_responsavel", 0);
+    let aviso = null;
+    if (!todos) {
+      const c = await comunidadesDaParoquia();
+      if (c.marcadas) q = q.in("comunidade_id", c.ids);
+      else { q = q.not("comunidade_id", "is", null); aviso = "Nenhuma comunidade foi marcada como \"da paróquia\" ainda: mostrando todas as comunidades cadastradas."; }
+    }
     if (busca) q = q.or(`nome.ilike.%${busca}%,comunidade.ilike.%${busca}%`);
-    const { data, error } = await q.order("comunidade").order("nome").limit(40);
+    const { data, error } = await q.order("comunidade").order("nome").limit(60);
     if (error) return falha(res, error, "Erro ao buscar.");
-    res.json({ sucesso: true, responsaveis: data || [] });
+    res.json({ sucesso: true, responsaveis: data || [], aviso });
   });
 
-  /* blocos que a pessoa ainda tem (e os que já foram recebidos pela paróquia) */
+  /* escolher quais comunidades devolvem na paróquia (equipe) */
+  app.get("/admin/paroquia/comunidades", limite, acessoRepasse, async (req, res) => {
+    const { data, error } = await supabase.from("blocos_comunidades").select("id, nome, local, ativa, devolve_paroquia").order("nome");
+    if (error) return falha(res, error, "Erro ao carregar as comunidades (rode o SQL 2026-11-22-paroquia).");
+    res.json({ sucesso: true, comunidades: data || [] });
+  });
+  app.post("/admin/paroquia/comunidades/:id", limite, acessoRepasse, async (req, res) => {
+    const { error } = await supabase.from("blocos_comunidades").update({ devolve_paroquia: req.body?.valor === true }).eq("id", Number(req.params.id));
+    if (error) return falha(res, error, "Erro ao salvar.");
+    res.json({ sucesso: true });
+  });
+
   app.get("/admin/paroquia/responsaveis/:id/blocos", limite, acesso, async (req, res) => {
     const id = Number(req.params.id);
-    const { data: resp } = await supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade").eq("id", id).maybeSingle();
+    const { data: resp } = await supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade, saldo").eq("id", id).maybeSingle();
     if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
     const { data: entregas, error } = await supabase.from("blocos_entregas")
       .select(CAMPOS_ENTREGA + ", blocos(sequencial, numero_inicial, numero_final)")
       .eq("responsavel_id", id).neq("status", "cancelada").eq("separada", false).order("id");
     if (error) return falha(res, error, "Erro ao carregar os blocos.");
     const ids = (entregas || []).map(e => e.id);
-    let cartelas = [], recebidos = [];
+    let cartelas = [], recebidos = [], itens = [];
     if (ids.length) {
-      const r1 = await supabase.from("blocos_cartelas").select("numero, entrega_id, status").in("entrega_id", ids).in("status", ["com_responsavel", "vendida"]).limit(20000);
+      const r1 = await supabase.from("blocos_cartelas").select("numero, entrega_id, status").in("entrega_id", ids).in("status", ["com_responsavel", "vendida", "devolvida"]).limit(20000);
       cartelas = r1.data || [];
       const r2 = await supabase.from("paroquia_recebimento_blocos").select("entrega_id, recebimento_id, vendidas, devolvidas, paroquia_recebimentos(created_at)")
         .in("entrega_id", ids).eq("ativo", true);
       if (r2.error && /paroquia_/.test(r2.error.message || "")) return res.status(500).json({ sucesso: false, erro: SEM_TABELA });
       recebidos = r2.data || [];
+      const r3 = await supabase.from("blocos_acerto_itens").select("entrega_id, vendidas, devolvidas, valor_devido, blocos_acertos!inner(desfeito, created_at)")
+        .in("entrega_id", ids).eq("blocos_acertos.desfeito", false);
+      itens = r3.data || [];
     }
-    let pagas = new Set();
-    const numeros = cartelas.filter(c => c.status === "com_responsavel").map(c => c.numero);
-    if (numeros.length) {
-      const { data: pg } = await supabase.rpc("fpss_blocos_cartelas_pagas", { p_numeros: numeros });
-      pagas = new Set((pg || []).map(p => p.numero));
+    /* cartelas que já constam pagas no site (pendentes e as já acertadas) */
+    const pagasPor = {};
+    const numerosPagaveis = cartelas.filter(c => c.status !== "devolvida").map(c => c.numero);
+    if (numerosPagaveis.length) {
+      const { data: pg } = await supabase.rpc("fpss_blocos_cartelas_pagas", { p_numeros: numerosPagaveis });
+      (pg || []).forEach(x => { pagasPor[x.numero] = x; });
     }
-    const porEntrega = {};
-    const vendidasAntes = {};
+    const pend = {}, vendidasAntes = {}, devolvidasAntes = {}, acertadasPagas = {};
     cartelas.forEach(c => {
-      if (c.status === "vendida") vendidasAntes[c.entrega_id] = (vendidasAntes[c.entrega_id] || 0) + 1;
-      else (porEntrega[c.entrega_id] = porEntrega[c.entrega_id] || []).push(c.numero);
+      if (c.status === "vendida") { vendidasAntes[c.entrega_id] = (vendidasAntes[c.entrega_id] || 0) + 1; if (pagasPor[c.numero]) acertadasPagas[c.entrega_id] = (acertadasPagas[c.entrega_id] || 0) + 1; }
+      else if (c.status === "devolvida") devolvidasAntes[c.entrega_id] = (devolvidasAntes[c.entrega_id] || 0) + 1;
+      else (pend[c.entrega_id] = pend[c.entrega_id] || []).push(c.numero);
+    });
+    const acerto = {};
+    itens.forEach(i => {
+      const a = acerto[i.entrega_id] = acerto[i.entrega_id] || { devido: 0, ultimo: null };
+      a.devido = arred(a.devido + Number(i.valor_devido || 0));
+      const d = i.blocos_acertos?.created_at;
+      if (d && (!a.ultimo || d > a.ultimo)) a.ultimo = d;
     });
     const jaRec = {};
     recebidos.forEach(r => { jaRec[r.entrega_id] = r; });
+    const primeiro = t => String(t || "").trim().split(/\s+/)[0] || "";
     const blocos = (entregas || []).map(e => {
-      const nums = porEntrega[e.id] || [];
+      const nums = pend[e.id] || [];
       const rec = jaRec[e.id];
+      const pagasDoBloco = nums.filter(n => pagasPor[n]).map(n => {
+        const x = pagasPor[n];
+        return { numero: x.numero_chance1, valor: x.valor_pago != null ? Number(x.valor_pago) : null, pix: !!x.via_pix, em: x.data_pagamento || null, quem: primeiro(x.nome_comprador) };
+      });
       return {
         entrega_id: e.id, sequencial: e.blocos?.sequencial, numero_inicial: e.blocos?.numero_inicial, numero_final: e.blocos?.numero_final,
-        quantidade: nums.length, pagas_site: nums.filter(n => pagas.has(n)).length,
+        quantidade: nums.length, pagas_site: pagasDoBloco.length, pagas_lista: pagasDoBloco,
         cobra: e.cobra, preco: Number(e.preco), comissao_pct: Number(e.comissao_pct), tem_bonus: e.tem_bonus, bonus_usado: e.bonus_usado,
-        quantidade_entregue: e.quantidade_entregue, plano_nome: e.plano_nome, vendidas_antes: vendidasAntes[e.id] || 0,
+        quantidade_entregue: e.quantidade_entregue, plano_nome: e.plano_nome,
+        vendidas_antes: vendidasAntes[e.id] || 0, devolvidas_antes: devolvidasAntes[e.id] || 0, pagas_site_antes: acertadasPagas[e.id] || 0,
+        acerto_devido: acerto[e.id]?.devido || 0, ultimo_acerto: acerto[e.id]?.ultimo || null,
         ja_recebido: rec ? { recebimento_id: rec.recebimento_id, vendidas: rec.vendidas, devolvidas: rec.devolvidas, em: rec.paroquia_recebimentos?.created_at || null } : null
       };
-    }).filter(b => b.quantidade > 0 || b.ja_recebido);
-    res.json({ sucesso: true, responsavel: resp, blocos });
+    });
+    res.json({ sucesso: true, responsavel: { id: resp.id, nome: resp.nome, comunidade: resp.comunidade, saldo: arred(resp.saldo) }, blocos });
   });
 
   /* registra o recebimento */
@@ -194,7 +237,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
       vals.pix = arred(pixLinhas.reduce((a, l) => a + Number(l.valor_pago ?? l.valor), 0));
     }
 
-    const { data: resp } = await supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade").eq("id", respId).maybeSingle();
+    const { data: resp } = await supabase.from("blocos_resumo_responsavel").select("id, nome, comunidade, saldo").eq("id", respId).maybeSingle();
     if (!resp) return res.status(404).json({ sucesso: false, erro: "Pessoa não encontrada." });
     const ids = pedidos.map(p => p.entrega_id);
     const { data: entregas } = await supabase.from("blocos_entregas")
@@ -219,6 +262,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
       if (!lista.length) return res.status(400).json({ sucesso: false, erro: `O bloco ${e.blocos?.sequencial ?? ""} não tem mais cartelas pendentes (a equipe já acertou). Atualize a tela.` });
       if (p.vendidas > lista.length) return res.status(400).json({ sucesso: false, erro: `O bloco ${e.blocos?.sequencial ?? ""} tem só ${lista.length} cartela(s); você informou ${p.vendidas} vendidas.` });
       const pg = lista.filter(n => pagas.has(n)).length;
+      if (p.vendidas < pg) return res.status(400).json({ sucesso: false, erro: `No bloco ${e.blocos?.sequencial ?? ""}, ${pg} cartela(s) já foram pagas no site; as vendidas não podem ser menos que isso.` });
       const conta = contaBloco(e, antes[e.id] || 0, p.vendidas, pg);
       linhas.push({
         devido: conta.devido, abate_site: conta.abate,
@@ -228,7 +272,7 @@ function registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, c
     }
     const { data: rec, error: er } = await supabase.from("paroquia_recebimentos").insert({
       responsavel_id: respId, responsavel_nome: resp.nome, comunidade: resp.comunidade || null,
-      ...vals, a_receber: arred(linhas.reduce((a, l) => a + l.devido - l.abate_site, 0)),
+      ...vals, a_receber: arred(linhas.reduce((a, l) => a + l.devido - l.abate_site, 0) + (b.incluir_saldo === true && Number(resp.saldo) > 0 ? Number(resp.saldo) : 0)),
       observacao: texto(b.observacao) || null, lancador_id: req.usuarioAdmin?.id || null, lancador_nome: quem(req)
     }).select("id, created_at").single();
     if (er) return falha(res, er, /paroquia_/.test(er.message || "") ? SEM_TABELA : "Erro ao registrar o recebimento.");

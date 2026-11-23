@@ -75,6 +75,9 @@ alter table public.paroquia_recebimento_blocos add column if not exists abate_si
 alter table public.blocos_acerto_pix add column if not exists origem text;
 alter table public.blocos_acerto_pix add column if not exists recebimento_id bigint;
 
+-- quais comunidades devolvem os blocos na paróquia (a tela da paróquia mostra só essas por padrão)
+alter table public.blocos_comunidades add column if not exists devolve_paroquia boolean not null default false;
+
 -- só o servidor (service_role) acessa
 do $$
 declare t text;
