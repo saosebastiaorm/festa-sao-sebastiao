@@ -37,6 +37,7 @@ const { registrarRotasOrigens } = require("./src/origens/origens");
 const { registrarRotasVendedores } = require("./src/vendedores/vendedores");
 const { registrarRotasEnquetes } = require("./src/enquetes/enquetes");
 const { registrarRotasContatos } = require("./src/contatos/contatos");
+const { registrarRotasDivulgacoes } = require("./src/divulgacoes/divulgacoes");
 const { registrarRotasParoquia } = require("./src/paroquia/paroquia");
 const sharp = require("sharp");
 require("dotenv").config();
@@ -283,6 +284,7 @@ const PAGINAS_ADMIN = [
   { chave: "vendedores_documentos", pai: "vendedores", padrao: true, nome: "Ver documentos do vendedor",              pagina: null },
   { chave: "vendedores_excluir",  pai: "vendedores", padrao: true, nome: "Excluir vendedor",                          pagina: null },
   { chave: "contatos_envio",      pai: "contatos", padrao: true,  nome: "Enviar avisos (marcar quem já recebeu)",     pagina: null },
+  { chave: "contatos_divulgacoes", pai: "contatos", padrao: true, nome: "Criar, editar e excluir divulgações (imagem/vídeo)", pagina: null },
   { chave: "origens_links",       pai: "origens",  padrao: true,  nome: "Criar e excluir links de divulgação",        pagina: null }
 ];
 /* a tela "Relatórios" aparece para quem tem qualquer relatório liberado */
@@ -4409,6 +4411,9 @@ registrarRotasVendedores(app, { supabase, exigirPagina, criarLimitador, validarC
 /* ENQUETES e GRUPO VIP (leitura no admin) — src/enquetes/enquetes.js */
 registrarRotasEnquetes(app, { supabase, exigirPagina, criarLimitador });
 registrarRotasContatos(app, { supabase, exigirPagina, criarLimitador });
+
+/* MINHAS DIVULGAÇÕES (legenda + imagem/vídeo, página pública /d/:slug) — src/divulgacoes/divulgacoes.js */
+registrarRotasDivulgacoes(app, { supabase, exigirPagina, criarLimitador });
 
 /* RECEBIMENTO DA PARÓQUIA (blocos recebidos e repassados à equipe) — src/paroquia/paroquia.js */
 registrarRotasParoquia(app, { supabase, exigirPagina, criarLimitador, criarPix, consultarPix });
